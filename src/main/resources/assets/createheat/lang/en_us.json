@@ -1,0 +1,16 @@
+{
+  "itemGroup.createheat": "Create Heat",
+
+  "block.createheat.thermal_block": "Thermal Block",
+
+  "item.createheat.thermal_tool": "Thermal Tool",
+
+  "createheat.configuration.title": "Create:Heat Configs",
+  "createheat.configuration.section.createheat.common.toml": "Create:Heat Configs",
+  "createheat.configuration.section.createheat.common.toml.title": "Create:Heat Configs",
+
+  "createheat.configuration.allow_passive_heat": "Whether to allow passive heat source to be calculated",
+  "createheat.configuration.allow_generate_super_heat": "Whether to allow non super heat sources to generate super heat source",
+  "createheat.configuration.heat_per_fading_blaze": "Heat Per Fading Blaze Burner",
+  "createheat.configuration.heat_per_seething_blaze": "Heat Per Seething Blaze Burner"
+}
