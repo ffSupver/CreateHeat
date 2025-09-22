@@ -9,8 +9,9 @@
   "createheat.configuration.section.createheat.common.toml": "机械热力配置",
   "createheat.configuration.section.createheat.common.toml.title": "机械热力配置",
 
-  "createheat.configuration.allow_passive_heat": "是否计算被动热源",
-  "createheat.configuration.allow_generate_super_heat": "是否将几个不是超级加热的热源合成超级加热热源",
+  "createheat.configuration.allow_passive_heat": "计算被动热源",
+  "createheat.configuration.allow_generate_super_heat": "将几个不是超级加热的热源合成超级加热热源",
   "createheat.configuration.heat_per_fading_blaze": "每个普通加热的烈焰人燃烧室提供的热量",
-  "createheat.configuration.heat_per_seething_blaze": "每个超级加热的烈焰人燃烧室提供的热量"
+  "createheat.configuration.heat_per_seething_blaze": "每个超级加热的烈焰人燃烧室提供的热量",
+  "createheat.configuration.allow_super_heat_reproduce": "超级加热热源产生更多超级加热热源"
 }

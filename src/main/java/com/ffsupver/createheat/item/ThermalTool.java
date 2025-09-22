@@ -1,8 +1,10 @@
 package com.ffsupver.createheat.item;
 
 import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntity;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -10,6 +12,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 
 public class ThermalTool extends Item {
     public ThermalTool(Properties properties) {
@@ -23,24 +26,26 @@ public class ThermalTool extends Item {
         if (level.getBlockEntity(pos) instanceof ThermalBlockEntity thermalBlockEntity){
             Player player = context.getPlayer();
             BlockPos controllerPos = thermalBlockEntity.getControllerPos();
+            ThermalBlockEntity controllerEntity = thermalBlockEntity.getControllerEntity();
             if (player != null && !level.isClientSide()) {
-                player.sendSystemMessage(Component.literal(
-                        "Connect count :" + thermalBlockEntity.getConnectedBlocks().size() +
-                                "\n x:"+controllerPos.getX()+" y:"+controllerPos.getY()+" z:"+controllerPos.getZ()
-                        )
+                player.displayClientMessage(Component.literal(
+                        "Connect count :" + controllerEntity.getConnectedBlocks().size() + " heat:" + controllerEntity.getHeat()+
+                                " Controller x:"+controllerPos.getX()+" y:"+controllerPos.getY()+" z:"+controllerPos.getZ() + " heatStorage:" + controllerEntity.getHeatStorage()
+                        ).withStyle(ChatFormatting.RED),true
                 );
             }
             return InteractionResult.SUCCESS;
+        }else if (level.getBlockState(pos).is(Blocks.TNT)){
+            if (!level.isClientSide()){
+                level.setBlockAndUpdate(pos,Blocks.AIR.defaultBlockState());
+                level.explode(null, pos.getX(),pos.getY(),pos.getZ(), 5, true, Level.ExplosionInteraction.TRIGGER);
+            }
         }
         return super.useOn(context);
     }
 
     @Override
-    public void onStopUsing(ItemStack stack, LivingEntity entity, int count) {
-        super.onStopUsing(stack, entity, count);
-        Level level = entity.level();
-        if (!level.isClientSide() && count == 0){
-            level.explode(entity, entity.getX(), entity.getY(), entity.getZ(), 3, true, Level.ExplosionInteraction.MOB);
-        }
+    public boolean useOnRelease(ItemStack stack) {
+        return super.useOnRelease(stack);
     }
 }

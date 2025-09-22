@@ -9,8 +9,15 @@
   "createheat.configuration.section.createheat.common.toml": "Create:Heat Configs",
   "createheat.configuration.section.createheat.common.toml.title": "Create:Heat Configs",
 
-  "createheat.configuration.allow_passive_heat": "Whether to allow passive heat source to be calculated",
-  "createheat.configuration.allow_generate_super_heat": "Whether to allow non super heat sources to generate super heat source",
+  "createheat.configuration.allow_passive_heat": "Allow passive heat source to be calculated",
+  "createheat.configuration.allow_generate_super_heat": "Allow non super heat sources to generate super heat source",
   "createheat.configuration.heat_per_fading_blaze": "Heat Per Fading Blaze Burner",
-  "createheat.configuration.heat_per_seething_blaze": "Heat Per Seething Blaze Burner"
+  "createheat.configuration.heat_per_seething_blaze": "Heat Per Seething Blaze Burner",
+  "createheat.configuration.allow_super_heat_reproduce": "Allow super heat sources reproduce more super sources",
+
+  "createheat.configuration.allow_passive_heat.tooltip": "Allow passive heat source to be calculated",
+  "createheat.configuration.allow_generate_super_heat.tooltip": "Allow non super heat sources to generate super heat source",
+  "createheat.configuration.heat_per_fading_blaze.tooltip": "Heat Per Fading Blaze Burner",
+  "createheat.configuration.heat_per_seething_blaze.tooltip": "Heat Per Seething Blaze Burner",
+  "createheat.configuration.allow_super_heat_reproduce.tooltip": "Allow super heat sources reproduce more super sources"
 }

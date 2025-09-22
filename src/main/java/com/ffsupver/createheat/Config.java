@@ -13,7 +13,7 @@ public class Config {
             .define("allow_generate_super_heat", true);
 
     public static final ModConfigSpec.IntValue HEAT_PER_FADING_BLAZE = BUILDER
-            .comment("Heat per fading (normal heat) blaze burner provide.")
+            .comment("Heat per fading (regular heat) blaze burner provide.")
             .comment("If passive heat source allowed, it will be 1 for passive heat source.")
             .comment("Should be bigger than 1. Default 2")
             .defineInRange("heat_per_fading_blaze", 2, 1, Integer.MAX_VALUE);
@@ -22,6 +22,10 @@ public class Config {
             .comment("If passive heat source allowed, it will be 1 for passive heat source.")
             .comment("Should be bigger than 2. Default 4")
             .defineInRange("heat_per_seething_blaze", 4, 2, Integer.MAX_VALUE);
+    public static final ModConfigSpec.BooleanValue ALLOW_SUPER_HEAT_REPRODUCE = BUILDER
+            .comment("Whether to allow super heat sources to generate more super heat sources")
+            .comment("Only works when allow_generate_super_heat is false")
+            .define("allow_super_heat_reproduce", true);
 
     static final ModConfigSpec SPEC = BUILDER.build();
 }

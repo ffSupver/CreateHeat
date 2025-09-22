@@ -34,8 +34,11 @@ public class ThermalBlockEntity extends SmartBlockEntity {
     private final Set<BlockPos> connectedBlocks = new HashSet<>();
 
     private int heat;
+    private final int MAX_HEAT = 50 * Config.HEAT_PER_FADING_BLAZE.get();
     private int cooldown;
     private static final int MAX_COOLDOWN = 10;
+
+    private final HeatStorage heatStorage = new HeatStorage(MAX_HEAT);
 
     public ThermalBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -57,6 +60,8 @@ public class ThermalBlockEntity extends SmartBlockEntity {
             tag.put("connected",listTag);
             tag.putInt("heat",heat);
             tag.putInt("cooldown",cooldown);
+
+            tag.put("heat_storage",heatStorage.toNbt());
         }else {
             tag.put("controller", NbtUtils.writeBlockPos(controllerPos));
         }
@@ -74,6 +79,8 @@ public class ThermalBlockEntity extends SmartBlockEntity {
             }
             heat = tag.getInt("heat");
             cooldown = tag.getInt("cooldown");
+
+            heatStorage.fromNbt(tag.getCompound("heat_storage"));
         }else {
             controllerPos = NBTHelper.readBlockPos(tag,"controller");
         }
@@ -111,16 +118,27 @@ public class ThermalBlockEntity extends SmartBlockEntity {
 
         int superHeatCount = 0;
 
+        //计算加热数
         for (ThermalBlockEntity thermalBlockEntity : connectedBlockList){
             int heatBelow = thermalBlockEntity.genHeat();
             heat += heatBelow * MAX_COOLDOWN;
             superHeatCount += (heatBelow >= 3)? 1 : 0;
         }
 
+        //释放存储的热
+        if (heat <= 0){
+            heat += heatStorage.extract(heatStorage.getAmount(),false);
+        }
+
         for (ThermalBlockEntity thermalBlockEntity : connectedBlockList){
             CostHeatResult costHeatResult = thermalBlockEntity.costHeat(heat,MAX_COOLDOWN,superHeatCount);
             heat = costHeatResult.heat;
             superHeatCount = costHeatResult.superHeatCount;
+        }
+
+        //存储多余的热
+        if (heat > 0){
+            heatStorage.insert(heat);
         }
     }
 
@@ -155,7 +173,7 @@ public class ThermalBlockEntity extends SmartBlockEntity {
             setBlockHeat(NONE);
         }
 
-        if (getHeatLevel().equals(SEETHING)){
+        if (!Config.ALLOW_SUPER_HEAT_REPRODUCE.get() && getHeatLevel().equals(SEETHING)){
             superHeat--;
         }
 
@@ -235,6 +253,7 @@ public class ThermalBlockEntity extends SmartBlockEntity {
 
     public void addConnectedPos(BlockPos pos){
         this.connectedBlocks.add(pos);
+        calculateHeatStorage();
     }
 
     @Override
@@ -275,7 +294,14 @@ public class ThermalBlockEntity extends SmartBlockEntity {
                 }
             }
         }
+
+        calculateHeatStorage();
+
         notifyUpdate();
+    }
+
+    private void calculateHeatStorage(){
+        heatStorage.setCapacity(connectedBlocks.size() * MAX_HEAT);
     }
 
     public void walkAllBlocks(BlockPos startPos, Set<BlockPos> walkedBlockPos, Predicate<BlockPos> check) {
@@ -318,5 +344,73 @@ public class ThermalBlockEntity extends SmartBlockEntity {
     public BlockPos getControllerPos(){return isController ? getBlockPos() : controllerPos;}
     public Set<BlockPos> getConnectedBlocks(){return isController ? connectedBlocks : getControllerEntity().getConnectedBlocks();}
 
-    private record CostHeatResult(int heat,int superHeatCount){}
+    public int getHeat() {
+        return heat;
+    }
+
+    public HeatStorage getHeatStorage() {
+        return heatStorage;
+    }
+
+    private record CostHeatResult(int heat, int superHeatCount){}
+    public static class HeatStorage{
+        private int capacity;
+        private int amount;
+        public HeatStorage(int capacity){
+            this.capacity = capacity;
+            this.amount = 0;
+        }
+
+        public int insert(int heat){
+            int max = amount + heat;
+            if (max > capacity){
+                amount = capacity;
+                return max - capacity;
+            }else {
+                amount = max;
+                return heat;
+            }
+        }
+
+        public int extract(int heat,boolean simulate){
+            int min = amount - heat;
+            if (min < 0){
+                if (!simulate){
+                    amount = 0;
+                }
+                return heat + min;
+            }else {
+                if (!simulate){
+                    amount = min;
+                }
+                return heat;
+            }
+        }
+
+        public void setCapacity(int capacity) {
+            this.capacity = capacity;
+            this.amount = Math.min(amount,capacity);
+        }
+
+        public CompoundTag toNbt(){
+            CompoundTag nbt = new CompoundTag();
+            nbt.putInt("capacity",capacity);
+            nbt.putInt("amount",amount);
+            return nbt;
+        }
+
+        public void fromNbt(CompoundTag nbt){
+            this.capacity = nbt.getInt("capacity");
+            this.amount = nbt.getInt("amount");
+        }
+
+        public int getAmount() {
+            return amount;
+        }
+
+        @Override
+        public String toString() {
+            return "{"+amount+"/"+capacity+"}";
+        }
+    }
 }
