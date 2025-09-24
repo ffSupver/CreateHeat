@@ -28,11 +28,18 @@ public class ThermalTool extends Item {
             BlockPos controllerPos = thermalBlockEntity.getControllerPos();
             ThermalBlockEntity controllerEntity = thermalBlockEntity.getControllerEntity();
             if (player != null && !level.isClientSide()) {
-                player.displayClientMessage(Component.literal(
-                        "Connect count :" + controllerEntity.getConnectedBlocks().size() + " heat:" + controllerEntity.getHeat()+
-                                " Controller x:"+controllerPos.getX()+" y:"+controllerPos.getY()+" z:"+controllerPos.getZ() + " heatStorage:" + controllerEntity.getHeatStorage()
-                        ).withStyle(ChatFormatting.RED),true
-                );
+                if (player.isCrouching()){
+                    player.displayClientMessage(Component.literal(
+                            "total heat:" + controllerEntity.getAllHeatForDisplay()
+                            ).withStyle(ChatFormatting.RED), true
+                    );
+                }else {
+                    player.displayClientMessage(Component.literal(
+                                    "Connect count :" + controllerEntity.getConnectedBlocks().size() + " heat:" + controllerEntity.getHeat() +
+                                            " Controller x:" + controllerPos.getX() + " y:" + controllerPos.getY() + " z:" + controllerPos.getZ() + " heatStorage:" + controllerEntity.getHeatStorage()
+                            ).withStyle(ChatFormatting.RED), true
+                    );
+                }
             }
             return InteractionResult.SUCCESS;
         }else if (level.getBlockState(pos).is(Blocks.TNT)){

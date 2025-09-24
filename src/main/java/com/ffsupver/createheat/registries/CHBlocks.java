@@ -8,6 +8,7 @@ import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 
@@ -23,6 +24,13 @@ public class CHBlocks {
             .block("thermal_block", ThermalBlock::new)
             .properties(p-> BlockBehaviour.Properties.ofFullCopy(Blocks.COPPER_BLOCK))
             .item(BlockItem::new)
+            .build()
+            .register();
+
+    public static final BlockEntry<Block> TIGHT_COMPRESSED_STONE = REGISTRATE
+            .block("tight_compressed_stone",Block::new)
+            .properties(p->BlockBehaviour.Properties.ofFullCopy(Blocks.STONE))
+            .item()
             .build()
             .register();
 

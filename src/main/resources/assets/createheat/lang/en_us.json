@@ -1,7 +1,8 @@
 {
-  "itemGroup.createheat": "Create Heat",
+  "itemGroup.createheat": "Create:Heat",
 
   "block.createheat.thermal_block": "Thermal Block",
+  "block.createheat.tight_compressed_stone": "Tight compressed_stone",
 
   "item.createheat.thermal_tool": "Thermal Tool",
 

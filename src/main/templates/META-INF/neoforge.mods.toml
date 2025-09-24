@@ -14,7 +14,7 @@ displayName="${mod_name}"
 #updateJSONURL="https://change.me.example.invalid/updates.json" #optional
 
 # A URL for the "homepage" for this mod, displayed in the mod UI
-#displayURL="https://change.me.to.your.mods.homepage.example.invalid/" #optional
+displayURL="https://modrinth.com/mod/create-heat"
 
 logoFile= "icon.png"
 

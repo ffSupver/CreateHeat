@@ -1,5 +1,6 @@
 {
   "values": [
-    "createheat:thermal_block"
+    "createheat:thermal_block",
+    "createheat:tight_compressed_stone"
   ]
 }

@@ -2,6 +2,7 @@
   "itemGroup.createheat": "机械热力",
 
   "block.createheat.thermal_block": "导热块",
+  "block.createheat.tight_compressed_stone": "紧致压缩石",
 
   "item.createheat.thermal_tool": "热调试器",
 
