@@ -20,5 +20,19 @@
   "createheat.configuration.allow_generate_super_heat.tooltip": "Allow non super heat sources to generate super heat source",
   "createheat.configuration.heat_per_fading_blaze.tooltip": "Heat Per Fading Blaze Burner",
   "createheat.configuration.heat_per_seething_blaze.tooltip": "Heat Per Seething Blaze Burner",
-  "createheat.configuration.allow_super_heat_reproduce.tooltip": "Allow super heat sources reproduce more super sources"
+  "createheat.configuration.allow_super_heat_reproduce.tooltip": "Allow super heat sources reproduce more super sources",
+
+  "createheat.gui.goggles.heat_amount": "Heat: %s / %s",
+
+  "createheat.ponder.thermal_block.use.header": "Using Thermal Block",
+  "createheat.ponder.thermal_block.use.text_1": "Heat goes through Thermal Block",
+  "createheat.ponder.thermal_block.use.text_2": "Thermal Block provide heat for machines above",
+  "createheat.ponder.thermal_block.use.text_3": "Super heat",
+  "createheat.ponder.thermal_block.storage.header": "Storge Heat Using Thermal Block",
+  "createheat.ponder.thermal_block.storage.text_1": "Some passive heat sources can generate regular heat source",
+  "createheat.ponder.thermal_block.storage.text_2": "Some regular heat sources can generate super heat source",
+  "createheat.ponder.thermal_block.storage.text_3": "When the provided heat exceed the consumed heat",
+  "createheat.ponder.thermal_block.storage.text_4": "The excess heat will be stored",
+  "createheat.ponder.thermal_block.storage.text_5": "When no heat provided",
+  "createheat.ponder.thermal_block.storage.text_6": "The stored heat will be released"
 }

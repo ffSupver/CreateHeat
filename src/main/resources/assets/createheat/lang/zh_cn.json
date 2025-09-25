@@ -14,5 +14,25 @@
   "createheat.configuration.allow_generate_super_heat": "将几个不是超级加热的热源合成超级加热热源",
   "createheat.configuration.heat_per_fading_blaze": "每个普通加热的烈焰人燃烧室提供的热量",
   "createheat.configuration.heat_per_seething_blaze": "每个超级加热的烈焰人燃烧室提供的热量",
-  "createheat.configuration.allow_super_heat_reproduce": "超级加热热源产生更多超级加热热源"
+  "createheat.configuration.allow_super_heat_reproduce": "超级加热热源产生更多超级加热热源",
+
+  "createheat.configuration.allow_passive_heat.tooltip": "计算被动热源",
+  "createheat.configuration.allow_generate_super_heat.tooltip": "将几个不是超级加热的热源合成超级加热热源",
+  "createheat.configuration.heat_per_fading_blaze.tooltip": "每个普通加热的烈焰人燃烧室提供的热量",
+  "createheat.configuration.heat_per_seething_blaze.tooltip": "每个超级加热的烈焰人燃烧室提供的热量",
+  "createheat.configuration.allow_super_heat_reproduce.tooltip": "超级加热热源产生更多超级加热热源",
+
+  "createheat.gui.goggles.heat_amount": "热量: %s / %s",
+
+  "createheat.ponder.thermal_block.use.header": "使用导热块",
+  "createheat.ponder.thermal_block.use.text_1": "热量通过导热块传播",
+  "createheat.ponder.thermal_block.use.text_2": "导热块为上面的机器供热",
+  "createheat.ponder.thermal_block.use.text_3": "超级加热",
+  "createheat.ponder.thermal_block.storage.header": "用导热块储存热量",
+  "createheat.ponder.thermal_block.storage.text_1": "几个被动热源可以产生普通加热热源",
+  "createheat.ponder.thermal_block.storage.text_2": "几个普通加热热源可以产生超级加热热源",
+  "createheat.ponder.thermal_block.storage.text_3": "当提供的热量大于消耗的热量",
+  "createheat.ponder.thermal_block.storage.text_4": "多余的热量会被储存",
+  "createheat.ponder.thermal_block.storage.text_5": "当没有热源时",
+  "createheat.ponder.thermal_block.storage.text_6": "储存的热量会被释放"
 }

@@ -1,5 +1,7 @@
 package com.ffsupver.createheat;
 
+import com.ffsupver.createheat.ponder.CHPonderPlugin;
+import net.createmod.ponder.foundation.PonderIndex;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -15,6 +17,8 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 public class CreateHeatClient {
     public CreateHeatClient(ModContainer container) {
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+
+        PonderIndex.addPlugin(new CHPonderPlugin());
     }
 
     @SubscribeEvent
