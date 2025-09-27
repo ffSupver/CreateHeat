@@ -3,6 +3,7 @@ package com.ffsupver.createheat;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.ffsupver.createheat.registries.CHCreativeTab;
 import com.ffsupver.createheat.registries.CHItems;
+import com.ffsupver.createheat.registries.CHRecipes;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.KineticStats;
@@ -46,6 +47,7 @@ public class CreateHeat {
         CHItems.register();
         CHBlocks.register();
         CHTags.register();
+        CHRecipes.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (CreateHeat) to respond directly to events.

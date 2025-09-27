@@ -1,0 +1,11 @@
+{
+  "type": "createheat:heat",
+  "input": {
+    "state":{
+      "Name": "minecraft:stone_bricks"
+    }
+  },
+  "output": {"Name":"minecraft:cracked_stone_bricks"},
+  "heat": 200,
+  "min_heat": 2
+}

@@ -1,0 +1,19 @@
+{
+  "type": "createheat:heat",
+  "input": {
+"state":{
+  "Name": "minecraft:chorus_flower",
+  "Properties": {
+    "age": "0"
+  }
+}
+  },
+  "output": {
+    "Properties":{
+      "age":"5"
+    },
+    "Name":"minecraft:chorus_flower"
+  },
+  "heat": 800,
+  "min_heat": 8
+}

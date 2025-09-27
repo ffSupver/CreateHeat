@@ -2,7 +2,9 @@ package com.ffsupver.createheat.block.thermalBlock;
 
 import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.Config;
+import com.ffsupver.createheat.recipe.HeatRecipe;
 import com.ffsupver.createheat.registries.CHBlocks;
+import com.ffsupver.createheat.registries.CHRecipes;
 import com.ffsupver.createheat.util.NbtUtil;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
@@ -19,6 +21,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -26,11 +30,14 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.ffsupver.createheat.util.BlockPosUtil.AllDirectionOf;
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.*;
 
@@ -47,6 +54,8 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
 
     private final HeatStorage heatStorage = new HeatStorage(MAX_HEAT.get());
     private final ArrayList<StoneHeatStorage> stoneHeatStorages = new ArrayList<>();
+
+    private final Map<BlockPos,HeatRecipeProcessing> recipeProcessingMap = new HashMap<>();
 
     public ThermalBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -66,6 +75,12 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             tag.put("heat_storage",heatStorage.toNbt());
 
             tag.put("shs",NbtUtil.writeToNbtList(stoneHeatStorages, StoneHeatStorage::toNbt));
+
+            tag.put("recipe",NbtUtil.writeMapToNbtList(
+                    recipeProcessingMap,
+                    NbtUtil::blockPosToNbt,
+                    hRP->hRP.toNbt(getBlockPos()))
+            );
         }else {
             tag.put("controller", NbtUtils.writeBlockPos(controllerPos));
         }
@@ -73,6 +88,7 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
 
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        //getLevel return null
         super.read(tag, registries, clientPacket);
         isController = tag.getBoolean("is_controller");
         if (isController) {
@@ -84,7 +100,14 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             heatStorage.fromNbt(tag.getCompound("heat_storage"));
 
             stoneHeatStorages.clear();
-            stoneHeatStorages.addAll(NbtUtil.readFromNbt(tag.getList("shs",Tag.TAG_COMPOUND),tS -> StoneHeatStorage.cFromNbt((CompoundTag) tS)));
+            stoneHeatStorages.addAll(NbtUtil.readListFromNbt(tag.getList("shs",Tag.TAG_COMPOUND), tS -> StoneHeatStorage.cFromNbt((CompoundTag) tS)));
+
+            recipeProcessingMap.clear();
+            recipeProcessingMap.putAll(NbtUtil.readMapFromNbtList(
+                    tag.getList("recipe",Tag.TAG_COMPOUND),
+                    NbtUtil::blockPosFromNbt,
+                    t->HeatRecipeProcessing.fromNbt((CompoundTag) t,getBlockPos()))
+            );
         }else {
             controllerPos = NBTHelper.readBlockPos(tag,"controller");
         }
@@ -113,6 +136,7 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             return;
         }
 
+        int tickSkip = MAX_COOLDOWN;
 
         Set<ThermalBlockEntity> connectedBlockList = connectedBlocks.stream().map(
                 pos -> getLevel().getBlockEntity(pos) instanceof ThermalBlockEntity thermalBlockEntity ? thermalBlockEntity : null
@@ -140,10 +164,23 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             }
         }
 
-        //计算加热数
+
+        //移除已经完成的配方
+        List<BlockPos> processPosToRemove = recipeProcessingMap.entrySet().stream()
+                .filter(entry->entry.getValue().finished)
+                .map(Map.Entry::getKey).toList();
+        processPosToRemove.forEach(recipeProcessingMap::remove);
+
+        //====加热部分====
+
+
+        //计算加热数  寻找配方
+        List<HeatRecipeProcessing> hRPL = new ArrayList<>();
         for (ThermalBlockEntity thermalBlockEntity : connectedBlockList){
+            hRPL.addAll(thermalBlockEntity.getRecipes());
+
             int heatBelow = thermalBlockEntity.genHeat();
-            heat += heatBelow * MAX_COOLDOWN;
+            heat += heatBelow * tickSkip;
             superHeatCount += (heatBelow >= 3)? 1 : 0;
 
             // 寻找新储热器
@@ -160,20 +197,38 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
                 }
             }
         }
-
-
-
         releaseHeat();
 
+        //添加找到的新配方
+        checkAddHeatRecipeProcessing(hRPL);
+
+
+        //====耗热部分====
+
         for (ThermalBlockEntity thermalBlockEntity : connectedBlockList){
-            CostHeatResult costHeatResult = thermalBlockEntity.costHeat(heat,MAX_COOLDOWN,superHeatCount);
+            CostHeatResult costHeatResult = thermalBlockEntity.costHeat(heat,tickSkip,superHeatCount);
             heat = costHeatResult.heat;
             superHeatCount = costHeatResult.superHeatCount;
         }
 
+        //处理配方->周围方块转换完毕 已经计算过耗热
+        recipeProcessingMap.values().forEach(rP->{
+            rP.addHeat(this,tickSkip);
+            heat += rP.process(getBlockPos(),getLevel(),tickSkip);
+        });
+
+
        boolean storageUpdate = storageHeat();
         if (changeSHS || storageUpdate){
             setChanged();
+        }
+    }
+
+    private void checkAddHeatRecipeProcessing(List<HeatRecipeProcessing> hRPL) {
+        for (HeatRecipeProcessing h : hRPL){
+            if (!recipeProcessingMap.containsKey(h.processPos)){
+                recipeProcessingMap.put(h.processPos,h);
+            }
         }
     }
 
@@ -189,7 +244,7 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     }
 
     private CostHeatResult costHeat(int heat,int tickSkip,int superHeat){
-        if (!needToHeatAbove()){
+        if (!needToHeat()){
             setBlockHeat(NONE);
             return new CostHeatResult(heat,superHeat);
         }
@@ -267,9 +322,42 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         };
     }
 
-    public boolean needToHeatUp(HeatLevel heatLevel){
-        return needToHeatAbove() && (getHeatLevel().equals(NONE) ||
+    private boolean needToHeatUp(HeatLevel heatLevel){
+        return needToHeat() && (getHeatLevel().equals(NONE) ||
                 heatLevel.equals(SEETHING) && !getHeatLevel().equals(SEETHING));
+    }
+
+    private boolean needToHeat(){
+        return needToHeatAbove() || canProcessRecipe(getBlockPos());
+    }
+
+    private List<HeatRecipeProcessing> getRecipes(){
+        List<HeatRecipeProcessing> rPList = new ArrayList<>();
+        AllDirectionOf(getBlockPos(),checkPos->{
+            BlockState checkState = getLevel().getBlockState(checkPos);
+            HeatRecipe.HeatRecipeTester tester = new HeatRecipe.HeatRecipeTester(checkState);
+            Optional<RecipeHolder<HeatRecipe>> optionalRH = getLevel().getRecipeManager().getRecipeFor(CHRecipes.HEAT_RECIPE.get(),tester,getLevel());
+            if (optionalRH.isPresent()){
+                AtomicReference<Optional<HeatRecipeProcessing>> oHRP = new AtomicReference<>(Optional.empty());
+                AllDirectionOf(checkPos,
+                        checkControllerPos-> {
+                            if (!checkControllerPos.equals(getBlockPos()) && getLevel().getBlockEntity(checkControllerPos) instanceof ThermalBlockEntity otherTE) {
+                                if (!otherTE.getControllerPos().equals(getControllerPos())) {
+                                    oHRP.set(otherTE.getRecipeByOther(checkPos));
+                                }
+                            }
+                        },
+                        c->oHRP.get().isPresent() //找到就终止
+                );
+                HeatRecipeProcessing hRP = oHRP.get().orElse(new HeatRecipeProcessing(checkPos,getControllerPos(), optionalRH.get()));
+                rPList.add(hRP);
+            }
+        });
+        return rPList;
+    }
+
+    private Optional<HeatRecipeProcessing> getRecipeByOther(BlockPos pos){
+        return Optional.ofNullable(getControllerEntity().recipeProcessingMap.get(pos));
     }
 
     public boolean needToHeatAbove(){
@@ -277,6 +365,19 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         boolean needToHeatBoiler = getLevel().getBlockEntity(getBlockPos().above()) instanceof FluidTankBlockEntity fluidTankBlockEntity &&
                 fluidTankBlockEntity.getControllerBE().boiler.attachedEngines > 0;
         return needToHeatAbove || needToHeatBoiler;
+    }
+
+
+    public boolean canProcessRecipe(BlockPos pos){
+        if (isController()) {
+            AtomicBoolean c = new AtomicBoolean(false);
+            AllDirectionOf(pos,checkPos->{
+               c.set(recipeProcessingMap.containsKey(checkPos));
+            },b->c.get());
+            return c.get();
+        }else {
+           return getControllerEntity().canProcessRecipe(getBlockPos());
+        }
     }
 
     public HeatLevel getHeatLevel(BlockPos pos){
@@ -294,13 +395,13 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
 
     public void checkNeighbour(){
         if (!isController){
-            boolean foundConnect = false;
-            for (Direction direction : Direction.values()) {
-                if (getLevel().getBlockEntity(getBlockPos().relative(direction)) instanceof ThermalBlockEntity neighbourEntity) {
+            AtomicBoolean foundConnect = new AtomicBoolean(false);
+            AllDirectionOf(getBlockPos(),checkPos->{
+                if (getLevel().getBlockEntity(checkPos) instanceof ThermalBlockEntity neighbourEntity) {
                     this.isController = false;
-                    if (!foundConnect){
+                    if (!foundConnect.get()){
                         this.controllerPos = neighbourEntity.getControllerPos();
-                        foundConnect = true;
+                        foundConnect.set(true);
                     }
 
 
@@ -315,9 +416,9 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
                         }
                     }
                 }
-            }
+            });
 
-            if (!foundConnect){
+            if (!foundConnect.get()){
                 this.isController = true;
                 this.controllerPos = getBlockPos();
                 this.addConnectedPos(this.getBlockPos());
@@ -408,13 +509,10 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         walkedBlockPos.add(startPos);
 
         // 遍历六个方向（上、下、北、南、西、东）
-        for (Direction direction : Direction.values()) {
-            // 获取相邻方块的位置
-            BlockPos neighborPos = startPos.relative(direction);
-
+        AllDirectionOf(startPos,neighborPos->{
             // 递归遍历相邻方块
             walkAllBlocks(neighborPos, walkedBlockPos, check);
-        }
+        });
     }
 
 
@@ -678,7 +776,122 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             }
             return false;
         }
+    }
 
+    private static class HeatRecipeProcessing{
+        private final BlockPos processPos;
+        private BlockPos recordControllerPos;
+        private RecipeHolder<HeatRecipe> recipe;
+        private int heatAccept;
+        private int heatGot;
+        private boolean finished;
+        private String recipeId;
 
+        private HeatRecipeProcessing(BlockPos processPos, BlockPos recordControllerPos, RecipeHolder<HeatRecipe> recipe,int heatGot) {
+            this.processPos = processPos;
+            this.recordControllerPos = recordControllerPos;
+            this.recipe = recipe;
+            this.heatAccept = 0;
+            this.heatGot = heatGot;
+        }
+
+        private HeatRecipeProcessing(BlockPos processPos, BlockPos recordControllerPos, RecipeHolder<HeatRecipe> recipe) {
+            this(processPos,recordControllerPos,recipe,0);
+        }
+
+        private HeatRecipeProcessing(BlockPos processPos, BlockPos recordControllerPos,String recipeId,int heatGot){
+            this(processPos,recordControllerPos, (RecipeHolder<HeatRecipe>) null,heatGot);
+            this.recipeId = recipeId;
+        }
+
+        private void addHeat(ThermalBlockEntity controller,int tickSkip){
+            AllDirectionOf(processPos,pos -> {
+                if (controller.getConnectedBlocks().contains(pos)){
+                    HeatLevel heatLevel = controller.getHeatLevel(pos);
+                    this.heatAccept += controller.calculateHeatCost(tickSkip,heatLevel);
+                }
+            });
+        }
+
+        private int process(BlockPos controllerPos,Level level,int tickSkip){
+            if (!controllerPos.equals(recordControllerPos)){
+                checkRecordController(level,controllerPos);
+                return 0;
+            }
+
+            if (recipe == null){
+                initRecipe(level.getRecipeManager());
+            }
+
+            //检测输入方块是否正确
+            if (!checkInputBlock(level)){
+                this.finished = true;
+            }
+
+            HeatRecipe heatRecipe = recipe.value();
+            int tmpHeatAccept = heatAccept;
+            heatAccept = 0;
+
+            if (finished || tmpHeatAccept < heatRecipe.getMinHeatPerTick() * tickSkip){
+                return tmpHeatAccept;
+            }
+
+            int heatFinal = heatGot + tmpHeatAccept;
+
+            if (heatFinal >= heatRecipe.getHeatCost()){
+                heatGot = heatRecipe.getHeatCost();
+                this.finished = true;
+                level.setBlock(processPos,heatRecipe.getOutputBlock(),3);
+                return heatFinal - heatRecipe.getHeatCost();
+            }else {
+                heatGot = heatFinal;
+                return 0;
+            }
+        }
+
+        private void initRecipe(RecipeManager recipeManager){
+            Optional<RecipeHolder<HeatRecipe>> recipeOp = recipeManager.getAllRecipesFor(CHRecipes.HEAT_RECIPE.get())
+                    .stream().filter(h->h.id().toString().equals(recipeId)).findFirst();
+            recipe = recipeOp.orElse(null);
+            if (recipe == null){
+                this.finished = true;
+            }
+        }
+
+        private void checkRecordController(Level level,BlockPos newPos){
+           if (!(level.getBlockEntity(recordControllerPos) instanceof ThermalBlockEntity)){
+               recordControllerPos = newPos;
+           }
+        }
+
+        private boolean checkInputBlock(Level level){
+            //recipe 已经初始化
+            HeatRecipe.HeatRecipeTester tester = new HeatRecipe.HeatRecipeTester(level.getBlockState(processPos));
+            Optional<RecipeHolder<HeatRecipe>> heatRecipeRecipeHolderOp = level.getRecipeManager().getRecipeFor(CHRecipes.HEAT_RECIPE.get(),tester,level);
+            if (heatRecipeRecipeHolderOp.isPresent()){
+               RecipeHolder<HeatRecipe> heatRecipeH = heatRecipeRecipeHolderOp.get();
+               return heatRecipeH.id().equals(recipe.id());
+            }
+            return false;
+        }
+
+        private CompoundTag toNbt(BlockPos controllerPos){
+            if (controllerPos.equals(recordControllerPos)){
+                CompoundTag nbt = new CompoundTag();
+                nbt.put("process_pos",NbtUtils.writeBlockPos(processPos));
+                nbt.putInt("heat_got",heatGot);
+                nbt.putString("id", recipe == null ? recipeId : recipe.id().toString());
+
+                return nbt;
+            }
+            return null;
+        }
+
+        private static HeatRecipeProcessing fromNbt(CompoundTag nbt, BlockPos recordControllerPos){
+            BlockPos processPos = NBTHelper.readBlockPos(nbt,"process_pos");
+            int heatGot = nbt.getInt("heat_got");
+            String recipeId = nbt.getString("id");
+            return new HeatRecipeProcessing(processPos, recordControllerPos, recipeId,heatGot);
+        }
     }
 }
