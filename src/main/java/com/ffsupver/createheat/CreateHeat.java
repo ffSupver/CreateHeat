@@ -10,6 +10,7 @@ import com.simibubi.create.foundation.item.KineticStats;
 import com.simibubi.create.foundation.item.TooltipModifier;
 import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.slf4j.Logger;
@@ -75,5 +76,8 @@ public class CreateHeat {
 
     public static CreateRegistrate registrate(){
         return REGISTRATE;
+    }
+    public static ResourceLocation asResource(String path){
+        return  ResourceLocation.fromNamespaceAndPath(MODID,path);
     }
 }

@@ -119,7 +119,9 @@ configurations {
 }
 
 dependencies {
-     localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:19.21.2.313"
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+//    runtimeOnly "mezz.jei:jei-${minecraft_version}:${jei_version}"
+     localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
 
 
     implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = true }

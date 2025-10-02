@@ -5,16 +5,14 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeInput;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.levelgen.feature.configurations.BlockStateConfiguration;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -26,7 +24,7 @@ public class HeatRecipe implements Recipe<HeatRecipe.HeatRecipeTester>{
 
     public final static String ID = "heat";
     public final static RecipeType<HeatRecipe> TYPE = RecipeBuildHelper.recipeType(ID);
-    public final static RecipeSerializer<HeatRecipe> SERIALIZER = RecipeBuildHelper.recipeSerializer(fromJson(),HeatRecipe::fromNetWork,HeatRecipe::toNetWork);
+    public final static RecipeSerializer<HeatRecipe> SERIALIZER = RecipeBuildHelper.recipeSerializer(fromJson());
 
 
 
@@ -86,6 +84,17 @@ public class HeatRecipe implements Recipe<HeatRecipe.HeatRecipeTester>{
         return minHeatPerTick;
     }
 
+    @Override
+    public @NotNull NonNullList<Ingredient> getIngredients() {
+        NonNullList<Ingredient> ingredients = NonNullList.create();
+        ingredients.add(Ingredient.of(inputBlock.state.getBlock().asItem()));
+        return ingredients;
+    }
+
+    public BlockState getInputBlock() {
+        return inputBlock.state;
+    }
+
     private static MapCodec<HeatRecipe> fromJson(){
         return RecordCodecBuilder.mapCodec(p->{
         Products.P4<RecordCodecBuilder.Mu<HeatRecipe>, Integer,BlockStateConfiguration,BlockState,Integer> p1 =  p.group(
@@ -97,26 +106,6 @@ public class HeatRecipe implements Recipe<HeatRecipe.HeatRecipeTester>{
         return p1.apply(p,(heat,input,output,min)->new HeatRecipe(input,output,heat,min));
         });
     }
-
-    private static HeatRecipe fromNetWork(RegistryFriendlyByteBuf byteBuf) {
-        int heatCost = byteBuf.readInt();
-        int minHeatPerTick = byteBuf.readInt();
-
-        BlockStateConfiguration input = byteBuf.readJsonWithCodec(BlockStateConfiguration.CODEC);
-        BlockState output = byteBuf.readJsonWithCodec(BlockState.CODEC);
-
-        return new HeatRecipe(input,output,heatCost,minHeatPerTick);
-    }
-
-    private static void toNetWork(RegistryFriendlyByteBuf byteBuf, HeatRecipe heatRecipe) {
-        byteBuf.writeInt(heatRecipe.heatCost);
-        byteBuf.writeInt(heatRecipe.minHeatPerTick);
-
-        byteBuf.writeJsonWithCodec(BlockStateConfiguration.CODEC, heatRecipe.inputBlock);
-        byteBuf.writeJsonWithCodec(BlockState.CODEC, heatRecipe.outputBlock);
-    }
-
-
 
 
     public static class HeatRecipeTester implements RecipeInput {

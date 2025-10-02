@@ -1,4 +1,4 @@
-package com.ffsupver.createheat.ponder;
+package com.ffsupver.createheat.compat.ponder;
 
 import com.ffsupver.createheat.CreateHeat;
 import net.createmod.ponder.api.level.PonderLevel;

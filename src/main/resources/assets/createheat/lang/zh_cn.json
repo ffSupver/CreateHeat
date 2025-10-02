@@ -23,6 +23,8 @@
   "createheat.configuration.allow_super_heat_reproduce.tooltip": "超级加热热源产生更多超级加热热源",
 
   "createheat.gui.goggles.heat_amount": "热量: %s / %s",
+  "createheat.gui.goggles.heat_remain": "剩余热: %s/t",
+
 
   "createheat.ponder.thermal_block.use.header": "使用导热块",
   "createheat.ponder.thermal_block.use.text_1": "热量通过导热块传播",
@@ -34,5 +36,8 @@
   "createheat.ponder.thermal_block.storage.text_3": "当提供的热量大于消耗的热量",
   "createheat.ponder.thermal_block.storage.text_4": "多余的热量会被储存",
   "createheat.ponder.thermal_block.storage.text_5": "当没有热源时",
-  "createheat.ponder.thermal_block.storage.text_6": "储存的热量会被释放"
+  "createheat.ponder.thermal_block.storage.text_6": "储存的热量会被释放",
+
+  "createheat.recipe.heat":"加热",
+  "createheat.recipe.heat.amount": "至少: %s 总共: %s"
 }

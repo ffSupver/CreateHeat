@@ -1,6 +1,6 @@
 package com.ffsupver.createheat;
 
-import com.ffsupver.createheat.ponder.CHPonderPlugin;
+import com.ffsupver.createheat.compat.ponder.CHPonderPlugin;
 import net.createmod.ponder.foundation.PonderIndex;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;

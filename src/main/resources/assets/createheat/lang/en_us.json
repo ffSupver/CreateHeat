@@ -23,6 +23,7 @@
   "createheat.configuration.allow_super_heat_reproduce.tooltip": "Allow super heat sources reproduce more super sources",
 
   "createheat.gui.goggles.heat_amount": "Heat: %s / %s",
+  "createheat.gui.goggles.heat_remain": "Heat Remain: %s/t",
 
   "createheat.ponder.thermal_block.use.header": "Using Thermal Block",
   "createheat.ponder.thermal_block.use.text_1": "Heat goes through Thermal Block",
@@ -34,5 +35,8 @@
   "createheat.ponder.thermal_block.storage.text_3": "When the provided heat exceed the consumed heat",
   "createheat.ponder.thermal_block.storage.text_4": "The excess heat will be stored",
   "createheat.ponder.thermal_block.storage.text_5": "When no heat provided",
-  "createheat.ponder.thermal_block.storage.text_6": "The stored heat will be released"
+  "createheat.ponder.thermal_block.storage.text_6": "The stored heat will be released",
+
+  "createheat.recipe.heat":"Heat",
+  "createheat.recipe.heat.amount": "Min: %s Total: %s"
 }

@@ -531,6 +531,14 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
                                 heatStorageForDisplay.getCapacity()
                         )
                 ));
+                tooltip.add(Component.literal(
+                        Strings.repeat(' ', 4)
+                ).append(
+                        Component.translatable(
+                                "createheat.gui.goggles.heat_remain",
+                                getControllerEntity().heat / MAX_COOLDOWN
+                        )
+                ));
                 return true;
             }
         }

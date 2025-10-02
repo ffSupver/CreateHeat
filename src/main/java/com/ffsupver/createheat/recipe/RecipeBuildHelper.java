@@ -7,18 +7,13 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-
 public final class RecipeBuildHelper {
     public static <C extends Recipe<?>> RecipeType<C> recipeType(String id){
         return new RecipeType<>() {
         };
     }
     public static <C extends Recipe<?>> RecipeSerializer<C> recipeSerializer(
-            MapCodec<C> codec,
-            Function<RegistryFriendlyByteBuf,C> fromNetWork,
-            BiConsumer<RegistryFriendlyByteBuf,C> toNetWork
+            MapCodec<C> codec
     ){
         return new RecipeSerializer<C>() {
             @Override
@@ -32,10 +27,10 @@ public final class RecipeBuildHelper {
             }
 
             private C fromNetwork(RegistryFriendlyByteBuf byteBuf){
-                return fromNetWork.apply(byteBuf);
+               return byteBuf.readJsonWithCodec(codec.codec());
             }
             private void toNetwork(RegistryFriendlyByteBuf byteBuf,C recipe){
-                 toNetWork.accept(byteBuf,recipe);
+                byteBuf.writeJsonWithCodec(codec.codec(),recipe);
             }
         };
     }

@@ -1,6 +1,5 @@
-package com.ffsupver.createheat.ponder.scenes;
+package com.ffsupver.createheat.compat.ponder.scenes;
 
-import com.ffsupver.createheat.block.thermalBlock.ThermalBlock;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.content.kinetics.mixer.MechanicalMixerBlockEntity;

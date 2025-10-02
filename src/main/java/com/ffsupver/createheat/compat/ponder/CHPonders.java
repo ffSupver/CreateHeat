@@ -1,6 +1,6 @@
-package com.ffsupver.createheat.ponder;
+package com.ffsupver.createheat.compat.ponder;
 
-import com.ffsupver.createheat.ponder.scenes.ThermalBlockScene;
+import com.ffsupver.createheat.compat.ponder.scenes.ThermalBlockScene;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.tterrag.registrate.util.entry.ItemProviderEntry;
 import com.tterrag.registrate.util.entry.RegistryEntry;
