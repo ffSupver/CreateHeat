@@ -13,6 +13,7 @@ public class CHPonders {
 
         HELPER.forComponents(CHBlocks.THERMAL_BLOCK)
                 .addStoryBoard("thermal_block/use",ThermalBlockScene::use)
-                .addStoryBoard("thermal_block/storage",ThermalBlockScene::storage);
+                .addStoryBoard("thermal_block/storage",ThermalBlockScene::storage)
+                .addStoryBoard("thermal_block/recipe",ThermalBlockScene::recipe);
     }
 }

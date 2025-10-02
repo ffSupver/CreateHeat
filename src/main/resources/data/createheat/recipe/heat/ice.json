@@ -1,0 +1,11 @@
+{
+  "type": "createheat:heat",
+  "input": {
+    "state":{
+      "Name": "minecraft:ice"
+    }
+  },
+  "output": {"Name":"minecraft:water"},
+  "heat": 100,
+  "min_heat": 1
+}

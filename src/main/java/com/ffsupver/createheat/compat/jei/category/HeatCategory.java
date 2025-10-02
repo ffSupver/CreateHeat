@@ -20,7 +20,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FlowingFluid;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -59,9 +63,13 @@ public class HeatCategory implements IRecipeCategory<HeatRecipe> {
                 .setPosition(20,100)
                 .addIngredients(recipe.getIngredients().getFirst())
                 .setStandardSlotBackground();
+        BlockState outputBlock = recipe.getOutputBlock();
         builder.addSlot(RecipeIngredientRole.OUTPUT)
                 .setPosition(217,70)
-                .addItemStack(recipe.getOutputBlock().getBlock().asItem().getDefaultInstance())
+                .addItemStack(outputBlock.getFluidState().isEmpty() ?
+                        outputBlock.getBlock().asItem().getDefaultInstance() :
+                        outputBlock.getFluidState().getType().getBucket().getDefaultInstance()
+                )
                 .setOutputSlotBackground();
     }
 

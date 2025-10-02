@@ -1,0 +1,11 @@
+{
+  "type": "createheat:heat",
+  "input": {
+    "state":{
+      "Name": "minecraft:deepslate_bricks"
+    }
+  },
+  "output": {"Name":"minecraft:cracked_deepslate_bricks"},
+  "heat": 300,
+  "min_heat": 3
+}

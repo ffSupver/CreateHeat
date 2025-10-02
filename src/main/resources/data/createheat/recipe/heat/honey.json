@@ -1,0 +1,11 @@
+{
+  "type": "createheat:heat",
+  "input": {
+    "state":{
+      "Name": "minecraft:honey_block"
+    }
+  },
+  "output": {"Name":"create:honey"},
+  "heat": 300,
+  "min_heat": 3
+}

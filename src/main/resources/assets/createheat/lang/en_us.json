@@ -36,6 +36,13 @@
   "createheat.ponder.thermal_block.storage.text_4": "The excess heat will be stored",
   "createheat.ponder.thermal_block.storage.text_5": "When no heat provided",
   "createheat.ponder.thermal_block.storage.text_6": "The stored heat will be released",
+  "createheat.ponder.thermal_block.recipe.header": "Processing Recipe Using Thermal Block",
+  "createheat.ponder.thermal_block.recipe.text_1": "Some block can be turn into another block by heating",
+  "createheat.ponder.thermal_block.recipe.text_2": "Provide heat",
+  "createheat.ponder.thermal_block.recipe.text_3": "Recipe done",
+  "createheat.ponder.thermal_block.recipe.text_4": "Some recipes require more heat to continue processing",
+  "createheat.ponder.thermal_block.recipe.text_5": "Provide more heat",
+  "createheat.ponder.thermal_block.recipe.text_6": "Recipe done",
 
   "createheat.recipe.heat":"Heat",
   "createheat.recipe.heat.amount": "Min: %s Total: %s"

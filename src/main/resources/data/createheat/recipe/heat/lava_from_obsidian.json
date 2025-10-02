@@ -1,0 +1,11 @@
+{
+  "type": "createheat:heat",
+  "input": {
+    "state":{
+      "Name": "minecraft:obsidian"
+    }
+  },
+  "output": {"Name":"minecraft:lava"},
+  "heat": 1000,
+  "min_heat": 8
+}

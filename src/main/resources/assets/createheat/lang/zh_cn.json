@@ -37,6 +37,13 @@
   "createheat.ponder.thermal_block.storage.text_4": "多余的热量会被储存",
   "createheat.ponder.thermal_block.storage.text_5": "当没有热源时",
   "createheat.ponder.thermal_block.storage.text_6": "储存的热量会被释放",
+  "createheat.ponder.thermal_block.recipe.header": "用导热块处理配方",
+  "createheat.ponder.thermal_block.recipe.text_1": "一些方块可以被加热成其他方块",
+  "createheat.ponder.thermal_block.recipe.text_2": "加热",
+  "createheat.ponder.thermal_block.recipe.text_3": "完成",
+  "createheat.ponder.thermal_block.recipe.text_4": "一些配方需要更多热量才能继续处理",
+  "createheat.ponder.thermal_block.recipe.text_5": "加更多热",
+  "createheat.ponder.thermal_block.recipe.text_6": "完成",
 
   "createheat.recipe.heat":"加热",
   "createheat.recipe.heat.amount": "至少: %s 总共: %s"

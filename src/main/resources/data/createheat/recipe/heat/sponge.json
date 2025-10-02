@@ -1,0 +1,11 @@
+{
+  "type": "createheat:heat",
+  "input": {
+    "state":{
+      "Name": "minecraft:wet_sponge"
+    }
+  },
+  "output": {"Name":"minecraft:sponge"},
+  "heat": 100,
+  "min_heat": 1
+}
