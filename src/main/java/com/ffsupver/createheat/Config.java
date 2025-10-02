@@ -27,5 +27,9 @@ public class Config {
             .comment("Only works when allow_generate_super_heat is false")
             .define("allow_super_heat_reproduce", true);
 
+    public static final ModConfigSpec.IntValue MAX_CONNECT_RANGE = BUILDER
+            .comment("Max range between blocks can be connected")
+            .defineInRange("max_connect_range", 16, 1, Integer.MAX_VALUE);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 }

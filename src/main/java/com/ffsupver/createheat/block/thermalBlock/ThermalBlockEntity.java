@@ -21,9 +21,13 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -682,7 +686,12 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             if (heatFinal >= heatRecipe.getHeatCost()){
                 heatGot = heatRecipe.getHeatCost();
                 this.finished = true;
-                level.setBlock(processPos,heatRecipe.getOutputBlock(),3);
+                BlockState outputState = heatRecipe.getOutputBlock();
+                if (outputState.getFluidState().is(FluidTags.WATER) && level.dimensionType().ultraWarm()) {
+                    level.destroyBlock(processPos,false);
+                }else {
+                    level.setBlock(processPos, heatRecipe.getOutputBlock(), 3);
+                }
                 return heatFinal - heatRecipe.getHeatCost();
             }else {
                 heatGot = heatFinal;

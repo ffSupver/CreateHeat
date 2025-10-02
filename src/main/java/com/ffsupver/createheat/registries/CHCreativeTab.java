@@ -20,8 +20,8 @@ public class CHCreativeTab {
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN_TAB = CREATIVE_MODE_TABS.register("create_heat",
             () -> CreativeModeTab.builder()
                 .title(Component.translatable("itemGroup.createheat"))
-                .withTabsBefore(CreativeModeTabs.COMBAT)
-                .icon(()-> THERMAL_BLOCK.asStack())
+                .withTabsBefore(CreativeModeTabs.SPAWN_EGGS)
+                .icon(THERMAL_BLOCK::asStack)
             .displayItems((parameters, output) -> {
                 output.accept(THERMAL_TOOL);
                 output.accept(THERMAL_BLOCK);
