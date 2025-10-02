@@ -28,3 +28,18 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build
+
+      - name: Extract mod properties
+        id: properties
+        run: |
+       # get id and name from gradle.properties
+          source ./extract_properties.sh
+          echo "MOD_ID=$MOD_ID" >> $GITHUB_OUTPUT
+          echo "MOD_VERSION=$MOD_VERSION" >> $GITHUB_OUTPUT
+          echo "ARTIFACT_NAME=$MOD_ID-$MOD_VERSION" >> $GITHUB_OUTPUT
+
+      - name: capture build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.properties.outputs.ARTIFACT_NAME }}
+          path: build/libs/

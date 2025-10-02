@@ -1,0 +1,11 @@
+{
+  "type": "createheat:heat",
+  "input": {
+    "state":{
+      "Name": "minecraft:nether_bricks"
+    }
+  },
+  "output": {"Name":"minecraft:cracked_nether_bricks"},
+  "heat": 400,
+  "min_heat": 4
+}

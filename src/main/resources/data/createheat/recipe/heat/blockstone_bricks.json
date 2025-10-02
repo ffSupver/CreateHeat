@@ -1,0 +1,11 @@
+{
+  "type": "createheat:heat",
+  "input": {
+    "state":{
+      "Name": "minecraft:blackstone_bricks"
+    }
+  },
+  "output": {"Name":"minecraft:cracked_blackstone_bricks"},
+  "heat": 400,
+  "min_heat": 4
+}
