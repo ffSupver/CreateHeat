@@ -1,9 +1,6 @@
 package com.ffsupver.createheat;
 
-import com.ffsupver.createheat.registries.CHBlocks;
-import com.ffsupver.createheat.registries.CHCreativeTab;
-import com.ffsupver.createheat.registries.CHItems;
-import com.ffsupver.createheat.registries.CHRecipes;
+import com.ffsupver.createheat.registries.*;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.KineticStats;
@@ -13,6 +10,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -56,7 +54,7 @@ public class CreateHeat {
         NeoForge.EVENT_BUS.register(this);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-
+        modEventBus.addListener(CHDataKeys::register);
         modEventBus.addListener(CreateHeat::init);
     }
 

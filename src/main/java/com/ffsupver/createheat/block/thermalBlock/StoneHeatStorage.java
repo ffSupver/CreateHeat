@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntity.MAX_HEAT;
-import static com.ffsupver.createheat.util.BlockPosUtil.walkAllBlocks;
+import static com.ffsupver.createheat.util.BlockUtil.walkAllBlocks;
 
 public class StoneHeatStorage extends HeatStorage{
     private static final Supplier<Integer> HEAT_PER_LAVA = ()->MAX_HEAT.get() * 10;

@@ -1,5 +1,6 @@
 package com.ffsupver.createheat.recipe;
 
+import com.ffsupver.createheat.util.BlockUtil;
 import com.mojang.datafixers.Products;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -10,11 +11,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.levelgen.feature.configurations.BlockStateConfiguration;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 
 public class HeatRecipe implements Recipe<HeatRecipe.HeatRecipeTester>{
     private final BlockStateConfiguration inputBlock;
@@ -116,20 +114,7 @@ public class HeatRecipe implements Recipe<HeatRecipe.HeatRecipeTester>{
         }
 
         public boolean checkState(BlockStateConfiguration checkState) {
-            boolean sameBlock = checkState.state.getBlock().equals(state.getBlock());
-            if (!sameBlock){
-                return false;
-            }
-
-            Collection<Property<?>> properties = checkState.state.getProperties();
-            for (Property<?> property : properties){
-                boolean nS = state.hasProperty(property) && state.getValue(property).equals(checkState.state.getValue(property));
-                if (!nS){
-                    return false;
-                }
-            }
-
-            return true;
+           return BlockUtil.checkState(checkState.state,state);
         }
 
         @Override

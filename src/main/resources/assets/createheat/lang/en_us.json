@@ -15,12 +15,14 @@
   "createheat.configuration.heat_per_fading_blaze": "Heat Per Fading Blaze Burner",
   "createheat.configuration.heat_per_seething_blaze": "Heat Per Seething Blaze Burner",
   "createheat.configuration.allow_super_heat_reproduce": "Allow super heat sources reproduce more super sources",
+  "createheat.configuration.max_connect_range": "Max range between blocks can be connected",
 
   "createheat.configuration.allow_passive_heat.tooltip": "Allow passive heat source to be calculated",
   "createheat.configuration.allow_generate_super_heat.tooltip": "Allow non super heat sources to generate super heat source",
   "createheat.configuration.heat_per_fading_blaze.tooltip": "Heat Per Fading Blaze Burner",
   "createheat.configuration.heat_per_seething_blaze.tooltip": "Heat Per Seething Blaze Burner",
   "createheat.configuration.allow_super_heat_reproduce.tooltip": "Allow super heat sources reproduce more super sources",
+  "createheat.configuration.max_connect_range.tooltip": "Max range between blocks can be connected",
 
   "createheat.gui.goggles.heat_amount": "Heat: %s / %s",
   "createheat.gui.goggles.heat_remain": "Heat Remain: %s/t",

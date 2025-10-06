@@ -15,12 +15,14 @@
   "createheat.configuration.heat_per_fading_blaze": "每个普通加热的烈焰人燃烧室提供的热量",
   "createheat.configuration.heat_per_seething_blaze": "每个超级加热的烈焰人燃烧室提供的热量",
   "createheat.configuration.allow_super_heat_reproduce": "超级加热热源产生更多超级加热热源",
+  "createheat.configuration.max_connect_range": "方块最大连接距离",
 
   "createheat.configuration.allow_passive_heat.tooltip": "计算被动热源",
   "createheat.configuration.allow_generate_super_heat.tooltip": "将几个不是超级加热的热源合成超级加热热源",
   "createheat.configuration.heat_per_fading_blaze.tooltip": "每个普通加热的烈焰人燃烧室提供的热量",
   "createheat.configuration.heat_per_seething_blaze.tooltip": "每个超级加热的烈焰人燃烧室提供的热量",
   "createheat.configuration.allow_super_heat_reproduce.tooltip": "超级加热热源产生更多超级加热热源",
+  "createheat.configuration.max_connect_range.tooltip": "方块最大连接距离",
 
   "createheat.gui.goggles.heat_amount": "热量: %s / %s",
   "createheat.gui.goggles.heat_remain": "剩余热: %s/t",

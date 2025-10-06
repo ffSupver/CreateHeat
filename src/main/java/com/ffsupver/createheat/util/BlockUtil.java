@@ -3,12 +3,15 @@ package com.ffsupver.createheat.util;
 import com.ffsupver.createheat.Config;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 
+import java.util.Collection;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public final class BlockPosUtil {
+public final class BlockUtil {
     public static void AllDirectionOf(BlockPos startPos, Consumer<BlockPos> f){
         AllDirectionOf(startPos,f,b->false);
     }
@@ -40,5 +43,22 @@ public final class BlockPosUtil {
 
     public static void walkAllBlocks(BlockPos startPos, Set<BlockPos> walkedBlockPos, Predicate<BlockPos> check){
         walkAllBlocks(startPos,walkedBlockPos,check, Config.MAX_CONNECT_RANGE.get(),0);
+    }
+
+    public static boolean checkState(BlockState checkState,BlockState state) {
+        boolean sameBlock = checkState.getBlock().equals(state.getBlock());
+        if (!sameBlock){
+            return false;
+        }
+
+        Collection<Property<?>> properties = checkState.getProperties();
+        for (Property<?> property : properties){
+            boolean nS = state.hasProperty(property) && state.getValue(property).equals(checkState.getValue(property));
+            if (!nS){
+                return false;
+            }
+        }
+
+        return true;
     }
 }

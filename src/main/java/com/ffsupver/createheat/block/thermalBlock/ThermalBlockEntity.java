@@ -2,9 +2,10 @@ package com.ffsupver.createheat.block.thermalBlock;
 
 import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.Config;
+import com.ffsupver.createheat.api.CustomHeater;
 import com.ffsupver.createheat.recipe.HeatRecipe;
 import com.ffsupver.createheat.registries.CHRecipes;
-import com.ffsupver.createheat.util.BlockPosUtil;
+import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.NbtUtil;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
@@ -16,18 +17,16 @@ import joptsimple.internal.Strings;
 import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -37,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.ffsupver.createheat.util.BlockPosUtil.AllDirectionOf;
+import static com.ffsupver.createheat.util.BlockUtil.AllDirectionOf;
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.*;
 
@@ -159,6 +158,7 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
                 pos -> getLevel().getBlockEntity(pos) instanceof ThermalBlockEntity thermalBlockEntity ? thermalBlockEntity : null
         ).collect(Collectors.toSet());
 
+        int lastHeat = heat;
         heat = 0;
 
         int superHeatCount = 0;
@@ -200,9 +200,9 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         for (ThermalBlockEntity thermalBlockEntity : connectedBlockList){
             hRPL.addAll(thermalBlockEntity.getRecipes());
 
-            int heatBelow = thermalBlockEntity.genHeat();
-            heat += heatBelow * tickSkip;
-            superHeatCount += (heatBelow >= 3)? 1 : 0;
+            HeatData heatBelow = thermalBlockEntity.genHeat();
+            heat += heatBelow.heat * tickSkip;
+            superHeatCount += heatBelow.superHeatCount;
 
             // 寻找新储热器
             for (Direction d : Direction.values()){
@@ -257,7 +257,7 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
 
 
        boolean storageUpdate = storageHeat();
-        if (changeSHS || storageUpdate){
+        if (changeSHS || storageUpdate || heat != lastHeat){
             sendData();
         }
     }
@@ -270,14 +270,21 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         }
     }
 
-    public int genHeat(){
-        HeatLevel heatLevelB = getHeatLevel(getBlockPos().below());
-        int boilHeat = (int) BoilerHeater.findHeat(getLevel(),getBlockPos().below(),getLevel().getBlockState(getBlockPos().below())) + 1;
-        int result = Math.max(getHeatPerTick(heatLevelB),boilHeat);
-        if (Config.ALLOW_PASSIVE_HEAT.get()){
-            return  result;
+    private HeatData genHeat(){
+        BlockPos belowPos = getBlockPos().below();
+        Optional<Holder.Reference<CustomHeater>> customHeatOp = CustomHeater.getFromBlockState(getLevel().registryAccess(),getLevel().getBlockState(belowPos));
+        if (customHeatOp.isPresent()){
+            CustomHeater customHeater = customHeatOp.get().value();
+            return new HeatData(customHeater.heatPerTick(),customHeater.superHeatCount());
         }else {
-            return  result == 1 ? 0 : result;
+            HeatLevel heatLevelB = getHeatLevel(belowPos);
+            int boilHeat = (int) BoilerHeater.findHeat(getLevel(), getBlockPos().below(), getLevel().getBlockState(getBlockPos().below())) + 1;
+
+            int result = Math.max(getHeatPerTick(heatLevelB), boilHeat);
+            if (!Config.ALLOW_PASSIVE_HEAT.get()) {
+                result = result == 1 ? 0 : result;
+            }
+            return new HeatData(result, result >= 3 ? 1 : 0);
         }
     }
 
@@ -552,7 +559,7 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     public void walkAllBlocks(BlockPos exceptFor){
         Set<BlockPos> oldBlocks = Set.copyOf(connectedBlocks);
         connectedBlocks.clear();
-        BlockPosUtil.walkAllBlocks(getBlockPos(),connectedBlocks, pos -> {
+        BlockUtil.walkAllBlocks(getBlockPos(),connectedBlocks, pos -> {
             if (!pos.equals(exceptFor) && getLevel().getBlockEntity(pos) instanceof ThermalBlockEntity thermalBlockEntity) {
                 thermalBlockEntity.controllerPos = getBlockPos();
                 return true;
@@ -744,4 +751,5 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             return new HeatRecipeProcessing(processPos, recordControllerPos, recipeId,heatGot);
         }
     }
+    private record HeatData(int heat,int superHeatCount){}
 }

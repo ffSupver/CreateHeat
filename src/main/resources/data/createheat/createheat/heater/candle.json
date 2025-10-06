@@ -1,0 +1,11 @@
+{
+  "state": {
+    "Properties":{
+      "lit":"true",
+      "candles": "4"
+    },
+    "Name":"minecraft:candle"
+  },
+  "heat_per_tick": 1,
+  "super_heat_count": 0
+}
