@@ -1,8 +1,9 @@
 {
   "type": "createheat:heat",
   "input": {
-    "state":{
-      "Name": "minecraft:obsidian"
+    "tester": {
+      "block": "minecraft:obsidian",
+      "properties": []
     }
   },
   "output": {"Name":"minecraft:lava"},

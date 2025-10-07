@@ -1,6 +1,6 @@
 package com.ffsupver.createheat.recipe;
 
-import com.ffsupver.createheat.util.BlockUtil;
+import com.ffsupver.createheat.api.BlockStateTester;
 import com.mojang.datafixers.Products;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -11,11 +11,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.feature.configurations.BlockStateConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 public class HeatRecipe implements Recipe<HeatRecipe.HeatRecipeTester>{
-    private final BlockStateConfiguration inputBlock;
+    private final BlockStateTester inputBlock;
     private final BlockState outputBlock;
     private final int heatCost;
     private final int minHeatPerTick;
@@ -27,7 +26,7 @@ public class HeatRecipe implements Recipe<HeatRecipe.HeatRecipeTester>{
 
 
 
-    public HeatRecipe(BlockStateConfiguration inputBlock, BlockState outputBlock, int heatCost, int minHeatPerTick) {
+    public HeatRecipe(BlockStateTester inputBlock, BlockState outputBlock, int heatCost, int minHeatPerTick) {
         this.inputBlock = inputBlock;
         this.outputBlock = outputBlock;
         this.heatCost = heatCost;
@@ -36,7 +35,6 @@ public class HeatRecipe implements Recipe<HeatRecipe.HeatRecipeTester>{
 
     @Override
     public boolean matches(HeatRecipeTester heatRecipeTester, Level level) {
-
         return heatRecipeTester.checkState(inputBlock);
     }
 
@@ -67,7 +65,7 @@ public class HeatRecipe implements Recipe<HeatRecipe.HeatRecipeTester>{
 
     @Override
     public String toString() {
-        return "Input : "+this.inputBlock.state+" Output : "+this.outputBlock+" cost:"+heatCost+" min:"+minHeatPerTick;
+        return "Input : "+this.inputBlock+" Output : "+this.outputBlock+" cost:"+heatCost+" min:"+minHeatPerTick;
     }
 
     public BlockState getOutputBlock() {
@@ -84,20 +82,15 @@ public class HeatRecipe implements Recipe<HeatRecipe.HeatRecipeTester>{
 
     @Override
     public @NotNull NonNullList<Ingredient> getIngredients() {
-        NonNullList<Ingredient> ingredients = NonNullList.create();
-        ingredients.add(Ingredient.of(inputBlock.state.getBlock().asItem()));
-        return ingredients;
-    }
-
-    public BlockState getInputBlock() {
-        return inputBlock.state;
+        System.out.println("G "+inputBlock.toIngredient()+" ");
+        return inputBlock.toIngredient();
     }
 
     private static MapCodec<HeatRecipe> fromJson(){
         return RecordCodecBuilder.mapCodec(p->{
-        Products.P4<RecordCodecBuilder.Mu<HeatRecipe>, Integer,BlockStateConfiguration,BlockState,Integer> p1 =  p.group(
+        Products.P4<RecordCodecBuilder.Mu<HeatRecipe>, Integer,BlockStateTester,BlockState,Integer> p1 =  p.group(
                 Codec.INT.fieldOf("heat").forGetter(h->h.heatCost),
-                BlockStateConfiguration.CODEC.fieldOf("input").forGetter(h->h.inputBlock),
+                BlockStateTester.CODEC.fieldOf("input").forGetter(h->h.inputBlock),
                 BlockState.CODEC.fieldOf("output").forGetter(h->h.outputBlock),
                 Codec.INT.fieldOf("min_heat").forGetter(h->h.minHeatPerTick)
         );
@@ -113,8 +106,8 @@ public class HeatRecipe implements Recipe<HeatRecipe.HeatRecipeTester>{
             this.state = state;
         }
 
-        public boolean checkState(BlockStateConfiguration checkState) {
-           return BlockUtil.checkState(checkState.state,state);
+        public boolean checkState(BlockStateTester tester) {
+           return tester.test(state);
         }
 
         @Override

@@ -2,11 +2,11 @@
   "type": "createheat:heat",
   "input": {
     "tester": {
-      "block": "minecraft:stone_bricks",
+      "tag": "c:sands",
       "properties": []
     }
   },
-  "output": {"Name":"minecraft:cracked_stone_bricks"},
+  "output": {"Name":"minecraft:glass"},
   "heat": 200,
   "min_heat": 2
 }

@@ -11,6 +11,7 @@ import com.simibubi.create.compat.jei.category.animations.AnimatedKinetics;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
+import mezz.jei.api.gui.ingredient.IRecipeSlotView;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
@@ -20,17 +21,17 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FlowingFluid;
-import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
-import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.*;
+import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.KINDLED;
+import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.SEETHING;
 
 public class HeatCategory implements IRecipeCategory<HeatRecipe> {
     private static final List<Vec3i> HEAT_POSITIONS = List.of(
@@ -60,6 +61,7 @@ public class HeatCategory implements IRecipeCategory<HeatRecipe> {
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, HeatRecipe recipe, IFocusGroup focuses) {
         builder.addSlot(RecipeIngredientRole.INPUT)
+                .setSlotName("input")
                 .setPosition(20,100)
                 .addIngredients(recipe.getIngredients().getFirst())
                 .setStandardSlotBackground();
@@ -96,7 +98,17 @@ public class HeatCategory implements IRecipeCategory<HeatRecipe> {
         matrixStack.pushPose();
         translateBlock(xOffsetInput,yOffsetInput,matrixStack);
 
-        drawBlock(recipe.getInputBlock(),0,0,0,scale,guiGraphics);
+        Optional<IRecipeSlotView> recipeSlotsViewOptional = recipeSlotsView.findSlotByName("input");
+        if (recipeSlotsViewOptional.isPresent()){
+           Optional<ItemStack> itemStackOptional = recipeSlotsViewOptional.get().getDisplayedItemStack();
+           if (itemStackOptional.isPresent()){
+               ItemStack stack = itemStackOptional.get();
+               if (stack.getItem() instanceof BlockItem blockItem){
+                   drawBlock(blockItem.getBlock().defaultBlockState(),0,0,0,scale,guiGraphics);
+               }
+           }
+        }
+
         drawThermalBlockByHeat(recipe.getMinHeatPerTick(), Config.HEAT_PER_FADING_BLAZE.get(),Config.HEAT_PER_SEETHING_BLAZE.get(),scale,guiGraphics);
 
         matrixStack.popPose();

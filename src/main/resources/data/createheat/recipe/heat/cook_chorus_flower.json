@@ -1,12 +1,15 @@
 {
   "type": "createheat:heat",
   "input": {
-"state":{
-  "Name": "minecraft:chorus_flower",
-  "Properties": {
-    "age": "0"
-  }
-}
+    "tester": {
+      "block": "minecraft:chorus_flower",
+      "properties": [
+        {
+          "name": "age",
+          "value": ["0","1"]
+        }
+      ]
+    }
   },
   "output": {
     "Properties":{

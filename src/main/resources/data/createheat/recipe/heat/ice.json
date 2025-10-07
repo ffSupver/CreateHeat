@@ -1,8 +1,9 @@
 {
   "type": "createheat:heat",
   "input": {
-    "state":{
-      "Name": "minecraft:ice"
+    "tester": {
+      "block": "minecraft:ice",
+      "properties": []
     }
   },
   "output": {"Name":"minecraft:water"},
