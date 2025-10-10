@@ -29,6 +29,7 @@ public class StoneHeatStorage extends HeatStorage{
     private final BlockPos recordControllerPos;
     public boolean shouldChangeController = false;
     private BlockPos newController = null;
+    private BlockCounts lastBlockCounts = new BlockCounts();
 
 
     public StoneHeatStorage(HashSet<BlockPos> stonePosSet,BlockPos recordController) {
@@ -87,10 +88,11 @@ public class StoneHeatStorage extends HeatStorage{
         int amountFromBlock = sC + lC > 0 ? lC * getCapacity() / (sC + lC) : 0;
         if (shouldSetAmountWithoutCheck){
             setAmount(amountFromBlock);
-        }else {
+        }else if (!lastBlockCounts.unInit() && lastBlockCounts.lava < lC){
             setAmount(Math.max(getAmount(),amountFromBlock));
         }
 
+        lastBlockCounts = new BlockCounts(sC,lC);
         return controllerPos;
     }
 
@@ -221,4 +223,18 @@ public class StoneHeatStorage extends HeatStorage{
         return false;
     }
 
+    private static class BlockCounts{
+        private Integer stone;
+        private Integer lava;
+        public BlockCounts(int stone,int lava){
+            this.stone = stone;
+            this.lava = lava;
+        }
+        public BlockCounts(){
+        }
+
+        public boolean unInit(){
+            return stone == null || lava == null;
+        }
+    }
 }

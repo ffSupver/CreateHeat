@@ -82,7 +82,6 @@ public class HeatRecipe implements Recipe<HeatRecipe.HeatRecipeTester>{
 
     @Override
     public @NotNull NonNullList<Ingredient> getIngredients() {
-        System.out.println("G "+inputBlock.toIngredient()+" ");
         return inputBlock.toIngredient();
     }
 

@@ -1,10 +1,16 @@
 package com.ffsupver.createheat.api;
 
-import com.ffsupver.createheat.registries.CHDataKeys;
+import com.ffsupver.createheat.CHTags;
+import com.ffsupver.createheat.Config;
+import com.ffsupver.createheat.registries.CHDatapacks;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.simibubi.create.api.boiler.BoilerHeater;
+import com.simibubi.create.api.registry.SimpleRegistry;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
@@ -24,6 +30,28 @@ public record CustomHeater(BlockStateTester heaterState, int heatPerTick, int su
                 .findFirst();
     }
     public static List<Holder.Reference<CustomHeater>> getAll(RegistryAccess registryAccess){
-        return registryAccess.lookupOrThrow(CHDataKeys.CUSTOM_HEATER).listElements().toList();
+        return registryAccess.lookupOrThrow(CHDatapacks.CUSTOM_HEATER).listElements().toList();
+    }
+
+    public static void registerBoilerHeater(RegistryAccess registryAccess){
+        BoilerHeater.REGISTRY.registerProvider(SimpleRegistry.Provider.forBlockTag(CHTags.BlockTag.CUSTOM_BOILER_HEATER,new CustomBoilerHeater(registryAccess)));
+    }
+
+    public static class CustomBoilerHeater implements BoilerHeater{
+        private final RegistryAccess registryAccess;
+        public CustomBoilerHeater(RegistryAccess registryAccess) {
+            this.registryAccess = registryAccess;
+        }
+
+        public float getHeat (Level level, BlockPos pos, BlockState state){
+            Optional<Holder.Reference<CustomHeater>> heaterOp = getFromBlockState(registryAccess, state);
+            if (heaterOp.isPresent()) {
+                float result = heaterOp.get().value().heatPerTick * 1f / Config.HEAT_PER_FADING_BLAZE.get(); //1代表HeatLevel.FADING给锅炉的热量
+                result = result > 0 ? result < 1 ? BoilerHeater.PASSIVE_HEAT : result : result;  //将0-1之间的锅炉热量设置为被动,否则无法被锅炉使用
+                return result;
+            } else {
+                return BoilerHeater.NO_HEAT;
+            }
+        }
     }
 }

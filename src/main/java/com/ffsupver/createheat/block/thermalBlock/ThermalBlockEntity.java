@@ -90,9 +90,9 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
                     hRP->hRP.toNbt(getBlockPos()))
             );
 
-//            if (clientPacket){
+            if (clientPacket){
                 tag.put("display_heat",getAllHeatForDisplay().toNbt());
-//            }
+            }
         }else {
             tag.put("controller", NbtUtils.writeBlockPos(controllerPos));
         }
@@ -121,9 +121,9 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
                     t->HeatRecipeProcessing.fromNbt((CompoundTag) t,getBlockPos()))
             );
 
-//            if (clientPacket){
+            if (clientPacket){
               displayHeatStorage.fromNbt(tag.getCompound("display_heat"));
-//            }
+            }
         }else {
             controllerPos = NBTHelper.readBlockPos(tag,"controller");
         }
@@ -256,7 +256,7 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         });
 
 
-       boolean storageUpdate = storageHeat();
+       boolean storageUpdate = storageHeat(); //检测SHS是否有方块变化
         if (changeSHS || storageUpdate || heat != lastHeat){
             sendData();
         }

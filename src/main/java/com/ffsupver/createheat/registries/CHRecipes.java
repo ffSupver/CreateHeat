@@ -1,11 +1,13 @@
 package com.ffsupver.createheat.registries;
 
 import com.ffsupver.createheat.recipe.HeatRecipe;
+import net.minecraft.client.RecipeBookCategories;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.RegisterRecipeBookCategoriesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -28,6 +30,12 @@ public class CHRecipes {
     public static void register(IEventBus modBus){
         RECIPE_TYPE.register(modBus);
         RECIPE_SERIALIZER.register(modBus);
+
+        modBus.addListener(CHRecipes::registerRecipeBook);
+    }
+
+    private static void registerRecipeBook(RegisterRecipeBookCategoriesEvent event){
+        event.registerRecipeCategoryFinder(HEAT_RECIPE.get(),rH->RecipeBookCategories.UNKNOWN);
     }
 
 }
