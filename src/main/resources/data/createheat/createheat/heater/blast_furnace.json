@@ -1,0 +1,15 @@
+{
+  "block": {
+    "tester": {
+      "block": "minecraft:blast_furnace",
+      "properties": [
+        {
+          "name": "lit",
+          "value": ["true"]
+        }
+      ]
+    }
+  },
+  "heat_per_tick": 2,
+  "super_heat_count": 0
+}

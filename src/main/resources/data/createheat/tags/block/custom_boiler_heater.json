@@ -1,5 +1,6 @@
 {
   "values": [
-    "#minecraft:candles"
+    "#minecraft:candles",
+    "minecraft:blast_furnace"
   ]
 }
