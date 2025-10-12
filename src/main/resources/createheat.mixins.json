@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.ffsupver.createheat.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "createheat.refmap.json",
+  "mixins": [
+    "iceAndFire.EntityDragonBaseMixin",
+    "iceAndFire.IafDragonDestructionManagerMixin"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

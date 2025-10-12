@@ -1,7 +1,8 @@
 package com.ffsupver.createheat;
 
-import com.ffsupver.createheat.api.CustomHeater;
+import com.ffsupver.createheat.compat.iceAndFire.IceAndFire;
 import com.ffsupver.createheat.registries.*;
+import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.KineticStats;
@@ -10,18 +11,16 @@ import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import org.slf4j.Logger;
-
-import com.mojang.logging.LogUtils;
-
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import org.slf4j.Logger;
 
 @Mod(CreateHeat.MODID)
 public class CreateHeat {
@@ -38,7 +37,7 @@ public class CreateHeat {
 
 
 
-    public CreateHeat(IEventBus modEventBus, ModContainer modContainer) {
+    public CreateHeat(IEventBus modEventBus, ModContainer modContainer) throws NoSuchFieldException, IllegalAccessException {
         CHCreativeTab.register(modEventBus);
 
         REGISTRATE.registerEventListeners(modEventBus);
@@ -56,6 +55,10 @@ public class CreateHeat {
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         modEventBus.addListener(CHDatapacks::register);
         modEventBus.addListener(CreateHeat::init);
+
+        if (ModList.get().isLoaded("iceandfire")){
+            IceAndFire.init(modEventBus);
+        }
     }
 
     private static void init(FMLCommonSetupEvent event){

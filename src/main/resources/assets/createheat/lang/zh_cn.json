@@ -3,6 +3,8 @@
 
   "block.createheat.thermal_block": "导热块",
   "block.createheat.tight_compressed_stone": "紧致压缩石",
+  "block.createheat.dragon_fire_input": "导热块龙焰口",
+
 
   "item.createheat.thermal_tool": "热调试器",
 

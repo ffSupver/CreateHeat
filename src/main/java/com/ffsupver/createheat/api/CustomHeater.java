@@ -3,6 +3,7 @@ package com.ffsupver.createheat.api;
 import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.Config;
 import com.ffsupver.createheat.registries.CHDatapacks;
+import com.ffsupver.createheat.util.HeatUtil;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.api.boiler.BoilerHeater;
@@ -46,9 +47,7 @@ public record CustomHeater(BlockStateTester heaterState, int heatPerTick, int su
         public float getHeat (Level level, BlockPos pos, BlockState state){
             Optional<Holder.Reference<CustomHeater>> heaterOp = getFromBlockState(registryAccess, state);
             if (heaterOp.isPresent()) {
-                float result = heaterOp.get().value().heatPerTick * 1f / Config.HEAT_PER_FADING_BLAZE.get(); //1代表HeatLevel.FADING给锅炉的热量
-                result = result > 0 ? result < 1 ? BoilerHeater.PASSIVE_HEAT : result : result;  //将0-1之间的锅炉热量设置为被动,否则无法被锅炉使用
-                return result;
+                return HeatUtil.toBoilerHeat(heaterOp.get().value().heatPerTick);
             } else {
                 return BoilerHeater.NO_HEAT;
             }

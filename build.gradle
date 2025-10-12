@@ -43,6 +43,19 @@ repositories {
         name = 'architectury'
         url = 'https://maven.architectury.dev'
     }
+
+
+    maven { url = 'https://jitpack.io' }
+    maven {
+        name = 'Nucleoid'
+        url = 'https://maven.nucleoid.xyz/'
+    }
+    maven {
+        name = "Jared's maven"
+        url = "https://maven.blamejared.com/"
+    }
+
+    mavenLocal()
 }
 
 base {
@@ -129,6 +142,12 @@ dependencies {
     compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
     runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
     implementation("com.tterrag.registrate:Registrate:${registrate_version}")
+
+    implementation "maven.modrinth:uranus:BBb3HOQ5"
+    implementation "maven.modrinth:jupiter:I4i9vhEW"
+    implementation("dev.architectury:architectury-neoforge:13.0.8")
+    compileOnly files("libs/IceAndFireCE-2.0-beta.7-1.21.1-neoforge.jar") //找不到Maven所以从Modrinth下的
+    runtimeOnly(files("libs/IceAndFireCE-2.0-beta.7-1.21.1-neoforge.jar"))
 }
 
 
@@ -149,6 +168,16 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     expand replaceProperties
     from "src/main/templates"
     into "build/generated/sources/modMetadata"
+}
+
+tasks.register('sourcesJar', Jar) {
+    dependsOn classes
+    archiveClassifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+tasks.named('build') {
+    dependsOn tasks.named('sourcesJar')
 }
 
 sourceSets.main.resources.srcDir generateModMetadata

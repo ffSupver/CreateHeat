@@ -3,6 +3,7 @@ package com.ffsupver.createheat.block.thermalBlock;
 import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.Config;
 import com.ffsupver.createheat.api.CustomHeater;
+import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.recipe.HeatRecipe;
 import com.ffsupver.createheat.registries.CHRecipes;
 import com.ffsupver.createheat.util.BlockUtil;
@@ -156,7 +157,7 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
 
         Set<ThermalBlockEntity> connectedBlockList = connectedBlocks.stream().map(
                 pos -> getLevel().getBlockEntity(pos) instanceof ThermalBlockEntity thermalBlockEntity ? thermalBlockEntity : null
-        ).collect(Collectors.toSet());
+        ).filter(Objects::nonNull).collect(Collectors.toSet());
 
         int lastHeat = heat;
         heat = 0;
@@ -270,10 +271,12 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         }
     }
 
-    private HeatData genHeat(){
+    private HeatData genHeat() {
         BlockPos belowPos = getBlockPos().below();
-        Optional<Holder.Reference<CustomHeater>> customHeatOp = CustomHeater.getFromBlockState(getLevel().registryAccess(),getLevel().getBlockState(belowPos));
-        if (customHeatOp.isPresent()){
+        Optional<Holder.Reference<CustomHeater>> customHeatOp = CustomHeater.getFromBlockState(getLevel().registryAccess(), getLevel().getBlockState(belowPos));
+        if (getLevel().getBlockEntity(belowPos) instanceof HeatProvider provider){
+           return new HeatData(provider.getHeatPerTick(),provider.getSupperHeatCount());
+        }else if (customHeatOp.isPresent()){
             CustomHeater customHeater = customHeatOp.get().value();
             return new HeatData(customHeater.heatPerTick(),customHeater.superHeatCount());
         }else {
@@ -453,7 +456,7 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             },b->c.get());
             return c.get();
         }else {
-           return getControllerEntity().canProcessRecipe(getBlockPos());
+           return getControllerEntity() != null && getControllerEntity().canProcessRecipe(getBlockPos());
         }
     }
 
@@ -605,7 +608,7 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         if (isController){
             return this;
         }else if (controllerPos != null && getLevel().getBlockEntity(controllerPos) instanceof ThermalBlockEntity controllerEntity){
-            return controllerEntity;
+            return controllerEntity.isController() ? controllerEntity : null;
         }else {
             return null;
         }
@@ -624,7 +627,11 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     }
 
     public HeatStorage getHeatStorage() {
-        return heatStorage;
+        if (isController()){
+            return heatStorage;
+        }else {
+            return getControllerEntity().getHeatStorage();
+        }
     }
 
     private record CostHeatResult(int heat, int superHeatCount){}
