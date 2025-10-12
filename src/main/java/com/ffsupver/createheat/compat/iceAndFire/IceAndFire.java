@@ -1,21 +1,29 @@
 package com.ffsupver.createheat.compat.iceAndFire;
 
 import com.ffsupver.createheat.CreateHeat;
+import com.ffsupver.createheat.api.iceAndFire.DragonHeater;
 import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.block.dragonFireInput.DragonFireInputBlock;
 import com.ffsupver.createheat.block.dragonFireInput.DragonFireInputBlockEntity;
+import com.ffsupver.createheat.compat.CHModCompat;
+import com.ffsupver.createheat.compat.Mods;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.ffsupver.createheat.registries.CHCreativeTab;
+import com.ffsupver.createheat.registries.CHDatapacks;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.tterrag.registrate.util.entry.BlockEntry;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 
-public class IceAndFire {
+public class IceAndFire implements CHModCompat {
+    public static String MOD_ID = "iceandfire";
     private static final CreateRegistrate REGISTRATE = CreateHeat.registrate();
     public static final BlockEntry<DragonFireInputBlock> DRAGON_FIRE_INPUT = REGISTRATE
             .block("dragon_fire_input",DragonFireInputBlock::new)
@@ -29,16 +37,25 @@ public class IceAndFire {
             .register();
 
 
+    public static final ResourceKey<Registry<DragonHeater>> DRAGON_HEATER = CHDatapacks.key("dragon_heater");
 
-    public static void init(IEventBus eventBus) {
-        eventBus.addListener(IceAndFire::addItemsToCreativeTab);
+    @Override
+    public String getModId() {
+        return MOD_ID;
+    }
+
+    public void init(IEventBus eventBus) {
+        eventBus.addListener(IceAndFire::addItemsToCreativeTabA);
+        eventBus.addListener(IceAndFire::registerDatapack);
         eventBus.addListener(IceAndFire::registerBoilerHeater);
     }
 
-    private static void addItemsToCreativeTab(BuildCreativeModeTabContentsEvent event){
-        if (event.getTabKey().equals(CHCreativeTab.MAIN_TAB.getKey())){
-            event.accept(DRAGON_FIRE_INPUT);
-        }
+    private static void addItemsToCreativeTabA(BuildCreativeModeTabContentsEvent event){
+        Mods.addItemsToCreativeTab(event,CHCreativeTab.MAIN_TAB.getKey(),DRAGON_FIRE_INPUT);
+    }
+
+    private static void registerDatapack(DataPackRegistryEvent.NewRegistry event) {
+        event.dataPackRegistry(DRAGON_HEATER,DragonHeater.CODEC,DragonHeater.CODEC);
     }
 
     private static void registerBoilerHeater(FMLCommonSetupEvent event){

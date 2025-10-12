@@ -15,7 +15,6 @@ public interface HeatProvider {
 
     static float getBoilerHeat(Level level, BlockPos pos, BlockState blockState) {
         if (level.getBlockEntity(pos) instanceof HeatProvider provider && provider.getHeatPerTick() > 0){
-            System.out.println("provied "+provider.getHeatPerTick()+" "+HeatUtil.toBoilerHeat(provider.getHeatPerTick()));
             return HeatUtil.toBoilerHeat(provider.getHeatPerTick());
         }
         return BoilerHeater.NO_HEAT;

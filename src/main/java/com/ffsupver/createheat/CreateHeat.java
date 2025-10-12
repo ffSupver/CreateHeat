@@ -1,6 +1,6 @@
 package com.ffsupver.createheat;
 
-import com.ffsupver.createheat.compat.iceAndFire.IceAndFire;
+import com.ffsupver.createheat.compat.Mods;
 import com.ffsupver.createheat.registries.*;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -14,7 +14,6 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -56,9 +55,7 @@ public class CreateHeat {
         modEventBus.addListener(CHDatapacks::register);
         modEventBus.addListener(CreateHeat::init);
 
-        if (ModList.get().isLoaded("iceandfire")){
-            IceAndFire.init(modEventBus);
-        }
+        Mods.init(modEventBus);
     }
 
     private static void init(FMLCommonSetupEvent event){

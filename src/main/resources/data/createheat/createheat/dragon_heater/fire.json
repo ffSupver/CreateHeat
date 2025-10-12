@@ -1,0 +1,5 @@
+{
+  "dragon_type": "iceandfire:fire",
+  "heat_per_tick": "stage * stage * 2",
+  "super_heat_count": "stage"
+}

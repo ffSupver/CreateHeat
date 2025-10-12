@@ -11,7 +11,7 @@ import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 
 public class CHDatapacks {
     public static final ResourceKey<Registry<CustomHeater>> CUSTOM_HEATER = key("heater");
-    private static <T> ResourceKey<Registry<T>> key(String name) {
+    public static <T> ResourceKey<Registry<T>> key(String name) {
         return ResourceKey.createRegistryKey(CreateHeat.asResource(name));
     }
 

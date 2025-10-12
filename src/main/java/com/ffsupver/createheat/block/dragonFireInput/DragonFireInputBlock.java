@@ -9,6 +9,7 @@ import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -48,5 +49,10 @@ public class DragonFireInputBlock extends Block implements DragonProof, DragonTy
     @Override
     public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
         return state.getValue(BURNING) ? 15 : 0;
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        IBE.onRemove(state,level,pos,newState);
     }
 }
