@@ -262,7 +262,7 @@ public class ThermalBlockScene {
         scene.markAsFinished();
     }
 
-    private static UnaryOperator<BlockState> setHeatLevel(BlazeBurnerBlock.HeatLevel heatLevel){
+    public static UnaryOperator<BlockState> setHeatLevel(BlazeBurnerBlock.HeatLevel heatLevel){
         return b->b.setValue(HEAT_LEVEL,heatLevel);
     }
 }

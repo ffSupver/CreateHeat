@@ -1,5 +1,6 @@
 package com.ffsupver.createheat.compat.ponder;
 
+import com.ffsupver.createheat.compat.Mods;
 import com.ffsupver.createheat.compat.ponder.scenes.ThermalBlockScene;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.tterrag.registrate.util.entry.ItemProviderEntry;
@@ -15,5 +16,7 @@ public class CHPonders {
                 .addStoryBoard("thermal_block/use",ThermalBlockScene::use)
                 .addStoryBoard("thermal_block/storage",ThermalBlockScene::storage)
                 .addStoryBoard("thermal_block/recipe",ThermalBlockScene::recipe);
+
+        Mods.registerPonder(HELPER);
     }
 }

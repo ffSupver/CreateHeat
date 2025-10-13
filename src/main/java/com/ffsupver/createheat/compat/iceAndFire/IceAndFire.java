@@ -7,6 +7,7 @@ import com.ffsupver.createheat.block.dragonFireInput.DragonFireInputBlock;
 import com.ffsupver.createheat.block.dragonFireInput.DragonFireInputBlockEntity;
 import com.ffsupver.createheat.compat.CHModCompat;
 import com.ffsupver.createheat.compat.Mods;
+import com.ffsupver.createheat.compat.ponder.scenes.iceAndFire.DragonFireInputScenes;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.ffsupver.createheat.registries.CHCreativeTab;
 import com.ffsupver.createheat.registries.CHDatapacks;
@@ -14,6 +15,8 @@ import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.tterrag.registrate.util.entry.BlockEntry;
+import com.tterrag.registrate.util.entry.ItemProviderEntry;
+import net.createmod.ponder.api.registration.PonderSceneRegistrationHelper;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -23,7 +26,6 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 
 public class IceAndFire implements CHModCompat {
-    public static String MOD_ID = "iceandfire";
     private static final CreateRegistrate REGISTRATE = CreateHeat.registrate();
     public static final BlockEntry<DragonFireInputBlock> DRAGON_FIRE_INPUT = REGISTRATE
             .block("dragon_fire_input",DragonFireInputBlock::new)
@@ -41,7 +43,7 @@ public class IceAndFire implements CHModCompat {
 
     @Override
     public String getModId() {
-        return MOD_ID;
+        return Mods.ModIds.IceAndFire.ModId;
     }
 
     public void init(IEventBus eventBus) {
@@ -62,5 +64,11 @@ public class IceAndFire implements CHModCompat {
         event.enqueueWork(()->
                 BoilerHeater.REGISTRY.register(DRAGON_FIRE_INPUT.get(), HeatProvider.HEATER)
         );
+    }
+
+    @Override
+    public void registerPonder(PonderSceneRegistrationHelper<ItemProviderEntry<?, ?>> HELPER) {
+        HELPER.forComponents(DRAGON_FIRE_INPUT)
+                .addStoryBoard("ice_and_fire/use", DragonFireInputScenes::use);
     }
 }

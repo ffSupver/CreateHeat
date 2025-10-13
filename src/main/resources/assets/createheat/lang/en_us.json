@@ -46,6 +46,10 @@
   "createheat.ponder.thermal_block.recipe.text_4": "Some recipes require more heat to continue processing",
   "createheat.ponder.thermal_block.recipe.text_5": "Provide more heat",
   "createheat.ponder.thermal_block.recipe.text_6": "Recipe done",
+  "createheat.ponder.ice_and_fire.use.header": "Using Dragon Fire Input",
+  "createheat.ponder.ice_and_fire.use.text_1": "Dragon Fire Input can turn dragon fire into heat",
+  "createheat.ponder.ice_and_fire.use.text_2": "Place any Dragon Forge Bricks next to Dragon Fire Input to select dragon type you want",
+  "createheat.ponder.ice_and_fire.use.text_3": "Dragon Fire Input will provide heat",
 
   "createheat.recipe.heat":"Heat",
   "createheat.recipe.heat.amount": "Min: %s Total: %s"

@@ -21,6 +21,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.ffsupver.createheat.block.dragonFireInput.DragonFireInputBlock.BURNING;
 
@@ -32,6 +33,7 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity implements Heat
     private int lastStage;
     private DragonType dragonType;
     private DragonHeater dragonHeater;
+    private UUID lastDragonUUID;
 
     private static final float RADIUS = 25.0F;
     public DragonFireInputBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -148,15 +150,34 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity implements Heat
         AABB searchArea = new AABB((double)this.worldPosition.getX() - RADIUS, (double)this.worldPosition.getY() - RADIUS, (double)this.worldPosition.getZ() - RADIUS, (double)this.worldPosition.getX() + RADIUS, (double)this.worldPosition.getY() + RADIUS, (double)this.worldPosition.getZ() + RADIUS);
         boolean dragonSelected = false;
 
+        DragonBaseEntity backUpDragon = null;
 
         for(DragonBaseEntity dragon : this.level.getEntitiesOfClass(DragonBaseEntity.class, searchArea)) {
-            if (canLungType && assembled() && !dragonSelected && dragon.dragonType.equals(dragonType) && canSeeInput(dragon,targetPosition)){
-                if (dragon.burningTarget == null){
-                    dragon.burningTarget = this.worldPosition;
-                    dragonSelected = true;
+            boolean noTarget = dragon.burningTarget == null;
+            boolean isLastOne = dragon.getUUID().equals(this.lastDragonUUID);
+            boolean targetThis = !noTarget && dragon.burningTarget.equals(this.worldPosition);
+            if (canLungType && assembled() && dragon.dragonType.equals(dragonType) && canSeeInput(dragon,targetPosition) && (noTarget || isLastOne)){
+                if (backUpDragon == null){
+                    backUpDragon = dragon;
                 }
-            }else if (dragon.burningTarget != null && dragon.burningTarget.equals(this.worldPosition)){
+
+                if (isLastOne){
+                    if (!noTarget && !targetThis) {
+                        lastDragonUUID = null;
+                    }else {
+                        backUpDragon = dragon;
+                        dragonSelected = true;
+                    }
+                }
+            }else if (targetThis){
                 dragon.burningTarget = null;
+            }
+        }
+
+        if (backUpDragon != null){
+            backUpDragon.burningTarget = this.worldPosition;
+            if (!dragonSelected){
+                this.lastDragonUUID = backUpDragon.getUUID();
             }
         }
     }
@@ -188,6 +209,9 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity implements Heat
         if (tag.contains("dragon_type", CompoundTag.TAG_STRING)){
             dragonType = IafRegistries.DRAGON_TYPE.get(ResourceLocation.parse(tag.getString("dragon_type")));
         }
+        if (tag.contains("last_dragon", CompoundTag.TAG_INT_ARRAY)){
+            lastDragonUUID = tag.getUUID("last_dragon");
+        }
     }
 
     @Override
@@ -198,6 +222,9 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity implements Heat
         tag.putInt("stage",lastStage);
         if (dragonType != null){
             tag.putString("dragon_type", IafRegistries.DRAGON_TYPE.getKey(dragonType).toString());
+        }
+        if (lastDragonUUID != null){
+            tag.putUUID("last_dragon",lastDragonUUID);
         }
     }
 

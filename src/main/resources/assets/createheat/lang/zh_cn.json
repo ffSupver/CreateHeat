@@ -48,6 +48,10 @@
   "createheat.ponder.thermal_block.recipe.text_4": "一些配方需要更多热量才能继续处理",
   "createheat.ponder.thermal_block.recipe.text_5": "加更多热",
   "createheat.ponder.thermal_block.recipe.text_6": "完成",
+  "createheat.ponder.ice_and_fire.use.header": "使用导热块龙焰口",
+  "createheat.ponder.ice_and_fire.use.text_1": "导热块龙焰口可以将龙焰变成热量",
+  "createheat.ponder.ice_and_fire.use.text_2": "在导热块龙焰口放一种龙煅炉砖来选定你的龙类型",
+  "createheat.ponder.ice_and_fire.use.text_3": "导热块龙焰口会产生热量",
 
   "createheat.recipe.heat":"加热",
   "createheat.recipe.heat.amount": "至少: %s 总共: %s"

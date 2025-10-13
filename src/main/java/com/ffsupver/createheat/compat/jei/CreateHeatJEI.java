@@ -3,9 +3,11 @@ package com.ffsupver.createheat.compat.jei;
 import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.compat.jei.category.HeatCategory;
 import com.ffsupver.createheat.registries.CHBlocks;
+import com.ffsupver.createheat.registries.CHItems;
 import com.ffsupver.createheat.registries.CHRecipes;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
@@ -34,6 +36,8 @@ public class CreateHeatJEI implements IModPlugin {
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
         registration.addRecipes(HeatCategory.TYPE,fillRecipes(CHRecipes.HEAT_RECIPE.get()));
+
+        registration.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK,List.of(CHItems.THERMAL_TOOL.asStack()));
     }
 
     @Override

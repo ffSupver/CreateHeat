@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "iceandfire:dragonbone"
+    },
+    "B": {
+      "item": "createheat:tight_compressed_stone"
+    },
+    "C": {
+      "item": "createheat:thermal_block"
+    }
+  },
+  "pattern": [
+    "CAC",
+    "ABA",
+    "CAC"
+  ],
+  "result": {
+    "count": 1,
+    "id": "createheat:dragon_fire_input"
+  }
+}
