@@ -1,7 +1,13 @@
 {
   "variants": {
-    "": {
-      "model": "createheat:block/tight_compressed_stone"
+    "heat=none": {
+      "model": "createheat:block/tight_compressed_stone/none"
+    },
+    "heat=regular_heat": {
+      "model": "createheat:block/tight_compressed_stone/regular_heat"
+    },
+    "heat=super_heat": {
+      "model": "createheat:block/tight_compressed_stone/super_heat"
     }
   }
 }

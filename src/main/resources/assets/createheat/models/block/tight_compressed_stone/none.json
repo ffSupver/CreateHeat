@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "createheat:block/tight_compressed_stone"
+    "all": "createheat:block/tight_compressed_stone/none"
   }
 }

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "createheat:block/tight_compressed_stone/regular_heat"
+  }
+}

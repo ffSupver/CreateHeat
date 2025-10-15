@@ -2,15 +2,12 @@ package com.ffsupver.createheat.block.thermalBlock;
 
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.ffsupver.createheat.util.NbtUtil;
-import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
@@ -21,15 +18,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntity.MAX_HEAT;
+import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.HEAT;
+import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.Heat.*;
 import static com.ffsupver.createheat.util.BlockUtil.walkAllBlocks;
 
 public class StoneHeatStorage extends HeatStorage{
-    private static final Supplier<Integer> HEAT_PER_LAVA = ()->MAX_HEAT.get() * 10;
+    private static final Supplier<Integer> HEAT_PER_LAVA = ()->MAX_HEAT.get() * 50;
     public final HashSet<BlockPos> stonePosSet;
     private final BlockPos recordControllerPos;
     public boolean shouldChangeController = false;
-    private BlockPos newController = null;
     private BlockCounts lastBlockCounts = new BlockCounts();
+    private int superHeatCount;
 
 
     public StoneHeatStorage(HashSet<BlockPos> stonePosSet,BlockPos recordController) {
@@ -38,38 +37,23 @@ public class StoneHeatStorage extends HeatStorage{
         this.recordControllerPos = recordController;
     }
 
-    public StoneHeatStorage(StoneHeatStorage oldSHS,BlockPos newController){
-        this(oldSHS.stonePosSet,newController);
-        this.setCapacity(oldSHS.getCapacity());
-        this.setAmount(oldSHS.getAmount());
-    }
 
-    public void disconnect(BlockPos controllerPos){
-        if (controllerPos.equals(recordControllerPos)){
-            this.shouldChangeController = true;
-        }
-    }
-
-    private void tryChangeToNewController(BlockPos pos, Level level){
-        if (shouldChangeController && newController == null && level.getBlockEntity(pos) instanceof ThermalBlockEntity thermalBlockEntity){
-            if (thermalBlockEntity.getControllerEntity().acceptNewStoneHeatStorage(this)){
-                newController = thermalBlockEntity.getControllerPos();
-            }
-        }
-    }
 
     public Set<BlockPos> checkSize(Level level, BlockPos startPos, boolean shouldSetAmountWithoutCheck){
         Set<BlockPos> oldSet = Set.copyOf(stonePosSet);
         stonePosSet.clear();
-        AtomicInteger lavaCount = new AtomicInteger();
+        AtomicInteger regularHeatCount = new AtomicInteger();
         AtomicInteger stoneCount = new AtomicInteger();
+        AtomicInteger superHeatCount = new AtomicInteger();
 
         Set<BlockPos> controllerPos = new HashSet<>();
 
         walkAllBlocks(startPos,stonePosSet,b->{
             BlockState bsT = level.getBlockState(b);
-            if (isAvailableLavaBlock(bsT)){
-                lavaCount.getAndIncrement();
+                if (isAvailableRegularHeatBlock(bsT)){
+                regularHeatCount.getAndIncrement();
+            }else if (isAvailableSuperHeatBlock(bsT)){
+                superHeatCount.getAndIncrement();
             }else if (isAvailableTStoneBlock(bsT)) {
                 stoneCount.getAndIncrement();
             }
@@ -83,24 +67,21 @@ public class StoneHeatStorage extends HeatStorage{
             setCapacity(calculateCapacity(stonePosSet));
         }
 
-        int lC = lavaCount.get();
+        int lC = regularHeatCount.get();
+        int sHC = superHeatCount.get();
         int sC = stoneCount.get();
-        int amountFromBlock = sC + lC > 0 ? lC * getCapacity() / (sC + lC) : 0;
+        int amountFromBlock = sC + lC + sHC > 0 ? (lC + sHC) * getCapacity() / (sC + lC + sHC) : 0;
         if (shouldSetAmountWithoutCheck){
             setAmount(amountFromBlock);
-        }else if (!lastBlockCounts.unInit() && lastBlockCounts.lava < lC){
+        }else if (!lastBlockCounts.unInit() && (lastBlockCounts.regular + lastBlockCounts.superHeat) < (lC + sHC)){
             setAmount(Math.max(getAmount(),amountFromBlock));
         }
 
-        lastBlockCounts = new BlockCounts(sC,lC);
+        lastBlockCounts = new BlockCounts(sC,lC,sHC);
         return controllerPos;
     }
 
-    public boolean checkSize(Level level,BlockPos controllerPos) {
-        if (!controllerPos.equals(recordControllerPos)){
-            tryChangeToNewController(controllerPos,level);
-            return true; //无论是否变化都向客户端发送数据
-        }
+    public boolean checkSize(Level level) {
 
         if (!stonePosSet.isEmpty()){
             int oldSize = stonePosSet.size();
@@ -110,56 +91,148 @@ public class StoneHeatStorage extends HeatStorage{
         return false;
     }
 
-    public boolean updateBlockState(Level level,BlockPos controllerPos){
-        if (!controllerPos.equals(recordControllerPos)){
-            tryChangeToNewController(controllerPos,level);
-            return false;
-        }
-        int lavaCount = 0;
+    public boolean updateBlockState(Level level){
+        int regularHeatCount = 0;
+        int superHeatCount = 0;
         int stoneCount = 0;
         Set<BlockPos> stoneBlockPosSet = new HashSet<>();
-        Set<BlockPos> lavaBlockPosSet = new HashSet<>();
+        Set<BlockPos> regularHeatBlockPosSet = new HashSet<>();
+        Set<BlockPos> superHeatBlockPosSet = new HashSet<>();
         for (BlockPos sPos : stonePosSet){
-            if (isAvailableLavaBlock(level.getBlockState(sPos))){
-                lavaCount++;
-                lavaBlockPosSet.add(sPos);
+            if (isAvailableRegularHeatBlock(level.getBlockState(sPos))){
+                regularHeatCount++;
+                regularHeatBlockPosSet.add(sPos);
+            }else if (isAvailableSuperHeatBlock(level.getBlockState(sPos))){
+                superHeatCount++;
+                superHeatBlockPosSet.add(sPos);
             }else if (level.getBlockState(sPos).is(CHBlocks.TIGHT_COMPRESSED_STONE)){
                 stoneCount++;
                 stoneBlockPosSet.add(sPos);
             }
         }
 
-        if (lavaCount + stoneCount == 0){
+        if (regularHeatCount + stoneCount == 0){
             return false;
         }
 
-        int bCount = stoneCount + lavaCount;
-        int aUp = getCapacity() * (lavaCount + 1) / bCount;
-        int aDw = getCapacity() * lavaCount / bCount;
+        int bCount = stoneCount + regularHeatCount + superHeatCount;
+        int heatCount = regularHeatCount + superHeatCount;
+        int aUp = getCapacity() * (heatCount + 1) / bCount;
+        int aDw = getCapacity() * heatCount / bCount;
         boolean addTStone = aDw > getAmount();
         boolean removeTStone = aUp <= getAmount();
         if (addTStone){
             int countToAdd = (aDw - getAmount()) * bCount / getCapacity() + 1;
-            List<BlockPos> lavaPosList = new ArrayList<>(lavaBlockPosSet);
-            for (int i = 0;i < Math.min(countToAdd,lavaPosList.size());i++){
-                level.setBlock(lavaPosList.get(i),CHBlocks.TIGHT_COMPRESSED_STONE.getDefaultState(),3);
+            int leftToAdd = countToAdd;
+            //先替换regularHeat
+            List<BlockPos> regularHeatPosList = new ArrayList<>(regularHeatBlockPosSet);
+            for (int i = 0;i < Math.min(countToAdd,regularHeatPosList.size());i++){
+                BlockPos regularHeatPos = regularHeatPosList.get(i);
+                setNoneHeatBlock(level,regularHeatPos);
+                regularHeatBlockPosSet.remove(regularHeatPos);
+                leftToAdd--;
+            }
+
+            //再替换superHeat
+            if (leftToAdd > 0){
+                List<BlockPos> superHeatPosList = new ArrayList<>(superHeatBlockPosSet);
+                for (int i = 0;i < Math.min(leftToAdd,superHeatPosList.size());i++){
+                    BlockPos superHeatPos = superHeatPosList.get(i);
+                    setNoneHeatBlock(level,superHeatPos);
+                    superHeatBlockPosSet.remove(superHeatPos);
+                }
             }
         }else if (removeTStone){
             int countToRemove = (getAmount() - aUp) * bCount / getCapacity() + 1;
             List<BlockPos> stonePosList = new  ArrayList<>(stoneBlockPosSet);
             for (int i = 0;i < Math.min(countToRemove,stonePosList.size());i++){
-                level.setBlock(stonePosList.get(i), Blocks.LAVA.defaultBlockState(),3);
+                BlockPos newRegularPos = stonePosList.get(i);
+                setRegularHeatBlock(level,newRegularPos);
+                regularHeatBlockPosSet.add(newRegularPos);
             }
         }
-        return addTStone || removeTStone;
+
+        //更新superHeat数量
+        superHeatCount = superHeatBlockPosSet.size();
+        boolean canAddSuperHeat = canSuperHeat();
+        boolean shouldAddSuperHeat = getSuperHeatCount() > superHeatCount;
+        boolean shouldRemoveSuperHeat = getSuperHeatCount() < superHeatCount;
+        boolean changedSuperHeat = false;
+        if (canAddSuperHeat && shouldAddSuperHeat){
+            int leftToAdd = getSuperHeatCount() - superHeatCount;
+            List<BlockPos> regularHeatPosList = new ArrayList<>(regularHeatBlockPosSet);
+            for (int i = 0;i < Math.min(leftToAdd,regularHeatPosList.size());i++){
+                BlockPos superHeatToAdd = regularHeatPosList.get(i);
+                setSuperHeatBlock(level,superHeatToAdd);
+                superHeatBlockPosSet.add(superHeatToAdd);
+                changedSuperHeat = true;
+            }
+        }else if (!canAddSuperHeat || shouldRemoveSuperHeat){
+            int leftToRemove = canAddSuperHeat ? superHeatCount - getSuperHeatCount() : superHeatCount;
+            List<BlockPos> superHeatPosList = new ArrayList<>(superHeatBlockPosSet);
+            for (int i = 0;i < Math.min(leftToRemove,superHeatPosList.size());i++){
+                BlockPos superHeatToRemove = superHeatPosList.get(i);
+                setRegularHeatBlock(level,superHeatToRemove);
+                superHeatBlockPosSet.remove(superHeatToRemove);
+                changedSuperHeat = true;
+            }
+        }
+
+        setSuperHeatCount(superHeatBlockPosSet.size());
+
+        return addTStone || removeTStone || changedSuperHeat;
+    }
+
+    private boolean canSuperHeat(){
+        return getAmount() * 2 > getCapacity();
+    }
+
+    /**
+     * Only call after calling {@link #checkSize(Level, BlockPos, boolean)} or
+     * when {@link BlockCounts#unInit()} returns true
+     */
+    public int getSuperHeatCount(){
+        return superHeatCount;
+    }
+
+    /**
+     * Only call after calling {@link #checkSize(Level, BlockPos, boolean)} or
+     * when {@link BlockCounts#unInit()} returns true
+     */
+    public int getMaxSuperHeatCount(){
+        if (!canSuperHeat()){
+            return 0;
+        }
+        return lastBlockCounts.unInit() ? getAmount() * stonePosSet.size() / getCapacity() : (lastBlockCounts.regular + lastBlockCounts.superHeat) / 2;
+    }
+
+
+    public void setSuperHeatCount(int superHeatCount){
+        this.superHeatCount = Math.min(getMaxSuperHeatCount(),superHeatCount);
     }
 
     public static boolean isAvailableBlock(BlockState bsT){
-        return isAvailableLavaBlock(bsT) || isAvailableTStoneBlock(bsT);
+        return isAvailableRegularHeatBlock(bsT) || isAvailableTStoneBlock(bsT) || isAvailableSuperHeatBlock(bsT);
     }
 
-    public static boolean isAvailableLavaBlock(BlockState bsT){
-        return bsT.is(Blocks.LAVA) && bsT.getValue(LiquidBlock.LEVEL) == 0;
+    public static boolean isAvailableRegularHeatBlock(BlockState bsT){
+        return bsT.is(CHBlocks.TIGHT_COMPRESSED_STONE) && bsT.getValue(HEAT).equals(REGULAR_HEAT);
+    }
+
+    private static void setNoneHeatBlock(Level level,BlockPos pos){
+        level.setBlock(pos, CHBlocks.TIGHT_COMPRESSED_STONE.getDefaultState().setValue(HEAT,NONE),3);
+    }
+
+    public static boolean isAvailableSuperHeatBlock(BlockState bsT){
+        return bsT.is(CHBlocks.TIGHT_COMPRESSED_STONE) && bsT.getValue(HEAT).equals(SUPER_HEAT);
+    }
+
+    private static void setRegularHeatBlock(Level level,BlockPos pos){
+        level.setBlock(pos, CHBlocks.TIGHT_COMPRESSED_STONE.getDefaultState().setValue(HEAT,REGULAR_HEAT),3);
+    }
+
+    private static void setSuperHeatBlock(Level level,BlockPos pos){
+        level.setBlock(pos, CHBlocks.TIGHT_COMPRESSED_STONE.getDefaultState().setValue(HEAT,SUPER_HEAT),3);
     }
 
     public static boolean isAvailableTStoneBlock(BlockState bsT){
@@ -170,36 +243,16 @@ public class StoneHeatStorage extends HeatStorage{
         return stonePosSet.size() * HEAT_PER_LAVA.get();
     }
 
-    public void calculateAmountByBlock(Level level){
-        for (BlockPos stonePos : stonePosSet){
-            BlockState blockState = level.getBlockState(stonePos);
-            setAmount(getAmount() + (isAvailableLavaBlock(blockState) ?
-                    HEAT_PER_LAVA.get() : 0
-            ));
-        }
-    }
-
-    public boolean hasPos(BlockPos pos){
-        return stonePosSet.contains(pos);
-    }
-
     @Override
     public void fromNbt(CompoundTag nbt) {
         super.fromNbt(nbt);
         stonePosSet.clear();
         stonePosSet.addAll(NbtUtil.readBlockPosFromNbtList(nbt.getList("stone_pos", Tag.TAG_COMPOUND)));
         shouldChangeController = nbt.getBoolean("should_change_c");
+        superHeatCount = nbt.getInt("super_heat_count");
     }
 
-    public static StoneHeatStorage cFromNbt(CompoundTag tag){
-        StoneHeatStorage r = new StoneHeatStorage(new HashSet<>(), NBTHelper.readBlockPos(tag,"record_controller"));
-        r.fromNbt(tag);
-        return r;
-    }
 
-    public boolean shouldWriteToNbt(BlockPos pos){
-        return pos.equals(recordControllerPos);
-    }
 
     @Override
     public CompoundTag toNbt() {
@@ -207,6 +260,7 @@ public class StoneHeatStorage extends HeatStorage{
         nbt.put("stone_pos",NbtUtil.writeBlockPosToNbtList(stonePosSet));
         nbt.put("record_controller", NbtUtils.writeBlockPos(recordControllerPos));
         nbt.putBoolean("should_change_c",shouldChangeController);
+        nbt.putInt("super_heat_count", superHeatCount);
         return nbt;
     }
 
@@ -225,16 +279,27 @@ public class StoneHeatStorage extends HeatStorage{
 
     private static class BlockCounts{
         private Integer stone;
-        private Integer lava;
-        public BlockCounts(int stone,int lava){
+        private Integer regular;
+        private Integer superHeat;
+        public BlockCounts(int stone,int regular,int superHeat){
             this.stone = stone;
-            this.lava = lava;
+            this.regular = regular;
+            this.superHeat = superHeat;
         }
         public BlockCounts(){
         }
 
         public boolean unInit(){
-            return stone == null || lava == null;
+            return stone == null || regular == null || superHeat == null;
+        }
+
+        @Override
+        public String toString() {
+            return "BlockCounts{" +
+                    "stone=" + stone +
+                    ", regular=" + regular +
+                    ", superHeat=" + superHeat +
+                    '}';
         }
     }
 }

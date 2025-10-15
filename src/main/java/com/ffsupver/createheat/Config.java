@@ -29,7 +29,7 @@ public class Config {
 
     public static final ModConfigSpec.IntValue MAX_CONNECT_RANGE = BUILDER
             .comment("Max range between blocks can be connected")
-            .defineInRange("max_connect_range", 16, 1, Integer.MAX_VALUE);
+            .defineInRange("max_connect_range", 32, 1, Integer.MAX_VALUE);
 
     static final ModConfigSpec SPEC = BUILDER.build();
 }

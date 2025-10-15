@@ -3,16 +3,16 @@ package com.ffsupver.createheat.block.thermalBlock;
 import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.Config;
 import com.ffsupver.createheat.api.CustomHeater;
+import com.ffsupver.createheat.block.ConnectableBlockEntity;
 import com.ffsupver.createheat.block.HeatProvider;
+import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
 import com.ffsupver.createheat.recipe.HeatRecipe;
 import com.ffsupver.createheat.registries.CHRecipes;
-import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.NbtUtil;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
-import com.simibubi.create.content.processing.burner.BlazeBurnerBlock.*;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import joptsimple.internal.Strings;
 import net.createmod.catnip.nbt.NBTHelper;
@@ -41,20 +41,15 @@ import static com.ffsupver.createheat.util.BlockUtil.AllDirectionOf;
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.*;
 
-public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
-    private boolean isController;
-    private BlockPos controllerPos;
-
-    private final Set<BlockPos> connectedBlocks = new HashSet<>();
+public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntity> implements IHaveGoggleInformation {
 
     private int heat;
     public static final Supplier<Integer> MAX_HEAT = () -> 50 * Config.HEAT_PER_FADING_BLAZE.get();
     private int cooldown;
-    private static final int MAX_COOLDOWN = 10;
+    public static final int MAX_COOLDOWN = 10;
 
     private final HeatStorage heatStorage = new HeatStorage(MAX_HEAT.get());
-    private final ArrayList<StoneHeatStorage> stoneHeatStorages = new ArrayList<>();
-    private final ArrayList<StoneHeatStorage> stoneHeatStoragesToAddLater = new ArrayList<>();
+    private final ArrayList<BlockPos> stoneHeatStorages = new ArrayList<>();
 
     private final Map<BlockPos,HeatRecipeProcessing> recipeProcessingMap = new HashMap<>();
 
@@ -62,28 +57,29 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
 
     public ThermalBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        controllerPos = null;
         cooldown = 0;
+    }
+
+    @Override
+    public boolean canConnect(ConnectableBlockEntity toCheck) {
+        return toCheck instanceof ThermalBlockEntity;
+    }
+
+    @Override
+    protected ThermalBlockEntity castToSubclass() {
+        return this;
     }
 
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
-        tag.putBoolean("is_controller",isController);
-        if (isController) {
-            tag.put("connected",NbtUtil.writeBlockPosToNbtList(connectedBlocks));
+        if (isController()) {
             tag.putInt("heat",heat);
             tag.putInt("cooldown",cooldown);
 
             tag.put("heat_storage",heatStorage.toNbt());
 
-            tag.put("shs",NbtUtil.writeToNbtList(stoneHeatStorages, shs->{
-                if (shs.shouldWriteToNbt(getControllerPos())){
-                    return shs.toNbt();
-                }else {
-                    return null;
-                }
-            }));
+            tag.put("shs",NbtUtil.writeBlockPosToNbtList(stoneHeatStorages));
 
             tag.put("recipe",NbtUtil.writeMapToNbtList(
                     recipeProcessingMap,
@@ -94,8 +90,6 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             if (clientPacket){
                 tag.put("display_heat",getAllHeatForDisplay().toNbt());
             }
-        }else {
-            tag.put("controller", NbtUtils.writeBlockPos(controllerPos));
         }
     }
 
@@ -103,30 +97,25 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         //getLevel return null
         super.read(tag, registries, clientPacket);
-        isController = tag.getBoolean("is_controller");
-        if (isController) {
-            connectedBlocks.clear();
-            connectedBlocks.addAll(NbtUtil.readBlockPosFromNbtList(tag.getList("connected", Tag.TAG_COMPOUND)));
+        if (isController()) {
             heat = tag.getInt("heat");
             cooldown = tag.getInt("cooldown");
 
             heatStorage.fromNbt(tag.getCompound("heat_storage"));
 
             stoneHeatStorages.clear();
-            stoneHeatStorages.addAll(NbtUtil.readListFromNbt(tag.getList("shs",Tag.TAG_COMPOUND), tS -> StoneHeatStorage.cFromNbt((CompoundTag) tS)));
+            stoneHeatStorages.addAll(NbtUtil.readBlockPosFromNbtList(tag.getList("shs", Tag.TAG_COMPOUND)));
 
             recipeProcessingMap.clear();
             recipeProcessingMap.putAll(NbtUtil.readMapFromNbtList(
-                    tag.getList("recipe",Tag.TAG_COMPOUND),
+                    tag.getList("recipe", Tag.TAG_COMPOUND),
                     NbtUtil::blockPosFromNbt,
-                    t->HeatRecipeProcessing.fromNbt((CompoundTag) t,getBlockPos()))
+                    t -> HeatRecipeProcessing.fromNbt((CompoundTag) t, getBlockPos()))
             );
 
-            if (clientPacket){
-              displayHeatStorage.fromNbt(tag.getCompound("display_heat"));
+            if (clientPacket) {
+                displayHeatStorage.fromNbt(tag.getCompound("display_heat"));
             }
-        }else {
-            controllerPos = NBTHelper.readBlockPos(tag,"controller");
         }
     }
 
@@ -134,7 +123,7 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     public void tick() {
         super.tick();
 
-        if (!isController){
+        if (!isController()){
             return;
         }
 
@@ -167,24 +156,15 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
 
         //移除断开连接的或者空的储热器 检查每个储热器的方块状态
         boolean changeSHS = false;
-        Iterator<StoneHeatStorage> sHSIterator = stoneHeatStorages.iterator();
+        Iterator<BlockPos> sHSIterator = stoneHeatStorages.iterator();
         while (sHSIterator.hasNext()){
-            StoneHeatStorage sHS = sHSIterator.next();
-            if (!sHS.isConnect(connectedBlocks)){
-                sHS.disconnect(getControllerPos());
-                sHSIterator.remove();
-                changeSHS = true;
-            }else {
-                changeSHS = changeSHS || sHS.checkSize(getLevel(),getControllerPos());
-                if (sHS.getCapacity() <= 0 || sHS.shouldChangeController){
+            BlockPos sHSController = sHSIterator.next();
+            if (getLevel().getBlockEntity(sHSController) instanceof TightCompressStoneEntity sHS && !sHS.isConnect(connectedBlocks)) {
                     sHSIterator.remove();
                     changeSHS = true;
-                }
+
             }
         }
-        //添加失去控制器的储热器
-        stoneHeatStorages.addAll(stoneHeatStoragesToAddLater);
-        stoneHeatStoragesToAddLater.clear();
 
 
         //移除已经完成的配方
@@ -208,35 +188,19 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             // 寻找新储热器
             for (Direction d : Direction.values()){
                 BlockPos checkPos = thermalBlockEntity.getBlockPos().relative(d);
-                if (StoneHeatStorage.isAvailableBlock(getLevel().getBlockState(checkPos))){
-                   boolean foundIn = isPosInStoneHeatStorage(checkPos);
-                    if (!foundIn){
-                        StoneHeatStorage newShs = new StoneHeatStorage(new HashSet<>(Set.of(checkPos)),getControllerPos());
-                        //储热器连接的控制器
-                        Set<BlockPos> connectControllerPosSet = newShs.checkSize(getLevel(),checkPos,true);
-                        boolean foundOldSHS = false; //其他控制器是否已经有该储热器
-                        for (BlockPos otherControllerPos : connectControllerPosSet){
-                            if (!otherControllerPos.equals(getControllerPos()) && getLevel().getBlockEntity(otherControllerPos) instanceof ThermalBlockEntity t){
-                                ThermalBlockEntity otherControllerBE = t.getControllerEntity();
-                                Optional<StoneHeatStorage> oldSHSOp = otherControllerBE.findOldStoneHeatStorage(newShs);
-                                if (oldSHSOp.isPresent()){
-                                    stoneHeatStorages.add(oldSHSOp.get());
-                                    foundOldSHS = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (!foundOldSHS){
-                            stoneHeatStorages.add(newShs);
-                        }
-
-                        changeSHS = true;
+                if (getLevel().getBlockEntity(checkPos) instanceof TightCompressStoneEntity sHS){
+                    BlockPos sHSPosToAdd = sHS.getControllerPos();
+                    if (!stoneHeatStorages.contains(sHSPosToAdd)){
+                        stoneHeatStorages.add(sHSPosToAdd);
                     }
                 }
             }
         }
-        releaseHeat();
+
+        boolean usingHeater = heat > 0;
+        int superHeatCountFromSHS = releaseHeat();
+        int superHeatCountFromHeater = superHeatCount;
+        superHeatCount += superHeatCountFromSHS;
 
         //添加找到的新配方
         checkAddHeatRecipeProcessing(hRPL);
@@ -257,8 +221,8 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         });
 
 
-       boolean storageUpdate = storageHeat(); //检测SHS是否有方块变化
-        if (changeSHS || storageUpdate || heat != lastHeat){
+       storageHeat(superHeatCountFromHeater,superHeatCount,usingHeater); //检测SHS是否有方块变化
+        if (changeSHS || heat != lastHeat){
             sendData();
         }
     }
@@ -319,75 +283,55 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     }
 
     //存储多余的热
-    private boolean storageHeat(){
-        boolean blockUpdate = false;
+    private void storageHeat(int superHeatCount,int superCountLeft,boolean usingHeater){
         if (heat > 0){
             int left = heat;
-            for (StoneHeatStorage stoneHeatStorage : stoneHeatStorages){
-                if (left > 0){
-                    int inserted = stoneHeatStorage.insert(left);
-                    left -= inserted;
-                }
+            for (BlockPos stoneHeatStoragePos : stoneHeatStorages){
+                if (getLevel().getBlockEntity(stoneHeatStoragePos) instanceof TightCompressStoneEntity stoneHeatStorage) {
+                    if (left > 0) {
+                        int inserted = stoneHeatStorage.insert(left);
+                        left -= inserted;
+                    }
 
-                //更新方块状态
-                blockUpdate = blockUpdate || stoneHeatStorage.updateBlockState(getLevel(),getControllerPos());
+                    //记录超级加热数
+                    if (!Config.ALLOW_GENERATE_SUPER_HEAT.get()) {
+                        superHeatCount = stoneHeatStorage.addSuperHeatCount(superCountLeft,superHeatCount,usingHeater,getControllerPos());
+                    }
+                }
             }
 
             if (left > 0){
                 heatStorage.insert(left);
             }
         }
-        return blockUpdate;
     }
 
     //释放存储的热
-    private void releaseHeat(){
+    private int releaseHeat(){
+        int superHeatCount = 0;
         if (heat <= 0){
-            for (StoneHeatStorage stoneHeatStorage : stoneHeatStorages){
-                int need = heatStorage.getCapacity() - heatStorage.getAmount();
-                if (need > 0){
-                    int toExtract = stoneHeatStorage.extract(need, true);
-                    toExtract = heatStorage.insert(toExtract);
-                    stoneHeatStorage.extract(toExtract, false);
+            for (BlockPos stoneHeatStoragePos : stoneHeatStorages){
+                if (getLevel().getBlockEntity(stoneHeatStoragePos) instanceof TightCompressStoneEntity stoneHeatStorage) {
+                    int need = heatStorage.getCapacity() - heatStorage.getAmount();
+                    if (need > 0) {
+                        int toExtract = stoneHeatStorage.extract(need, true);
+                        toExtract = heatStorage.insert(toExtract);
+                        stoneHeatStorage.extract(toExtract, false);
+                    }
+
+                    //释放超级加热
+                    if (!Config.ALLOW_GENERATE_SUPER_HEAT.get()) {
+                        superHeatCount += stoneHeatStorage.releaseSuperHeatCount(getControllerPos());
+                    }
                 }
             }
 
 
             heat += heatStorage.extract(heatStorage.getAmount(),false);
         }
+        return superHeatCount;
     }
 
-    private boolean isPosInStoneHeatStorage(BlockPos checkPos){
-        if (isController()){
-           return stoneHeatStorages.stream().anyMatch(sHs -> sHs.hasPos(checkPos));
-        }else {
-            return getControllerEntity().isPosInStoneHeatStorage(checkPos);
-        }
-    }
-
-    private Optional<StoneHeatStorage> findOldStoneHeatStorage(StoneHeatStorage newSHS){
-        if (isController()){
-           return stoneHeatStorages.stream()
-                   .filter(
-                           oldSHS-> !oldSHS.stonePosSet.isEmpty() &&
-                                   newSHS.stonePosSet.contains(oldSHS.stonePosSet.iterator().next())
-                   ).findFirst();
-        }else {
-            return getControllerEntity().findOldStoneHeatStorage(newSHS);
-        }
-    }
-
-    public boolean acceptNewStoneHeatStorage(StoneHeatStorage oldSHS){
-        if (isController()){
-            if (oldSHS.isConnect(connectedBlocks)) {
-                stoneHeatStoragesToAddLater.add(new StoneHeatStorage(oldSHS, getControllerPos()));
-                return true;
-            }
-            return false;
-        }else {
-            return getControllerEntity().acceptNewStoneHeatStorage(oldSHS);
-        }
-    }
 
     public int calculateHeatCost(int tickSkip,HeatLevel heatLevel){
         return tickSkip * getHeatPerTick(heatLevel);
@@ -473,62 +417,13 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         notifyUpdate();
     }
 
-    public void checkNeighbour(){
-        if (!isController){
-            AtomicBoolean foundConnect = new AtomicBoolean(false);
-            AllDirectionOf(getBlockPos(),checkPos->{
-                if (getLevel().getBlockEntity(checkPos) instanceof ThermalBlockEntity neighbourEntity) {
-                    this.isController = false;
-                    if (!foundConnect.get()){
-                        this.controllerPos = neighbourEntity.getControllerPos();
-                        foundConnect.set(true);
-                    }
 
-
-                    ThermalBlockEntity controllerEntity = getControllerEntity();
-                    if (controllerEntity != null){
-                        controllerEntity.addConnectedPos(getBlockPos());
-                        if (!neighbourEntity.getControllerPos().equals(controllerPos)){
-                            if (neighbourEntity.getControllerEntity() != null){
-                                neighbourEntity.getControllerEntity().isController = false;
-                            }
-                            controllerEntity.walkAllBlocks(null);
-                        }
-                    }
-                }
-            });
-
-            if (!foundConnect.get()){
-                this.isController = true;
-                this.controllerPos = getBlockPos();
-                this.addConnectedPos(this.getBlockPos());
-            }
-        }
-    }
-
-    public void addConnectedPos(BlockPos pos){
-        this.connectedBlocks.add(pos);
+    @Override
+    public void addConnectedPos(BlockPos pos) {
+        super.addConnectedPos(pos);
         calculateHeatStorage();
     }
 
-    @Override
-    public void destroy() {
-        if (isController()){
-            stoneHeatStorages.forEach(sHS->sHS.disconnect(getBlockPos()));
-            for (BlockPos pos : connectedBlocks){
-                if (!pos.equals(getBlockPos()) && getLevel().getBlockEntity(pos) instanceof ThermalBlockEntity thermalBlockEntity){
-                    thermalBlockEntity.isController = true;
-                    thermalBlockEntity.walkAllBlocks(getBlockPos());
-                    break;
-                }
-            }
-        }else {
-            if (getLevel().getBlockEntity(controllerPos) instanceof ThermalBlockEntity thermalBlockEntity){
-                thermalBlockEntity.walkAllBlocks(getBlockPos());
-            }
-        }
-        super.destroy();
-    }
 
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
@@ -559,31 +454,12 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         return false;
     }
 
-    public void walkAllBlocks(BlockPos exceptFor){
-        Set<BlockPos> oldBlocks = Set.copyOf(connectedBlocks);
-        connectedBlocks.clear();
-        BlockUtil.walkAllBlocks(getBlockPos(),connectedBlocks, pos -> {
-            if (!pos.equals(exceptFor) && getLevel().getBlockEntity(pos) instanceof ThermalBlockEntity thermalBlockEntity) {
-                thermalBlockEntity.controllerPos = getBlockPos();
-                return true;
-            }else {
-                return false;
-            }
-        });
-
-        for (BlockPos pos : oldBlocks){
-            if (!connectedBlocks.contains(pos) && getLevel().getBlockEntity(pos) instanceof ThermalBlockEntity thermalBlockEntity) {
-                if(!thermalBlockEntity.isController() && thermalBlockEntity.getControllerPos().equals(getBlockPos())){
-                    thermalBlockEntity.isController = true;
-                    thermalBlockEntity.walkAllBlocks(exceptFor);
-                }
-            }
-        }
-
+    @Override
+    public void walkAllBlocks(BlockPos exceptFor) {
+        super.walkAllBlocks(exceptFor);
         calculateHeatStorage();
-
-        notifyUpdate();
     }
+
 
     private void calculateHeatStorage(){
         heatStorage.setCapacity(connectedBlocks.size() * MAX_HEAT.get());
@@ -594,9 +470,12 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
 
     public HeatStorage getAllHeatForDisplay(){
         HeatStorage result = new HeatStorage(0);
-        for (HeatStorage hs : stoneHeatStorages){
-            result.setCapacity(result.getCapacity() + hs.getCapacity());
-            result.insert(hs.getAmount());
+        for (BlockPos sHSPos : stoneHeatStorages){
+            if (getLevel().getBlockEntity(sHSPos) instanceof TightCompressStoneEntity sHS) {
+                HeatStorage hs = sHS.getStoneHeatStorage();
+                result.setCapacity(result.getCapacity() + hs.getCapacity());
+                result.insert(hs.getAmount());
+            }
         }
         result.setCapacity(result.getCapacity() + heatStorage.getCapacity());
         result.insert(heatStorage.getAmount());
@@ -604,23 +483,15 @@ public class ThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     }
 
 
-    public ThermalBlockEntity getControllerEntity(){
-        if (isController){
-            return this;
-        }else if (controllerPos != null && getLevel().getBlockEntity(controllerPos) instanceof ThermalBlockEntity controllerEntity){
-            return controllerEntity.isController() ? controllerEntity : null;
-        }else {
-            return null;
-        }
-    }
-
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
     }
 
-    public boolean isController(){return isController;}
-    public BlockPos getControllerPos(){return isController ? getBlockPos() : controllerPos;}
-    public Set<BlockPos> getConnectedBlocks(){return isController ? connectedBlocks : getControllerEntity().getConnectedBlocks();}
+    public boolean isConnectTo(StoneHeatStorage shs){
+        return shs.isConnect(getControllerEntity().connectedBlocks);
+    }
+
+
 
     public int getHeat() {
         return heat;

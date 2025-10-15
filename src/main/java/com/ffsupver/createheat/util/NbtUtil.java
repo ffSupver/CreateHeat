@@ -76,4 +76,14 @@ public final class NbtUtil {
         tag.put("p",NbtUtils.writeBlockPos(pos));
         return tag;
     }
+
+    public static CompoundTag intToNbt(int i){
+        CompoundTag tag = new CompoundTag();
+        tag.putInt("i",i);
+        return tag;
+    }
+
+    public static Integer intFromNbt(Tag tag){
+        return ((CompoundTag)tag).getInt("i");
+    }
 }
