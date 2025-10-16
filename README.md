@@ -1,4 +1,4 @@
-<p align="center"><img src="./src/main/resources/icon.png" alt="Logo" width="200"></p>
+<p align="center"><img src="./src/main/resources/icon.png" alt="Create:Heat" width="200"></p>
 <h1 align="center">Create:Heat <br></h1>
     <h3 align="center"><a href="https://modrinth.com/mod/create-heat">Modrith Page</a>
     <a href="https://www.curseforge.com/minecraft/mc-mods/create-heat">Curseforge Page</a>

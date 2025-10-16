@@ -10,7 +10,7 @@ public class Config {
             .define("allow_passive_heat", true);
     public static final ModConfigSpec.BooleanValue ALLOW_GENERATE_SUPER_HEAT = BUILDER
             .comment("Whether to allow non super heat sources to generate super heat source")
-            .define("allow_generate_super_heat", true);
+            .define("allow_generate_super_heat", false);
 
     public static final ModConfigSpec.IntValue HEAT_PER_FADING_BLAZE = BUILDER
             .comment("Heat per fading (regular heat) blaze burner provide.")
@@ -25,7 +25,7 @@ public class Config {
     public static final ModConfigSpec.BooleanValue ALLOW_SUPER_HEAT_REPRODUCE = BUILDER
             .comment("Whether to allow super heat sources to generate more super heat sources")
             .comment("Only works when allow_generate_super_heat is false")
-            .define("allow_super_heat_reproduce", true);
+            .define("allow_super_heat_reproduce", false);
 
     public static final ModConfigSpec.IntValue MAX_CONNECT_RANGE = BUILDER
             .comment("Max range between blocks can be connected")

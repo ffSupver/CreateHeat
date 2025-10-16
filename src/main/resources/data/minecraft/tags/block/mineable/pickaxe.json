@@ -2,6 +2,9 @@
   "values": [
     "createheat:thermal_block",
     "createheat:tight_compressed_stone",
-    "createheat:dragon_fire_input"
+    {
+      "id": "createheat:dragon_fire_input",
+      "required": false
+    }
   ]
 }

@@ -1,5 +1,6 @@
 package com.ffsupver.createheat.compat.ponder.scenes;
 
+import com.ffsupver.createheat.block.tightCompressStone.TightCompressStone;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.content.kinetics.mixer.MechanicalMixerBlockEntity;
@@ -151,7 +152,7 @@ public class ThermalBlockScene {
 
         BlockPos lavaPos = util.grid().at(2,1,4);
         for (int i = 0;i < 3;i++){
-            scene.world().setBlock(lavaPos.above(i), Blocks.LAVA.defaultBlockState().setValue(LiquidBlock.LEVEL, 0), false);
+            scene.world().setBlock(lavaPos.above(i), CHBlocks.TIGHT_COMPRESSED_STONE.getDefaultState().setValue(TightCompressStone.HEAT, TightCompressStone.Heat.REGULAR_HEAT), false);
             scene.idle(3);
         }
 
