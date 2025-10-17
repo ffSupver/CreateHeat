@@ -1,12 +1,9 @@
 package com.ffsupver.createheat.block.thermalBlock;
 
 import com.ffsupver.createheat.registries.CHBlocks;
-import com.ffsupver.createheat.util.NbtUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -20,35 +17,35 @@ import java.util.function.Supplier;
 import static com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntity.MAX_HEAT;
 import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.HEAT;
 import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.Heat.*;
-import static com.ffsupver.createheat.util.BlockUtil.walkAllBlocks;
 
 public class StoneHeatStorage extends HeatStorage{
     private static final Supplier<Integer> HEAT_PER_LAVA = ()->MAX_HEAT.get() * 50;
     public final HashSet<BlockPos> stonePosSet;
-    private final BlockPos recordControllerPos;
-    public boolean shouldChangeController = false;
+//    private final BlockPos recordControllerPos;
+//    public boolean shouldChangeController = false;
     private BlockCounts lastBlockCounts = new BlockCounts();
     private int superHeatCount;
 
 
-    public StoneHeatStorage(HashSet<BlockPos> stonePosSet,BlockPos recordController) {
+    public StoneHeatStorage(HashSet<BlockPos> stonePosSet) {
         super(calculateCapacity(stonePosSet));
         this.stonePosSet = stonePosSet;
-        this.recordControllerPos = recordController;
+//        this.recordControllerPos = recordController;
     }
 
 
 
-    public Set<BlockPos> checkSize(Level level, BlockPos startPos, boolean shouldSetAmountWithoutCheck){
+    public void checkSize(Level level,Set<BlockPos> newBlockPosSet, boolean shouldSetAmountWithoutCheck){
         Set<BlockPos> oldSet = Set.copyOf(stonePosSet);
         stonePosSet.clear();
         AtomicInteger regularHeatCount = new AtomicInteger();
         AtomicInteger stoneCount = new AtomicInteger();
         AtomicInteger superHeatCount = new AtomicInteger();
 
-        Set<BlockPos> controllerPos = new HashSet<>();
+//        Set<BlockPos> controllerPos = new HashSet<>();
 
-        walkAllBlocks(startPos,stonePosSet,b->{
+        newBlockPosSet.forEach(b->{
+//        walkAllBlocks(startPos,stonePosSet,b->{
             BlockState bsT = level.getBlockState(b);
                 if (isAvailableRegularHeatBlock(bsT)){
                 regularHeatCount.getAndIncrement();
@@ -57,10 +54,11 @@ public class StoneHeatStorage extends HeatStorage{
             }else if (isAvailableTStoneBlock(bsT)) {
                 stoneCount.getAndIncrement();
             }
-            if (level.getBlockEntity(b) instanceof ThermalBlockEntity connectTBE){
-                controllerPos.add(connectTBE.getControllerPos());
-            }
-            return isAvailableBlock(bsT);
+//            if (level.getBlockEntity(b) instanceof ThermalBlockEntity connectTBE){
+//                controllerPos.add(connectTBE.getControllerPos());
+//            }
+            stonePosSet.add(b);
+//            return isAvailableBlock(bsT);
         });
 
         if (oldSet.size() != stonePosSet.size()){
@@ -78,20 +76,22 @@ public class StoneHeatStorage extends HeatStorage{
         }
 
         lastBlockCounts = new BlockCounts(sC,lC,sHC);
-        return controllerPos;
+//        return controllerPos;
     }
 
-    public boolean checkSize(Level level) {
-
+    public boolean checkSize(Level level,Set<BlockPos> newBlockPosSet) {
         if (!stonePosSet.isEmpty()){
             int oldSize = stonePosSet.size();
-            checkSize(level, stonePosSet.iterator().next(),false);
+            checkSize(level, newBlockPosSet,false);
             return stonePosSet.size() != oldSize;
         }
         return false;
     }
 
     public boolean updateBlockState(Level level){
+        if (getCapacity() == 0){
+            return false;
+        }
         int regularHeatCount = 0;
         int superHeatCount = 0;
         int stoneCount = 0;
@@ -188,7 +188,7 @@ public class StoneHeatStorage extends HeatStorage{
     }
 
     /**
-     * Only call after calling {@link #checkSize(Level, BlockPos, boolean)} or
+     * Only call after calling {@link #checkSize(Level, Set, boolean)} or
      * when {@link BlockCounts#unInit()} returns true
      */
     public int getSuperHeatCount(){
@@ -196,7 +196,7 @@ public class StoneHeatStorage extends HeatStorage{
     }
 
     /**
-     * Only call after calling {@link #checkSize(Level, BlockPos, boolean)} or
+     * Only call after calling {@link #checkSize(Level, Set, boolean)} or
      * when {@link BlockCounts#unInit()} returns true
      */
     public int getMaxSuperHeatCount(){
@@ -243,12 +243,13 @@ public class StoneHeatStorage extends HeatStorage{
         return stonePosSet.size() * HEAT_PER_LAVA.get();
     }
 
-    @Override
-    public void fromNbt(CompoundTag nbt) {
-        super.fromNbt(nbt);
+
+    public void fromNbt(CompoundTag nbt,Set<BlockPos> stonePS) {
+        this.fromNbt(nbt);
         stonePosSet.clear();
-        stonePosSet.addAll(NbtUtil.readBlockPosFromNbtList(nbt.getList("stone_pos", Tag.TAG_COMPOUND)));
-        shouldChangeController = nbt.getBoolean("should_change_c");
+//        stonePosSet.addAll(NbtUtil.readBlockPosFromNbtList(nbt.getList("stone_pos", Tag.TAG_COMPOUND)));
+        stonePosSet.addAll(stonePS);
+//        shouldChangeController = nbt.getBoolean("should_change_c");
         superHeatCount = nbt.getInt("super_heat_count");
     }
 
@@ -257,9 +258,9 @@ public class StoneHeatStorage extends HeatStorage{
     @Override
     public CompoundTag toNbt() {
         CompoundTag nbt = super.toNbt();
-        nbt.put("stone_pos",NbtUtil.writeBlockPosToNbtList(stonePosSet));
-        nbt.put("record_controller", NbtUtils.writeBlockPos(recordControllerPos));
-        nbt.putBoolean("should_change_c",shouldChangeController);
+//        nbt.put("stone_pos",NbtUtil.writeBlockPosToNbtList(stonePosSet));
+//        nbt.put("record_controller", NbtUtils.writeBlockPos(recordControllerPos));
+//        nbt.putBoolean("should_change_c",shouldChangeController);
         nbt.putInt("super_heat_count", superHeatCount);
         return nbt;
     }

@@ -18,7 +18,7 @@ import java.util.*;
 import static com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntity.MAX_COOLDOWN;
 
 public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompressStoneEntity> {
-    private final StoneHeatStorage stoneHeatStorage = new StoneHeatStorage(new HashSet<>(Set.of(getBlockPos())),getBlockPos());
+    private final StoneHeatStorage stoneHeatStorage = new StoneHeatStorage(new HashSet<>(Set.of(getBlockPos())));
     private final Map<BlockPos,Integer> superHeatTakenByTh = new HashMap<>();//存储:没有加热的->使用的超级加热数
     private final Map<BlockPos,Integer> superHeatProvideByTh = new HashMap<>();//存储:有加热的->所有超级加热数
     private final Map<BlockPos,Integer> superHeatActuallyProvideByTh = new HashMap<>();//存储:有加热的->剩余超级加热数 或 没有加热的->失效前的所有超级加热数
@@ -46,7 +46,7 @@ public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompre
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         if (isController()){
-            stoneHeatStorage.fromNbt(tag.getCompound("shs"));
+            stoneHeatStorage.fromNbt(tag.getCompound("shs"),getConnectedBlocks());
             maxSuperHeatHold = tag.getInt("max_super_heat");
             superHeatTakenByTh.clear();
             superHeatTakenByTh.putAll(NbtUtil.readMapFromNbtList(tag.getList("taken_map", Tag.TAG_COMPOUND),NbtUtil::blockPosFromNbt,NbtUtil::intFromNbt));
@@ -71,7 +71,7 @@ public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompre
 
             boolean removed = removeDisconnect();
 
-            boolean change = stoneHeatStorage.checkSize(getLevel());
+            boolean change = stoneHeatStorage.checkSize(getLevel(),getConnectedBlocks());
             int superHeatCount = getSuperHeatBlockCount();
             stoneHeatStorage.setSuperHeatCount(superHeatCount);
             change = stoneHeatStorage.updateBlockState(getLevel()) || change;
