@@ -1,5 +1,6 @@
 package com.ffsupver.createheat.api.iceAndFire;
 
+import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.compat.iceAndFire.IceAndFire;
 import com.iafenvoy.iceandfire.data.DragonType;
@@ -12,11 +13,12 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
-public record DragonHeater(DragonType dragonType, Function<Integer, HeatProvider> heatProviderByStage) {
+public record DragonHeater(DragonType dragonType, StageToHeatProviderFunc heatProviderByStage) {
 
     public static final Codec<IntFunctionFactory> INT_CODEC = Codec.lazyInitialized(() ->
             Codec.STRING.comapFlatMap(
@@ -26,22 +28,32 @@ public record DragonHeater(DragonType dragonType, Function<Integer, HeatProvider
     );
 
     public static Codec<DragonHeater> CODEC = RecordCodecBuilder.create(i->i.group(
-            Codec.STRING.fieldOf("dragon_type").forGetter(d->d.dragonType.name()),
-            INT_CODEC.fieldOf("heat_per_tick").forGetter(d->s->d.heatProviderByStage.apply(s).getHeatPerTick()),
-            INT_CODEC.fieldOf("super_heat_count").forGetter(d->s->d.heatProviderByStage.apply(s).getSupperHeatCount())
-    ).apply(i,(t,h,s)->new DragonHeater(
-            IafRegistries.DRAGON_TYPE.get(
-                ResourceKey.create(IafRegistryKeys.DRAGON_TYPE, ResourceLocation.parse(t))
-            ),(stage)->new DragonHeatProvider(h.apply(stage),s.apply(stage))
-    )));
+            Codec.STRING.fieldOf("dragon_type").forGetter(d->IafRegistries.DRAGON_TYPE.getKey(d.dragonType).toString()),
+            INT_CODEC.fieldOf("heat_per_tick").forGetter(d->d.heatProviderByStage.heatPerTickProvider),
+            INT_CODEC.fieldOf("super_heat_count").forGetter(d->d.heatProviderByStage.superHeatCountProvider)
+    ).apply(i,(t,h,s)-> {
+        ResourceKey<DragonType> typeResourceKey = ResourceKey.create(IafRegistryKeys.DRAGON_TYPE, ResourceLocation.parse(t));
+        DragonType type = IafRegistries.DRAGON_TYPE.get(typeResourceKey);
+        DragonHeater result = new DragonHeater(type,new StageToHeatProviderFunc(h, s));
+        CreateHeat.LOGGER.info("Register dragon heater {} with type:{}",result,t);
+        return result;
+    }));
 
 
 
     public static Optional<Holder.Reference<DragonHeater>> getFromDragonType(RegistryAccess registryAccess, DragonType dragonType){
-        return registryAccess.lookupOrThrow(IceAndFire.DRAGON_HEATER)
+        List<Holder.Reference<DragonHeater>> dragonHeaterList = registryAccess.lookupOrThrow(IceAndFire.DRAGON_HEATER)
                 .listElements()
+                .filter(hR->{
+                    if (hR.value().dragonType == null){
+                        CreateHeat.LOGGER.error("[DragonHeater]find null dragon type {} ; Check you datapack createheat/dragon_heater", hR);
+                        return false;
+                    }
+                    return true;
+                })
                 .filter(hR->hR.value().dragonType.equals(dragonType))
-                .findFirst();
+                .toList();
+        return dragonHeaterList.isEmpty() ? Optional.empty() : Optional.of(dragonHeaterList.getLast());
     }
 
 
@@ -50,6 +62,10 @@ public record DragonHeater(DragonType dragonType, Function<Integer, HeatProvider
     private interface IntFunctionFactory{
 
         int apply(int stage);
+    }
+
+    public record StageToHeatProviderFunc(IntFunctionFactory heatPerTickProvider,IntFunctionFactory superHeatCountProvider){
+        public HeatProvider apply(int stage){return new DragonHeatProvider(heatPerTickProvider.apply(stage),superHeatCountProvider.apply(stage));}
     }
 
 
@@ -65,7 +81,7 @@ public record DragonHeater(DragonType dragonType, Function<Integer, HeatProvider
                     binary.operator().getSymbol() +
                     expressionToString(binary.right()) + ")";
         }
-        throw new IllegalArgumentException("Unknown expression type: " + expression.getClass());
+        throw new IllegalArgumentException("Unknown expression type: " + expression.getClass()+" exp="+ expression + " 1->"+expression.apply(1) + " 2->"+expression.apply(2));
     }
 
     // 解析表达式字符串
@@ -134,6 +150,11 @@ public record DragonHeater(DragonType dragonType, Function<Integer, HeatProvider
         public int apply(int stage) {
             return value;
         }
+
+        @Override
+        public @NotNull String toString() {
+            return "constant:"+value;
+        }
     }
 
     // 阶段变量表达式
@@ -141,6 +162,11 @@ public record DragonHeater(DragonType dragonType, Function<Integer, HeatProvider
         @Override
         public int apply(int stage) {
             return stage;
+        }
+
+        @Override
+        public @NotNull String toString() {
+            return "stage";
         }
     }
 
@@ -186,6 +212,13 @@ public record DragonHeater(DragonType dragonType, Function<Integer, HeatProvider
                 }
                 throw new IllegalArgumentException("Unknown operator: " + symbol);
             }
+        }
+
+        @Override
+        public String toString() {
+            return "BinaryExpression{" +
+                    left.toString() + " " + operator.symbol + " " + right.toString() +
+                    '}';
         }
     }
 
