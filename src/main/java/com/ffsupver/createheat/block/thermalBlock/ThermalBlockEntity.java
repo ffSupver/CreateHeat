@@ -28,6 +28,7 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -159,7 +160,8 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
         Iterator<BlockPos> sHSIterator = stoneHeatStorages.iterator();
         while (sHSIterator.hasNext()){
             BlockPos sHSController = sHSIterator.next();
-            if (getLevel().getBlockEntity(sHSController) instanceof TightCompressStoneEntity sHS && (!sHS.isController() || !sHS.isConnect(connectedBlocks))) {
+            BlockEntity tightCSE = getLevel().getBlockEntity(sHSController);
+            if (!(tightCSE instanceof TightCompressStoneEntity) || tightCSE instanceof TightCompressStoneEntity sHS && (!sHS.isController() || !sHS.isConnect(connectedBlocks))) {
                     sHSIterator.remove();
                     changeSHS = true;
 
