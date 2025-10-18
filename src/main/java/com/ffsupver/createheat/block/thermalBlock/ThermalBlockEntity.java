@@ -154,12 +154,12 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
         int superHeatCount = 0;
 
 
-        //移除断开连接的或者空的储热器 检查每个储热器的方块状态
+        //移除断开连接的或者不是控制器的储热器 检查每个储热器的方块状态
         boolean changeSHS = false;
         Iterator<BlockPos> sHSIterator = stoneHeatStorages.iterator();
         while (sHSIterator.hasNext()){
             BlockPos sHSController = sHSIterator.next();
-            if (getLevel().getBlockEntity(sHSController) instanceof TightCompressStoneEntity sHS && !sHS.isConnect(connectedBlocks)) {
+            if (getLevel().getBlockEntity(sHSController) instanceof TightCompressStoneEntity sHS && (!sHS.isController() || !sHS.isConnect(connectedBlocks))) {
                     sHSIterator.remove();
                     changeSHS = true;
 
