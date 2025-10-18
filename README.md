@@ -12,3 +12,9 @@ A mod provide ways to heat create machine up.
 ## Support
 
 view <a herf="./wiki">wiki page</a> for more information
+
+# Links
+
+[Video Introduction](https://www.bilibili.com/video/BV1QuWbzGEJS)
+
+[MC百科](https://www.mcmod.cn/class/22515.html)
