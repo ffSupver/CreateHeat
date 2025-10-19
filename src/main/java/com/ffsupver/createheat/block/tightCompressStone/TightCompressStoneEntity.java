@@ -22,6 +22,7 @@ public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompre
     private final Map<BlockPos,Integer> superHeatTakenByTh = new HashMap<>();//存储:没有加热的->使用的超级加热数
     private final Map<BlockPos,Integer> superHeatProvideByTh = new HashMap<>();//存储:有加热的->所有超级加热数
     private final Map<BlockPos,Integer> superHeatActuallyProvideByTh = new HashMap<>();//存储:有加热的->剩余超级加热数 或 没有加热的->失效前的所有超级加热数
+    private final Map<BlockPos,Integer> superHeatMergeCashe = new HashMap<>();
     private int coolDown = 0;
     private int lastAmount;
 
@@ -168,7 +169,10 @@ public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompre
             updateSuperCountTaken(controllerPos,0);//重置使用数
             int totalLeft = calculateSuperHeatCountActuallyProvide() - calculateSuperHeatCountTaken();
             updateSuperCountTaken(controllerPos, totalLeft);
-            if (superHeatProvideByTh.containsKey(controllerPos)) {
+            if (superHeatMergeCashe.containsKey(controllerPos)){
+                updateCountMap(superHeatActuallyProvideByTh,controllerPos,superHeatMergeCashe.get(controllerPos));
+                superHeatMergeCashe.remove(controllerPos);
+            }else if (superHeatProvideByTh.containsKey(controllerPos)) {
                 superHeatActuallyProvideByTh.replace(controllerPos, superHeatProvideByTh.get(controllerPos));
                 reduceSuperCountActuallyProvideToSHSSuperC();
                 superHeatProvideByTh.remove(controllerPos);
@@ -177,6 +181,14 @@ public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompre
         }else {
             return getControllerEntity() == null ? 0 : getControllerEntity().releaseSuperHeatCount(controllerPos);
         }
+    }
+
+    public void switchTControllerTo(BlockPos oldPos,BlockPos newPos){
+        mergeCountMap(superHeatTakenByTh,newPos,oldPos);
+        mergeCountMap(superHeatActuallyProvideByTh,newPos,oldPos);
+        updateCountMap(superHeatProvideByTh,newPos,superHeatActuallyProvideByTh.get(newPos));
+        superHeatMergeCashe.replace(newPos,superHeatActuallyProvideByTh.get(newPos));
+        notifyUpdate();
     }
 
     private void updateSuperCountProvide(BlockPos pos,int count){
@@ -219,6 +231,12 @@ public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompre
         }
     }
 
+    private static void mergeCountMap(Map<BlockPos,Integer> toUpdate, BlockPos pos, BlockPos oldPos){
+        int count = toUpdate.getOrDefault(oldPos,0) + toUpdate.getOrDefault(pos,0);
+        updateCountMap(toUpdate,pos,count);
+        toUpdate.remove(oldPos);
+    }
+
     private static int calculateTotalCountMap(Map<BlockPos,Integer> toSum){
         int taken = 0;
         for (Integer t : toSum.values()){
@@ -243,7 +261,7 @@ public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompre
     private static boolean removeCountMap(Map<BlockPos,Integer> toRemove, Level level,StoneHeatStorage stoneHeatStorage){
         List<BlockPos> toRemoveList = new ArrayList<>();
         for (BlockPos key : toRemove.keySet()){
-            boolean shouldNotRemove = level.getBlockEntity(key) instanceof ThermalBlockEntity thermalBlockEntity && thermalBlockEntity.isConnectTo(stoneHeatStorage);
+            boolean shouldNotRemove = level.getBlockEntity(key) instanceof ThermalBlockEntity thermalBlockEntity && thermalBlockEntity.isController() && thermalBlockEntity.isConnectTo(stoneHeatStorage);
             if (!shouldNotRemove){
                 toRemoveList.add(key);
             }

@@ -463,6 +463,34 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
     }
 
 
+    @Override
+    protected void mergeController(BlockPos oldControllerPos, ConnectableBlockEntity<?> oldControllerEntity, BlockPos newControllerPos, ThermalBlockEntity newControllerEntity) {
+        ((ThermalBlockEntity)oldControllerEntity).switchStoneHeatStorageToNew(newControllerPos,newControllerEntity,true);
+    }
+
+    @Override
+    protected void switchToNewControllerWhenDestroy(BlockPos newPos, ConnectableBlockEntity<?> newControllerEntity) {
+        switchStoneHeatStorageToNew(newPos, (ThermalBlockEntity) newControllerEntity, false);
+    }
+
+    private void switchStoneHeatStorageToNew(BlockPos newControllerPos,ThermalBlockEntity newControllerEntity,boolean merge){
+        Iterator<BlockPos> shsPosIt = stoneHeatStorages.iterator();
+        while (shsPosIt.hasNext()){
+            BlockPos shsPos =shsPosIt.next();
+            if (getLevel().getBlockEntity(shsPos) instanceof TightCompressStoneEntity sHSEntity){
+                if (merge){
+                    sHSEntity.switchTControllerTo(getControllerPos(), newControllerPos);
+                    shsPosIt.remove();
+                }else{
+                    if ((!sHSEntity.isConnect(getConnectedBlocks()) || isController()) && sHSEntity.isConnect(newControllerEntity.getConnectedBlocks())) {
+                        sHSEntity.switchTControllerTo(getControllerPos(), newControllerPos);
+                        shsPosIt.remove();
+                    }
+                }
+            }
+        }
+    }
+
     private void calculateHeatStorage(){
         heatStorage.setCapacity(connectedBlocks.size() * MAX_HEAT.get());
     }

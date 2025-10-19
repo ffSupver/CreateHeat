@@ -9,7 +9,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -18,10 +17,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.level.pathfinder.PathType;
 import net.neoforged.neoforge.common.extensions.IBlockExtension;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class TightCompressStone extends ConnectableBlock<TightCompressStoneEntity> implements IBlockExtension {
     public static final Property<Heat> HEAT = EnumProperty.create("heat",Heat.class);
@@ -73,6 +70,11 @@ public class TightCompressStone extends ConnectableBlock<TightCompressStoneEntit
     @Override
     public BlockEntityType<? extends TightCompressStoneEntity> getBlockEntityType() {
         return CHBlocks.TIGHT_COMPRESSED_STONE_ENTITY.get();
+    }
+
+    @Override
+    public boolean isBurning(BlockState state, BlockGetter level, BlockPos pos) {
+        return !state.getValue(HEAT).equals(Heat.NONE);
     }
 
     public enum Heat implements StringRepresentable {

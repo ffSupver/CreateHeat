@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.ffsupver.createheat.util.BlockUtil.AllDirectionOf;
 
 public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>> extends SmartBlockEntity {
-    private boolean isController;
+    protected boolean isController;
     private BlockPos controllerPos;
     protected final Set<BlockPos> connectedBlocks = new HashSet<>();
 
@@ -28,10 +28,17 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
         controllerPos = getBlockPos();
     }
 
-    public abstract boolean canConnect(ConnectableBlockEntity toCheck);
+    public abstract boolean canConnect(ConnectableBlockEntity<?> toCheck);
     protected abstract T castToSubclass();
 
-    protected void afterCheckNeighbour(){}
+    protected void connectedNewBlock(BlockPos newPos,ConnectableBlockEntity<?> oldBlockEntity){
+    }
+
+    protected void mergeController(BlockPos oldControllerPos, ConnectableBlockEntity<?> oldControllerEntity, BlockPos newControllerPos, T newControllerEntity){}
+    /**
+    Only called by a controller. Times of Calls equal to new controller count to create.
+     */
+    protected void switchToNewControllerWhenDestroy(BlockPos newPos,ConnectableBlockEntity<?> newControllerEntity){}
 
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
@@ -60,7 +67,7 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
         if (!isController){
             AtomicBoolean foundConnect = new AtomicBoolean(false);
             AllDirectionOf(getBlockPos(),checkPos->{
-                if (getLevel().getBlockEntity(checkPos) instanceof ConnectableBlockEntity neighbourEntity && canConnect(neighbourEntity)) {
+                if (getLevel().getBlockEntity(checkPos) instanceof ConnectableBlockEntity<?> neighbourEntity && canConnect(neighbourEntity)) {
                     this.isController = false;
                     if (!foundConnect.get()){
                         this.controllerPos = neighbourEntity.getControllerPos();
@@ -68,11 +75,12 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
                     }
 
 
-                    ConnectableBlockEntity controllerEntity = getControllerEntity();
+                    ConnectableBlockEntity<T> controllerEntity = getControllerEntity();
                     if (controllerEntity != null){
                         controllerEntity.addConnectedPos(getBlockPos());
                         if (!neighbourEntity.getControllerPos().equals(controllerPos)){
                             if (neighbourEntity.getControllerEntity() != null){
+                                mergeController(neighbourEntity.getControllerPos(),neighbourEntity.getControllerEntity(),controllerPos,controllerEntity.castToSubclass());
                                 neighbourEntity.getControllerEntity().isController = false;
                             }
                             controllerEntity.walkAllBlocks(null);
@@ -87,17 +95,16 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
                 this.addConnectedPos(this.getBlockPos());
             }
         }
-
-        afterCheckNeighbour();
     }
 
     @Override
     public void destroy() {
         if (isController()){
             for (BlockPos pos : connectedBlocks){
-                if (!pos.equals(getBlockPos()) && getLevel().getBlockEntity(pos) instanceof ConnectableBlockEntity connectableBlockEntity && connectableBlockEntity.getControllerPos().equals(getBlockPos())){
+                if (!pos.equals(getBlockPos()) && getLevel().getBlockEntity(pos) instanceof ConnectableBlockEntity<?> connectableBlockEntity && connectableBlockEntity.getControllerPos().equals(getBlockPos())){
                     connectableBlockEntity.isController = true;
                     connectableBlockEntity.walkAllBlocks(getBlockPos());
+                    switchToNewControllerWhenDestroy(pos,connectableBlockEntity);
                 }
             }
         }else {
@@ -112,7 +119,8 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
         Set<BlockPos> oldBlocks = Set.copyOf(connectedBlocks);
         connectedBlocks.clear();
         BlockUtil.walkAllBlocks(getBlockPos(),connectedBlocks, pos -> {
-            if (!pos.equals(exceptFor) && getLevel().getBlockEntity(pos) instanceof ConnectableBlockEntity connectableBlockEntity && canConnect(connectableBlockEntity)) {
+            if (!pos.equals(exceptFor) && getLevel().getBlockEntity(pos) instanceof ConnectableBlockEntity<?> connectableBlockEntity && canConnect(connectableBlockEntity)) {
+                connectedNewBlock(pos, connectableBlockEntity);
                 connectableBlockEntity.controllerPos = getBlockPos();
                 return true;
             }else {
@@ -125,6 +133,7 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
                 if(!connectableBlockEntity.isController() && connectableBlockEntity.getControllerPos().equals(getBlockPos())){
                     connectableBlockEntity.isController = true;
                     connectableBlockEntity.walkAllBlocks(exceptFor);
+                    switchToNewControllerWhenDestroy(pos,connectableBlockEntity);
                 }
             }
         }
