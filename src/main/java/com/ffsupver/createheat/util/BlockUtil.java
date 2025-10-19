@@ -8,19 +8,26 @@ import net.minecraft.world.level.block.state.properties.Property;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public final class BlockUtil {
     public static void AllDirectionOf(BlockPos startPos, Consumer<BlockPos> f){
+        AllDirectionOf(startPos,(b,fa)->f.accept(b));
+    }
+    public static void AllDirectionOf(BlockPos startPos, BiConsumer<BlockPos,Direction> f){
         AllDirectionOf(startPos,f,b->false);
     }
     public static void AllDirectionOf(BlockPos startPos, Consumer<BlockPos> f, Predicate<BlockPos> shouldBreak){
+        AllDirectionOf(startPos,(b,fa)->f.accept(b),shouldBreak);
+    }
+    public static void AllDirectionOf(BlockPos startPos, BiConsumer<BlockPos,Direction> f, Predicate<BlockPos> shouldBreak){
         for (Direction d : Direction.values()){
             if (shouldBreak.test(startPos.relative(d))){
                 break;
             }
-            f.accept(startPos.relative(d));
+            f.accept(startPos.relative(d),d);
         }
     }
 

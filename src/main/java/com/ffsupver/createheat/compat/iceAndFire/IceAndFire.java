@@ -21,7 +21,6 @@ import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 
@@ -49,7 +48,6 @@ public class IceAndFire implements CHModCompat {
     public void init(IEventBus eventBus) {
         eventBus.addListener(IceAndFire::addItemsToCreativeTabA);
         eventBus.addListener(IceAndFire::registerDatapack);
-        eventBus.addListener(IceAndFire::registerBoilerHeater);
     }
 
     private static void addItemsToCreativeTabA(BuildCreativeModeTabContentsEvent event){
@@ -60,10 +58,9 @@ public class IceAndFire implements CHModCompat {
         event.dataPackRegistry(DRAGON_HEATER,DragonHeater.CODEC,DragonHeater.CODEC);
     }
 
-    private static void registerBoilerHeater(FMLCommonSetupEvent event){
-        event.enqueueWork(()->
-                BoilerHeater.REGISTRY.register(DRAGON_FIRE_INPUT.get(), HeatProvider.HEATER)
-        );
+    @Override
+    public void registerBoilerHeater() {
+        BoilerHeater.REGISTRY.register(DRAGON_FIRE_INPUT.get(), HeatProvider.HEATER);
     }
 
     @Override

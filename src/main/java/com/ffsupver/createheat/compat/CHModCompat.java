@@ -8,4 +8,5 @@ public interface CHModCompat {
     public String getModId();
     public void init(IEventBus eventBus);
     default void registerPonder(PonderSceneRegistrationHelper<ItemProviderEntry<?, ?>> HELPER){}
+    default void registerBoilerHeater(){}
 }

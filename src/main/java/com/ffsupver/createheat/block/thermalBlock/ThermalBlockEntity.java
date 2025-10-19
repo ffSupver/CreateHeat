@@ -5,8 +5,10 @@ import com.ffsupver.createheat.Config;
 import com.ffsupver.createheat.api.CustomHeater;
 import com.ffsupver.createheat.block.ConnectableBlockEntity;
 import com.ffsupver.createheat.block.HeatProvider;
+import com.ffsupver.createheat.block.HeatTransferProcesser;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
 import com.ffsupver.createheat.recipe.HeatRecipe;
+import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
 import com.ffsupver.createheat.registries.CHRecipes;
 import com.ffsupver.createheat.util.NbtUtil;
 import com.simibubi.create.api.boiler.BoilerHeater;
@@ -17,7 +19,6 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import joptsimple.internal.Strings;
 import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -34,6 +35,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -53,6 +55,7 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
     private final ArrayList<BlockPos> stoneHeatStorages = new ArrayList<>();
 
     private final Map<BlockPos,HeatRecipeProcessing> recipeProcessingMap = new HashMap<>();
+    private final Map<BlockPos,HeatTransferProcesser> transferProcesserMap = new HashMap<>();
 
     private final HeatStorage displayHeatStorage = new HeatStorage(0);
 
@@ -135,6 +138,13 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
             cooldown--;
         }
 
+        //处理需要每tick的传热处理器
+        transferProcesserMap.forEach((hTPPos,hTP)->{
+            if (hTP.shouldProcessEveryTick()){
+                int heatProvider = calculateHeatProvide(hTPPos,this,1);
+                hTP.acceptHeat(getLevel(),hTPPos,heatProvider);
+            }
+        });
 
     }
 
@@ -151,6 +161,8 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
 
         int lastHeat = heat;
         heat = 0;
+
+        int lastHeatStored = heatStorage.getAmount();
 
         int superHeatCount = 0;
 
@@ -174,6 +186,11 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
                 .filter(entry->entry.getValue().finished)
                 .map(Map.Entry::getKey).toList();
         processPosToRemove.forEach(recipeProcessingMap::remove);
+        //移除不合条件的传热处理器
+        List<BlockPos> heatTransferProcesserToRemove = transferProcesserMap.entrySet().stream()
+                .filter(e->!e.getValue().needHeat(getLevel(),e.getKey(),null))
+                .map(Map.Entry::getKey).toList();
+        heatTransferProcesserToRemove.forEach(transferProcesserMap::remove);
 
         //====加热部分====
 
@@ -181,21 +198,27 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
         //计算加热数  寻找配方
         List<HeatRecipeProcessing> hRPL = new ArrayList<>();
         for (ThermalBlockEntity thermalBlockEntity : connectedBlockList){
-            hRPL.addAll(thermalBlockEntity.getRecipes());
+            if (thermalBlockEntity.getControllerEntity() != null) {
 
-            HeatData heatBelow = thermalBlockEntity.genHeat();
-            heat += heatBelow.heat * tickSkip;
-            superHeatCount += heatBelow.superHeatCount;
+                hRPL.addAll(thermalBlockEntity.getRecipes());
 
-            // 寻找新储热器
-            for (Direction d : Direction.values()){
-                BlockPos checkPos = thermalBlockEntity.getBlockPos().relative(d);
-                if (getLevel().getBlockEntity(checkPos) instanceof TightCompressStoneEntity sHS){
-                    BlockPos sHSPosToAdd = sHS.getControllerPos();
-                    if (!stoneHeatStorages.contains(sHSPosToAdd)){
-                        stoneHeatStorages.add(sHSPosToAdd);
+                HeatData heatBelow = thermalBlockEntity.genHeat();
+                heat += heatBelow.heat * tickSkip;
+                superHeatCount += heatBelow.superHeatCount;
+
+
+                // 寻找新储热器,传热处理器
+                AllDirectionOf(thermalBlockEntity.getBlockPos(), (checkPos, f) -> {
+                    Optional<HeatTransferProcesser> transferProcesserOp = CHHeatTransferProcessers.findProcesser(getLevel(), checkPos, f);
+                    transferProcesserOp.ifPresent(hTP -> transferProcesserMap.putIfAbsent(checkPos, hTP));
+
+                    if (getLevel().getBlockEntity(checkPos) instanceof TightCompressStoneEntity sHS) {
+                        BlockPos sHSPosToAdd = sHS.getControllerPos();
+                        if (!stoneHeatStorages.contains(sHSPosToAdd)) {
+                            stoneHeatStorages.add(sHSPosToAdd);
+                        }
                     }
-                }
+                });
             }
         }
 
@@ -209,22 +232,30 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
 
 
         //====耗热部分====
-
         for (ThermalBlockEntity thermalBlockEntity : connectedBlockList){
-            CostHeatResult costHeatResult = thermalBlockEntity.costHeat(heat,tickSkip,superHeatCount);
-            heat = costHeatResult.heat;
-            superHeatCount = costHeatResult.superHeatCount;
+            if (thermalBlockEntity.getControllerEntity() != null) {
+                CostHeatResult costHeatResult = thermalBlockEntity.costHeat(heat, tickSkip, superHeatCount);
+                heat = costHeatResult.heat;
+                superHeatCount = costHeatResult.superHeatCount;
+            }
         }
 
         //处理配方->周围方块转换完毕 已经计算过耗热
         recipeProcessingMap.values().forEach(rP->{
             rP.addHeat(this,tickSkip);
-            heat += rP.process(getBlockPos(),getLevel(),tickSkip);
+            rP.process(getBlockPos(),getLevel(),tickSkip);
+        });
+        //处理传热处理器
+        transferProcesserMap.forEach((hTPPos, hTP) -> {
+            if (!hTP.shouldProcessEveryTick()){
+                int heatProvide = calculateHeatProvide(hTPPos, this, tickSkip);
+                hTP.acceptHeat(level, hTPPos, heatProvide);
+            }
         });
 
 
        storageHeat(superHeatCountFromHeater,superHeatCount,usingHeater); //检测SHS是否有方块变化
-        if (changeSHS || heat != lastHeat){
+        if (changeSHS || heat != lastHeat || lastHeatStored != heatStorage.getAmount()){
             sendData();
         }
     }
@@ -239,6 +270,9 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
 
     private HeatData genHeat() {
         BlockPos belowPos = getBlockPos().below();
+        if (getControllerEntity().getControllerEntity().getConnectedBlocks().contains(belowPos)){ //防止加热自己
+            return new HeatData(0,0);
+        }
         Optional<Holder.Reference<CustomHeater>> customHeatOp = CustomHeater.getFromBlockState(getLevel().registryAccess(), getLevel().getBlockState(belowPos));
         if (getLevel().getBlockEntity(belowPos) instanceof HeatProvider provider){
            return new HeatData(provider.getHeatPerTick(),provider.getSupperHeatCount());
@@ -354,7 +388,14 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
     }
 
     private boolean needToHeat(){
-        return needToHeatAbove() || canProcessRecipe(getBlockPos());
+        AtomicBoolean findProcesser = new AtomicBoolean(false);
+        List<BlockPos> transferProcesserKeys = List.copyOf(getControllerEntity().transferProcesserMap.keySet());
+        AllDirectionOf(getBlockPos(),blockPos->{
+            if (!findProcesser.get()){
+                findProcesser.set(transferProcesserKeys.contains(blockPos));
+            }
+        });
+        return needToHeatAbove() || canProcessRecipe(getBlockPos()) || findProcesser.get();
     }
 
     private List<HeatRecipeProcessing> getRecipes(){
@@ -535,6 +576,17 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
         }
     }
 
+    private static int calculateHeatProvide(BlockPos cPos,ThermalBlockEntity controller,int tickSkip){
+        AtomicInteger heatAccept = new AtomicInteger();
+        AllDirectionOf(cPos,pos -> {
+            if (controller.getConnectedBlocks().contains(pos)){
+                HeatLevel heatLevel = controller.getHeatLevel(pos);
+                heatAccept.addAndGet(controller.calculateHeatCost(tickSkip, heatLevel));
+            }
+        });
+        return heatAccept.get();
+    }
+
     private record CostHeatResult(int heat, int superHeatCount){}
 
 
@@ -565,18 +617,13 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
         }
 
         private void addHeat(ThermalBlockEntity controller,int tickSkip){
-            AllDirectionOf(processPos,pos -> {
-                if (controller.getConnectedBlocks().contains(pos)){
-                    HeatLevel heatLevel = controller.getHeatLevel(pos);
-                    this.heatAccept += controller.calculateHeatCost(tickSkip,heatLevel);
-                }
-            });
+           this.heatAccept = calculateHeatProvide(processPos,controller,tickSkip);
         }
 
-        private int process(BlockPos controllerPos,Level level,int tickSkip){
+        private void process(BlockPos controllerPos, Level level, int tickSkip){
             if (!controllerPos.equals(recordControllerPos)){
                 checkRecordController(level,controllerPos);
-                return 0;
+                return;
             }
 
             if (recipe == null){
@@ -593,7 +640,7 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
             heatAccept = 0;
 
             if (finished || tmpHeatAccept < heatRecipe.getMinHeatPerTick() * tickSkip){
-                return tmpHeatAccept;
+                return;
             }
 
             int heatFinal = heatGot + tmpHeatAccept;
@@ -607,10 +654,8 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
                 }else {
                     level.setBlock(processPos, heatRecipe.getOutputBlock(), 3);
                 }
-                return heatFinal - heatRecipe.getHeatCost();
             }else {
                 heatGot = heatFinal;
-                return 0;
             }
         }
 

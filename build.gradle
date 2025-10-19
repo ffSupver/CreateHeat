@@ -146,11 +146,15 @@ dependencies {
     runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
     implementation("com.tterrag.registrate:Registrate:${registrate_version}")
 
+    //IceAndFire Community Edition
     implementation "maven.modrinth:uranus:BBb3HOQ5"
     implementation "maven.modrinth:jupiter:I4i9vhEW"
     implementation("dev.architectury:architectury-neoforge:13.0.8")
     compileOnly files("libs/IceAndFireCE-2.0-beta.7-1.21.1-neoforge.jar") //找不到Maven所以从Modrinth下的
     runtimeOnly(files("libs/IceAndFireCE-2.0-beta.7-1.21.1-neoforge.jar"))
+
+    //PneumaticCraft: Repressurized
+    implementation("me.desht.pneumaticcraft:pneumaticcraft-repressurized:${pneumaticcraft_version}+mc${minecraft_version}") {transitive = true}
 }
 
 

@@ -1,6 +1,7 @@
 package com.ffsupver.createheat.compat;
 
 import com.ffsupver.createheat.compat.iceAndFire.IceAndFire;
+import com.ffsupver.createheat.compat.pneumaticcraft.Pneumaticcraft;
 import com.tterrag.registrate.util.entry.ItemProviderEntry;
 import net.createmod.ponder.api.registration.PonderSceneRegistrationHelper;
 import net.minecraft.resources.ResourceKey;
@@ -8,11 +9,13 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class Mods {
@@ -22,27 +25,22 @@ public class Mods {
         MODS.clear();
 
         addMod(ModIds.IceAndFire.ModId, IceAndFire::new);
+        addMod(ModIds.PNEUMATICCRAFT.ModId, Pneumaticcraft::new);
 
     }
 
     public static void init(IEventBus eventBus){
         loadMods();
 
-        for (Map.Entry<String,Supplier<CHModCompat>> entry : MODS.entrySet()){
-            if (ModList.get().isLoaded(entry.getKey())){
-                entry.getValue().get().init(eventBus);
-            }
-        }
+        executeIfLoad(chModCompatSupplier->chModCompatSupplier.get().init(eventBus));
+
+        eventBus.addListener(Mods::registerBoilerHeater);
     }
 
     public static void registerPonder(PonderSceneRegistrationHelper<ItemProviderEntry<?, ?>> HELPER){
         loadMods();
 
-        for (Map.Entry<String,Supplier<CHModCompat>> entry : MODS.entrySet()){
-            if (ModList.get().isLoaded(entry.getKey())){
-                entry.getValue().get().registerPonder(HELPER);
-            }
-        }
+        executeIfLoad(chModCompatSupplier-> chModCompatSupplier.get().registerPonder(HELPER));
     }
 
     private static void addMod(String modId,Supplier<CHModCompat> modCompatSupplier){
@@ -57,8 +55,23 @@ public class Mods {
         }
     }
 
+    private static void registerBoilerHeater(FMLCommonSetupEvent event){
+        event.enqueueWork(()->{
+            executeIfLoad(chModCompatSupplier->chModCompatSupplier.get().registerBoilerHeater());
+        });
+    }
+
+    private static void executeIfLoad(Consumer<Supplier<CHModCompat>> runnable){
+        for (Map.Entry<String,Supplier<CHModCompat>> entry : MODS.entrySet()){
+            if (ModList.get().isLoaded(entry.getKey())){
+               runnable.accept(entry.getValue());
+            }
+        }
+    }
+
     public enum ModIds{
-        IceAndFire("iceandfire");
+        IceAndFire("iceandfire"),
+        PNEUMATICCRAFT("pneumaticcraft");
         public final String ModId;
 
         ModIds(String modId) {
