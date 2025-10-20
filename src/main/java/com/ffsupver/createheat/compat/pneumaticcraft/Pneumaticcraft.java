@@ -3,6 +3,7 @@ package com.ffsupver.createheat.compat.pneumaticcraft;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
 import com.ffsupver.createheat.compat.CHModCompat;
 import com.ffsupver.createheat.compat.Mods;
+import com.ffsupver.createheat.registries.CHBoilerUpdaters;
 import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import me.desht.pneumaticcraft.api.heat.IHeatExchangerLogic;
@@ -24,6 +25,11 @@ public class Pneumaticcraft implements CHModCompat {
     @Override
     public void init(IEventBus eventBus) {
         CHHeatTransferProcessers.registerHeatTransferProcesser(new PneumaticcraftHeatTransferProcesser());
+        CHBoilerUpdaters.registerBoilerUpdater(
+                (posBelowBoiler, level) ->
+                level.getBlockState(posBelowBoiler).is(ModBlocks.VORTEX_TUBE.get()) &&
+                level.getBlockEntity(posBelowBoiler) instanceof IHeatExchangingTE iHeatExchangingTE && iHeatExchangingTE.getHeatExchanger(Direction.UP) != null
+        );
     }
 
     @Override
@@ -32,9 +38,9 @@ public class Pneumaticcraft implements CHModCompat {
             if (level.getBlockEntity(pos) instanceof IHeatExchangingTE iHeatExchangingTE){
                IHeatExchangerLogic iHeatExchangerLogic = iHeatExchangingTE.getHeatExchanger(Direction.UP);
                 if (iHeatExchangerLogic != null) {
-                    //确保不会出现0-1之间的数
+                    //确保不会出现0-1之间的数, 805->烈焰人燃烧室超级加热的温度(K)
                     double temperature = iHeatExchangerLogic.getTemperature();
-                    return temperature >= 505 ? (float) (iHeatExchangerLogic.getTemperature() / 505) : temperature > 90 ? 0 : BoilerHeater.NO_HEAT;
+                    return temperature >= 805 ? (float) (iHeatExchangerLogic.getTemperature() / 805) : temperature > 390 ? 0 : BoilerHeater.NO_HEAT;
                 }
             }
             return BoilerHeater.NO_HEAT;

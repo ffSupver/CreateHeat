@@ -35,7 +35,7 @@ public class ThermalBlock extends ConnectableBlock<ThermalBlockEntity> implement
             case SMOULDERING -> 15;
             case FADING -> 15;
             case KINDLED -> 15;
-            case SEETHING -> 8;
+            case SEETHING -> 12;
         };
     }
 

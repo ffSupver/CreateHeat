@@ -1,5 +1,6 @@
 package com.ffsupver.createheat;
 
+import com.ffsupver.createheat.api.BoilerUpdater;
 import com.ffsupver.createheat.compat.Mods;
 import com.ffsupver.createheat.registries.*;
 import com.mojang.logging.LogUtils;
@@ -19,6 +20,7 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 
 @Mod(CreateHeat.MODID)
@@ -80,5 +82,10 @@ public class CreateHeat {
     }
     public static ResourceLocation asResource(String path){
         return  ResourceLocation.fromNamespaceAndPath(MODID,path);
+    }
+
+    @SubscribeEvent
+    public void onServerTicking(ServerTickEvent.Post serverTickEvent){
+        BoilerUpdater.registerEvent(serverTickEvent);
     }
 }

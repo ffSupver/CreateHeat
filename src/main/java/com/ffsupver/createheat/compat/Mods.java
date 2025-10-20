@@ -19,34 +19,53 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class Mods {
-    private static Map<String, Supplier<CHModCompat>> MODS = new HashMap<>();
+    private static final Map<String, Supplier<CHModCompat>> MOD_SUPPLIERS = new HashMap<>();
+    private static final Map<String,CHModCompat> MODS = new HashMap<>();
+    private static boolean hasInit = false;
 
     private static void loadMods(){
-        MODS.clear();
+        if (!hasInit){
+            MOD_SUPPLIERS.clear();
 
-        addMod(ModIds.IceAndFire.ModId, IceAndFire::new);
-        addMod(ModIds.PNEUMATICCRAFT.ModId, Pneumaticcraft::new);
+            addMod(ModIds.IceAndFire.ModId, IceAndFire::new);
+            addMod(ModIds.PNEUMATICCRAFT.ModId, Pneumaticcraft::new);
+
+            MOD_SUPPLIERS.forEach(Mods::intiMod);
+
+            hasInit = true;
+        }
 
     }
 
     public static void init(IEventBus eventBus){
         loadMods();
 
-        executeIfLoad(chModCompatSupplier->chModCompatSupplier.get().init(eventBus));
+        executeIfLoad(chModCompat->chModCompat.init(eventBus));
 
         eventBus.addListener(Mods::registerBoilerHeater);
     }
 
     public static void registerPonder(PonderSceneRegistrationHelper<ItemProviderEntry<?, ?>> HELPER){
         loadMods();
-
-        executeIfLoad(chModCompatSupplier-> chModCompatSupplier.get().registerPonder(HELPER));
+        System.out.println("c "+MODS);
+        executeIfLoad(chModCompat-> chModCompat.registerPonder(HELPER));
     }
 
     private static void addMod(String modId,Supplier<CHModCompat> modCompatSupplier){
-        if (ModList.get().isLoaded(modId)){
-            MODS.put(modId,modCompatSupplier);
+        if (isModLoad(modId)){
+            MOD_SUPPLIERS.put(modId,modCompatSupplier);
         }
+    }
+
+    /**
+     * Not check if mod is loaded
+     */
+    private static void intiMod(String modId,Supplier<CHModCompat> modCompatSupplier){
+        MODS.put(modId,modCompatSupplier.get());
+    }
+
+    private static boolean isModLoad(String modId){
+        return ModList.get().isLoaded(modId);
     }
 
     public static void addItemsToCreativeTab(BuildCreativeModeTabContentsEvent event, ResourceKey<CreativeModeTab> tabKey, ItemLike... itemLikes){
@@ -57,12 +76,12 @@ public class Mods {
 
     private static void registerBoilerHeater(FMLCommonSetupEvent event){
         event.enqueueWork(()->{
-            executeIfLoad(chModCompatSupplier->chModCompatSupplier.get().registerBoilerHeater());
+            executeIfLoad(CHModCompat::registerBoilerHeater);
         });
     }
 
-    private static void executeIfLoad(Consumer<Supplier<CHModCompat>> runnable){
-        for (Map.Entry<String,Supplier<CHModCompat>> entry : MODS.entrySet()){
+    private static void executeIfLoad(Consumer<CHModCompat> runnable){
+        for (Map.Entry<String,CHModCompat> entry : MODS.entrySet()){
             if (ModList.get().isLoaded(entry.getKey())){
                runnable.accept(entry.getValue());
             }

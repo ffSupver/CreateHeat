@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "refmap": "createheat.refmap.json",
   "mixins": [
+    "ChunkMapAccessor",
     "iceAndFire.EntityDragonBaseMixin",
     "iceAndFire.IafDragonDestructionManagerMixin"
   ],
