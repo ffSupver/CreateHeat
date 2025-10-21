@@ -68,4 +68,17 @@ public final class BlockUtil {
 
         return true;
     }
+
+    public static boolean isConnect(Set<BlockPos> set1,Set<BlockPos> set2){
+        for (BlockPos thisPos : set1){
+            for (Direction d : Direction.values()){
+                for (BlockPos thPos : set2) {
+                    if (thisPos.relative(d).equals(thPos)){
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }

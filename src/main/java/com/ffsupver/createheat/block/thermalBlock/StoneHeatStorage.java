@@ -1,6 +1,7 @@
 package com.ffsupver.createheat.block.thermalBlock;
 
 import com.ffsupver.createheat.registries.CHBlocks;
+import com.ffsupver.createheat.util.BlockUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -266,16 +267,7 @@ public class StoneHeatStorage extends HeatStorage{
     }
 
     public boolean isConnect(Set<BlockPos> posSet){
-        for (BlockPos thisPos : stonePosSet){
-            for (Direction d : Direction.values()){
-                for (BlockPos thPos : posSet) {
-                    if (thisPos.relative(d).equals(thPos)){
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+        return BlockUtil.isConnect(stonePosSet,posSet);
     }
 
     private static class BlockCounts{

@@ -2,14 +2,17 @@ package com.ffsupver.createheat.block.thermalBlock;
 
 import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.Config;
+import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.api.CustomHeater;
 import com.ffsupver.createheat.block.ConnectableBlockEntity;
 import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
 import com.ffsupver.createheat.recipe.HeatRecipe;
+import com.ffsupver.createheat.registries.CHBlocks;
 import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
 import com.ffsupver.createheat.registries.CHRecipes;
+import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.NbtUtil;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
@@ -17,21 +20,21 @@ import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import joptsimple.internal.Strings;
-import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -54,7 +57,6 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
     private final HeatStorage heatStorage = new HeatStorage(MAX_HEAT.get());
     private final ArrayList<BlockPos> stoneHeatStorages = new ArrayList<>();
 
-    private final Map<BlockPos,HeatRecipeProcessing> recipeProcessingMap = new HashMap<>();
     private final Map<BlockPos,HeatTransferProcesser> transferProcesserMap = new HashMap<>();
 
     private final HeatStorage displayHeatStorage = new HeatStorage(0);
@@ -85,11 +87,12 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
 
             tag.put("shs",NbtUtil.writeBlockPosToNbtList(stoneHeatStorages));
 
-            tag.put("recipe",NbtUtil.writeMapToNbtList(
-                    recipeProcessingMap,
+
+            tag.put("transfer_processers",NbtUtil.writeMapToNbtList(
+                    transferProcesserMap,
                     NbtUtil::blockPosToNbt,
-                    hRP->hRP.toNbt(getBlockPos()))
-            );
+                    CHHeatTransferProcessers::toNbt
+            ));
 
             if (clientPacket){
                 tag.put("display_heat",getAllHeatForDisplay().toNbt());
@@ -110,12 +113,12 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
             stoneHeatStorages.clear();
             stoneHeatStorages.addAll(NbtUtil.readBlockPosFromNbtList(tag.getList("shs", Tag.TAG_COMPOUND)));
 
-            recipeProcessingMap.clear();
-            recipeProcessingMap.putAll(NbtUtil.readMapFromNbtList(
-                    tag.getList("recipe", Tag.TAG_COMPOUND),
+            transferProcesserMap.clear();
+            transferProcesserMap.putAll(NbtUtil.readMapFromNbtList(
+                    tag.getList("transfer_processers", Tag.TAG_COMPOUND),
                     NbtUtil::blockPosFromNbt,
-                    t -> HeatRecipeProcessing.fromNbt((CompoundTag) t, getBlockPos()))
-            );
+                    CHHeatTransferProcessers::fromNbt
+            ));
 
             if (clientPacket) {
                 displayHeatStorage.fromNbt(tag.getCompound("display_heat"));
@@ -142,7 +145,7 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
         transferProcesserMap.forEach((hTPPos,hTP)->{
             if (hTP.shouldProcessEveryTick()){
                 int heatProvider = calculateHeatProvide(hTPPos,this,1);
-                hTP.acceptHeat(getLevel(),hTPPos,heatProvider);
+                hTP.acceptHeat(getLevel(),hTPPos,heatProvider,1);
             }
         });
 
@@ -181,27 +184,21 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
         }
 
 
-        //移除已经完成的配方
-        List<BlockPos> processPosToRemove = recipeProcessingMap.entrySet().stream()
-                .filter(entry->entry.getValue().finished)
-                .map(Map.Entry::getKey).toList();
-        processPosToRemove.forEach(recipeProcessingMap::remove);
         //移除不合条件的传热处理器
         List<BlockPos> heatTransferProcesserToRemove = transferProcesserMap.entrySet().stream()
-                .filter(e->!e.getValue().needHeat(getLevel(),e.getKey(),null))
+                .filter(e->!e.getValue().needHeat(getLevel(),e.getKey(),null) || !BlockUtil.isConnect(getConnectedBlocks(),Set.of(e.getKey())))
                 .map(Map.Entry::getKey).toList();
-        heatTransferProcesserToRemove.forEach(transferProcesserMap::remove);
+        heatTransferProcesserToRemove.forEach(blockPos -> {
+            transferProcesserMap.get(blockPos).onControllerRemove();
+            transferProcesserMap.remove(blockPos);
+        });
 
         //====加热部分====
 
 
-        //计算加热数  寻找配方
-        List<HeatRecipeProcessing> hRPL = new ArrayList<>();
+        //计算加热数
         for (ThermalBlockEntity thermalBlockEntity : connectedBlockList){
             if (thermalBlockEntity.getControllerEntity() != null) {
-
-                hRPL.addAll(thermalBlockEntity.getRecipes());
-
                 HeatData heatBelow = thermalBlockEntity.genHeat();
                 heat += heatBelow.heat * tickSkip;
                 superHeatCount += heatBelow.superHeatCount;
@@ -209,6 +206,10 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
 
                 // 寻找新储热器,传热处理器
                 AllDirectionOf(thermalBlockEntity.getBlockPos(), (checkPos, f) -> {
+                    if (transferProcesserMap.containsKey(checkPos)){
+                        return;  //避免重复搜索
+                    }
+
                     Optional<HeatTransferProcesser> transferProcesserOp = CHHeatTransferProcessers.findProcesser(getLevel(), checkPos, f);
                     transferProcesserOp.ifPresent(hTP -> transferProcesserMap.putIfAbsent(checkPos, hTP));
 
@@ -227,8 +228,6 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
         int superHeatCountFromHeater = superHeatCount;
         superHeatCount += superHeatCountFromSHS;
 
-        //添加找到的新配方
-        checkAddHeatRecipeProcessing(hRPL);
 
 
         //====耗热部分====
@@ -240,16 +239,11 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
             }
         }
 
-        //处理配方->周围方块转换完毕 已经计算过耗热
-        recipeProcessingMap.values().forEach(rP->{
-            rP.addHeat(this,tickSkip);
-            rP.process(getBlockPos(),getLevel(),tickSkip);
-        });
         //处理传热处理器
         transferProcesserMap.forEach((hTPPos, hTP) -> {
             if (!hTP.shouldProcessEveryTick()){
                 int heatProvide = calculateHeatProvide(hTPPos, this, tickSkip);
-                hTP.acceptHeat(level, hTPPos, heatProvide);
+                hTP.acceptHeat(level, hTPPos, heatProvide,tickSkip);
             }
         });
 
@@ -260,13 +254,6 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
         }
     }
 
-    private void checkAddHeatRecipeProcessing(List<HeatRecipeProcessing> hRPL) {
-        for (HeatRecipeProcessing h : hRPL){
-            if (!recipeProcessingMap.containsKey(h.processPos)){
-                recipeProcessingMap.put(h.processPos,h);
-            }
-        }
-    }
 
     private HeatData genHeat() {
         BlockPos belowPos = getBlockPos().below();
@@ -395,36 +382,11 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
                 findProcesser.set(transferProcesserKeys.contains(blockPos));
             }
         });
-        return needToHeatAbove() || canProcessRecipe(getBlockPos()) || findProcesser.get();
+        return needToHeatAbove() || findProcesser.get();
     }
 
-    private List<HeatRecipeProcessing> getRecipes(){
-        List<HeatRecipeProcessing> rPList = new ArrayList<>();
-        AllDirectionOf(getBlockPos(),checkPos->{
-            BlockState checkState = getLevel().getBlockState(checkPos);
-            HeatRecipe.HeatRecipeTester tester = new HeatRecipe.HeatRecipeTester(checkState);
-            Optional<RecipeHolder<HeatRecipe>> optionalRH = getLevel().getRecipeManager().getRecipeFor(CHRecipes.HEAT_RECIPE.get(),tester,getLevel());
-            if (optionalRH.isPresent()){
-                AtomicReference<Optional<HeatRecipeProcessing>> oHRP = new AtomicReference<>(Optional.empty());
-                AllDirectionOf(checkPos,
-                        checkControllerPos-> {
-                            if (!checkControllerPos.equals(getBlockPos()) && getLevel().getBlockEntity(checkControllerPos) instanceof ThermalBlockEntity otherTE) {
-                                if (!otherTE.getControllerPos().equals(getControllerPos())) {
-                                    oHRP.set(otherTE.getRecipeByOther(checkPos));
-                                }
-                            }
-                        },
-                        c->oHRP.get().isPresent() //找到就终止
-                );
-                HeatRecipeProcessing hRP = oHRP.get().orElse(new HeatRecipeProcessing(checkPos,getControllerPos(), optionalRH.get()));
-                rPList.add(hRP);
-            }
-        });
-        return rPList;
-    }
-
-    private Optional<HeatRecipeProcessing> getRecipeByOther(BlockPos pos){
-        return Optional.ofNullable(getControllerEntity().recipeProcessingMap.get(pos));
+    private Optional<HeatTransferProcesser> getHeatTransferProcesserByOther(BlockPos pos){
+        return Optional.ofNullable(getControllerEntity().transferProcesserMap.get(pos));
     }
 
     public boolean needToHeatAbove(){
@@ -432,19 +394,6 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
         boolean needToHeatBoiler = getLevel().getBlockEntity(getBlockPos().above()) instanceof FluidTankBlockEntity fluidTankBlockEntity &&
                 fluidTankBlockEntity.getControllerBE().boiler.attachedEngines > 0;
         return needToHeatAbove || needToHeatBoiler;
-    }
-
-
-    public boolean canProcessRecipe(BlockPos pos){
-        if (isController()) {
-            AtomicBoolean c = new AtomicBoolean(false);
-            AllDirectionOf(pos,checkPos->{
-               c.set(recipeProcessingMap.containsKey(checkPos));
-            },b->c.get());
-            return c.get();
-        }else {
-           return getControllerEntity() != null && getControllerEntity().canProcessRecipe(getBlockPos());
-        }
     }
 
     public HeatLevel getHeatLevel(BlockPos pos){
@@ -514,7 +463,13 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
         switchStoneHeatStorageToNew(newPos, (ThermalBlockEntity) newControllerEntity, false);
     }
 
-    private void switchStoneHeatStorageToNew(BlockPos newControllerPos,ThermalBlockEntity newControllerEntity,boolean merge){
+    @Override
+    public void destroy() {
+        transferProcesserMap.forEach((b,h)->h.onControllerRemove());
+        super.destroy();
+    }
+
+    private void switchStoneHeatStorageToNew(BlockPos newControllerPos, ThermalBlockEntity newControllerEntity, boolean merge){
         Iterator<BlockPos> shsPosIt = stoneHeatStorages.iterator();
         while (shsPosIt.hasNext()){
             BlockPos shsPos =shsPosIt.next();
@@ -590,119 +545,159 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
     private record CostHeatResult(int heat, int superHeatCount){}
 
 
-    private static class HeatRecipeProcessing{
-        private final BlockPos processPos;
-        private BlockPos recordControllerPos;
-        private RecipeHolder<HeatRecipe> recipe;
-        private int heatAccept;
-        private int heatGot;
-        private boolean finished;
-        private String recipeId;
+    public static class HeatRecipeTransferProcesser extends HeatTransferProcesser{
+        public static final ResourceLocation TYPE = CreateHeat.asResource("heat_recipe");
+        private boolean finished = false;
+        private boolean removed = false;
+        private boolean isMainProcesser = false;
+        private int acceptedHeat = 0;
+        private int totalHeat = 0;
+        private BlockPos fr = null;
+        private HeatRecipeTransferProcesser mainProcesser = null;
 
-        private HeatRecipeProcessing(BlockPos processPos, BlockPos recordControllerPos, RecipeHolder<HeatRecipe> recipe,int heatGot) {
-            this.processPos = processPos;
-            this.recordControllerPos = recordControllerPos;
-            this.recipe = recipe;
-            this.heatAccept = 0;
-            this.heatGot = heatGot;
+        public HeatRecipeTransferProcesser() {
+            super(TYPE);
         }
 
-        private HeatRecipeProcessing(BlockPos processPos, BlockPos recordControllerPos, RecipeHolder<HeatRecipe> recipe) {
-            this(processPos,recordControllerPos,recipe,0);
-        }
+        @Override
+        public boolean needHeat(Level level, BlockPos checkPos, @Nullable Direction face) {
+                Optional<RecipeHolder<HeatRecipe>> optionalRH = getRecipe(level,checkPos);
+                if (optionalRH.isPresent()){
+                    if (face == null){
+                        return !finished;
+                    }
 
-        private HeatRecipeProcessing(BlockPos processPos, BlockPos recordControllerPos,String recipeId,int heatGot){
-            this(processPos,recordControllerPos, (RecipeHolder<HeatRecipe>) null,heatGot);
-            this.recipeId = recipeId;
-        }
+                    ThermalBlockEntity thBlockAttach = getAttachThermalBlock(level,checkPos,face);
+                    AtomicReference<Optional<HeatTransferProcesser>> oHRP = new AtomicReference<>(Optional.empty());
+                    AllDirectionOf(checkPos,
+                            (checkControllerPos,f)-> {
+                                if (!f.equals(face.getOpposite()) && level.getBlockEntity(checkControllerPos) instanceof ThermalBlockEntity otherTE) {
+                                    if (!otherTE.getControllerPos().equals(thBlockAttach.getControllerPos())) {
+                                        Optional<HeatTransferProcesser> otherHTP = otherTE.getHeatTransferProcesserByOther(checkPos);
+                                        if (otherHTP.isPresent() && otherHTP.get() instanceof HeatRecipeTransferProcesser hRTP && hRTP.isMainProcesser){
+                                            oHRP.set(otherHTP);
+                                        }
+                                    }
+                                }
+                            },
+                            //找到mainProcesser就终止
+                            c-> oHRP.get().isPresent() && oHRP.get().get() instanceof HeatRecipeTransferProcesser hRTP && hRTP.isMainProcesser
+                    );
 
-        private void addHeat(ThermalBlockEntity controller,int tickSkip){
-           this.heatAccept = calculateHeatProvide(processPos,controller,tickSkip);
-        }
+                    if (oHRP.get().isEmpty()){
+                        this.isMainProcesser = true;
+                        this.mainProcesser = null;
+                    }else if (oHRP.get().get() instanceof HeatRecipeTransferProcesser mainRecipeP){
+                        this.mainProcesser = mainRecipeP.isMainProcesser ? mainRecipeP : mainRecipeP.mainProcesser;
+                    }
 
-        private void process(BlockPos controllerPos, Level level, int tickSkip){
-            if (!controllerPos.equals(recordControllerPos)){
-                checkRecordController(level,controllerPos);
-                return;
-            }
+                    this.fr = checkPos.relative(face.getOpposite());
 
-            if (recipe == null){
-                initRecipe(level.getRecipeManager());
-            }
-
-            //检测输入方块是否正确
-            if (!checkInputBlock(level)){
-                this.finished = true;
-            }
-
-            HeatRecipe heatRecipe = recipe.value();
-            int tmpHeatAccept = heatAccept;
-            heatAccept = 0;
-
-            if (finished || tmpHeatAccept < heatRecipe.getMinHeatPerTick() * tickSkip){
-                return;
-            }
-
-            int heatFinal = heatGot + tmpHeatAccept;
-
-            if (heatFinal >= heatRecipe.getHeatCost()){
-                heatGot = heatRecipe.getHeatCost();
-                this.finished = true;
-                BlockState outputState = heatRecipe.getOutputBlock();
-                if (outputState.getFluidState().is(FluidTags.WATER) && level.dimensionType().ultraWarm()) {
-                    level.destroyBlock(processPos,false);
+                    return true;
                 }else {
-                    level.setBlock(processPos, heatRecipe.getOutputBlock(), 3);
+                    return false;
                 }
+        }
+
+        @Override
+        public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide,int tickSkip) {
+            if (isMainProcesser){
+                acceptHeatAsMainP(level,hTPPos,heatProvide,tickSkip);
             }else {
-                heatGot = heatFinal;
+                if (mainProcesser.removed){
+                    //转换到新的mainProcesser
+                    if (mainProcesser.mainProcesser == null){
+                        mainProcesser.switchToNew(this);
+                        acceptHeatAsMainP(level,hTPPos,heatProvide,tickSkip);
+                    }else {
+                        mainProcesser = mainProcesser.mainProcesser;
+                        mainProcesser.mainAcceptHeat(heatProvide);
+                    }
+                }else {
+                    mainProcesser.mainAcceptHeat(heatProvide);
+                }
             }
         }
 
-        private void initRecipe(RecipeManager recipeManager){
-            Optional<RecipeHolder<HeatRecipe>> recipeOp = recipeManager.getAllRecipesFor(CHRecipes.HEAT_RECIPE.get())
-                    .stream().filter(h->h.id().toString().equals(recipeId)).findFirst();
-            recipe = recipeOp.orElse(null);
-            if (recipe == null){
-                this.finished = true;
-            }
+        private void mainAcceptHeat(int heat){
+            this.acceptedHeat += heat;
         }
 
-        private void checkRecordController(Level level,BlockPos newPos){
-           if (!(level.getBlockEntity(recordControllerPos) instanceof ThermalBlockEntity)){
-               recordControllerPos = newPos;
-           }
-        }
-
-        private boolean checkInputBlock(Level level){
-            //recipe 已经初始化
-            HeatRecipe.HeatRecipeTester tester = new HeatRecipe.HeatRecipeTester(level.getBlockState(processPos));
-            Optional<RecipeHolder<HeatRecipe>> heatRecipeRecipeHolderOp = level.getRecipeManager().getRecipeFor(CHRecipes.HEAT_RECIPE.get(),tester,level);
-            if (heatRecipeRecipeHolderOp.isPresent()){
-               RecipeHolder<HeatRecipe> heatRecipeH = heatRecipeRecipeHolderOp.get();
-               return heatRecipeH.id().equals(recipe.id());
-            }
+        @Override
+        public boolean shouldProcessEveryTick() {
             return false;
         }
 
-        private CompoundTag toNbt(BlockPos controllerPos){
-            if (controllerPos.equals(recordControllerPos)){
-                CompoundTag nbt = new CompoundTag();
-                nbt.put("process_pos",NbtUtils.writeBlockPos(processPos));
-                nbt.putInt("heat_got",heatGot);
-                nbt.putString("id", recipe == null ? recipeId : recipe.id().toString());
-
-                return nbt;
-            }
-            return null;
+        @Override
+        public boolean shouldWriteAndReadFromNbt() {
+            return isMainProcesser;
         }
 
-        private static HeatRecipeProcessing fromNbt(CompoundTag nbt, BlockPos recordControllerPos){
-            BlockPos processPos = NBTHelper.readBlockPos(nbt,"process_pos");
-            int heatGot = nbt.getInt("heat_got");
-            String recipeId = nbt.getString("id");
-            return new HeatRecipeProcessing(processPos, recordControllerPos, recipeId,heatGot);
+        @Override
+        public void onControllerRemove() {
+            this.removed = true;
+        }
+
+        @Override
+        public CompoundTag toNbt() {
+            CompoundTag nbt = new CompoundTag();
+            nbt.putInt("total",totalHeat);
+            nbt.putInt("accepted",acceptedHeat);
+            nbt.putBoolean("is_main",isMainProcesser);
+            return nbt;
+        }
+
+        @Override
+        public void fromNbt(CompoundTag nbt) {
+            totalHeat = nbt.getInt("total");
+            acceptedHeat = nbt.getInt("accepted");
+            isMainProcesser = nbt.getBoolean("is_main");
+        }
+
+        private void acceptHeatAsMainP(Level level, BlockPos hTPPos, int heatProvide, int tickSkip){
+            Optional<RecipeHolder<HeatRecipe>> optionalRH =  getRecipe(level,hTPPos);
+            if (optionalRH.isPresent()){
+                HeatRecipe recipe = optionalRH.get().value();
+                acceptedHeat += heatProvide;
+                if (acceptedHeat >= recipe.getMinHeatPerTick() * tickSkip){
+                    totalHeat += acceptedHeat;
+                    if (totalHeat >= recipe.getHeatCost()){
+                        doneRecipe(level,recipe,hTPPos);
+                    }
+                }
+            }
+            acceptedHeat = 0;
+        }
+
+        private void doneRecipe(Level level, HeatRecipe heatRecipe, BlockPos processPos) {
+            BlockState outputState = heatRecipe.getOutputBlock();
+            if (outputState.getFluidState().is(FluidTags.WATER) && level.dimensionType().ultraWarm()) {
+                level.destroyBlock(processPos, false);
+            } else {
+                level.setBlock(processPos, heatRecipe.getOutputBlock(), 3);
+            }
+            this.finished = true;
+        }
+
+        private void switchToNew(HeatRecipeTransferProcesser newTransferP){
+            this.mainProcesser = newTransferP;
+            newTransferP.isMainProcesser = true;
+            newTransferP.mainProcesser = null;
+            newTransferP.totalHeat = this.totalHeat;
+            newTransferP.acceptedHeat = this.acceptedHeat;
+        }
+
+        private static ThermalBlockEntity getAttachThermalBlock(Level level, BlockPos transferProcesserPos, Direction face){
+            BlockPos thBlockPos = transferProcesserPos.relative(face.getOpposite());
+            return level.getBlockEntity(thBlockPos, CHBlocks.THERMAL_BLOCK_ENTITY.get()).orElse(null);
+        }
+
+        private static Optional<RecipeHolder<HeatRecipe>> getRecipe(Level level,BlockPos checkPos){
+            BlockState checkState = level.getBlockState(checkPos);
+            HeatRecipe.HeatRecipeTester tester = new HeatRecipe.HeatRecipeTester(checkState);
+            return level.getRecipeManager().getRecipeFor(CHRecipes.HEAT_RECIPE.get(),tester,level);
         }
     }
+
     private record HeatData(int heat,int superHeatCount){}
 }

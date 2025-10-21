@@ -47,7 +47,6 @@ public class Mods {
 
     public static void registerPonder(PonderSceneRegistrationHelper<ItemProviderEntry<?, ?>> HELPER){
         loadMods();
-        System.out.println("c "+MODS);
         executeIfLoad(chModCompat-> chModCompat.registerPonder(HELPER));
     }
 

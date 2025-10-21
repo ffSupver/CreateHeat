@@ -1,5 +1,6 @@
 package com.ffsupver.createheat.compat.pneumaticcraft;
 
+import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
 import com.ffsupver.createheat.compat.CHModCompat;
 import com.ffsupver.createheat.compat.Mods;
@@ -11,6 +12,7 @@ import me.desht.pneumaticcraft.common.block.entity.IHeatExchangingTE;
 import me.desht.pneumaticcraft.common.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
@@ -24,7 +26,7 @@ public class Pneumaticcraft implements CHModCompat {
 
     @Override
     public void init(IEventBus eventBus) {
-        CHHeatTransferProcessers.registerHeatTransferProcesser(new PneumaticcraftHeatTransferProcesser());
+        CHHeatTransferProcessers.registerHeatTransferProcesser(PneumaticcraftHeatTransferProcesser.TYPE.getPath(),()->PneumaticcraftHeatTransferProcesser::new);
         CHBoilerUpdaters.registerBoilerUpdater(
                 (posBelowBoiler, level) ->
                 level.getBlockState(posBelowBoiler).is(ModBlocks.VORTEX_TUBE.get()) &&
@@ -48,6 +50,11 @@ public class Pneumaticcraft implements CHModCompat {
     }
 
     public static class PneumaticcraftHeatTransferProcesser extends HeatTransferProcesser {
+        private static final ResourceLocation TYPE = CreateHeat.asResource("pneumaticcraft_compat");
+
+        protected PneumaticcraftHeatTransferProcesser() {
+            super(TYPE);
+        }
 
         @Override
         public boolean needHeat(Level level, BlockPos hTPPos, @Nullable Direction face) {
@@ -59,7 +66,7 @@ public class Pneumaticcraft implements CHModCompat {
         }
 
         @Override
-        public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide) {
+        public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide,int tickSkip) {
             IHeatExchangingTE heatExchangingTE = getHeatExchangeLogic(level,hTPPos);
             if (heatExchangingTE != null){
                 heatExchangingTE.getHeatExchanger().addHeat(heatProvide * 1.9);
