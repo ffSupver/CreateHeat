@@ -2,6 +2,7 @@ package com.ffsupver.createheat.registries;
 
 import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.block.thermalBlock.ThermalBlock;
+import com.ffsupver.createheat.block.thermalBlock.ThermalBlockCTBehaviour;
 import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntity;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStone;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
@@ -24,6 +25,8 @@ public class CHBlocks {
     public static final BlockEntry<ThermalBlock> THERMAL_BLOCK = REGISTRATE
             .block("thermal_block", ThermalBlock::new)
             .properties(p-> BlockBehaviour.Properties.ofFullCopy(Blocks.COPPER_BLOCK))
+            .onRegister(CreateRegistrate.connectedTextures(()->new ThermalBlockCTBehaviour()))
+            .onRegister(CreateRegistrate.casingConnectivity((b, cc) -> cc.makeCasing(b, CHSpriteShifts.THERMAL_BLOCK_NONE)))
             .item(BlockItem::new)
             .build()
             .register();

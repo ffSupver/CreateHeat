@@ -56,6 +56,7 @@ public class CreateHeat {
         NeoForge.EVENT_BUS.register(this);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        modContainer.registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_SPEC);
         modEventBus.addListener(CHDatapacks::register);
         modEventBus.addListener(CreateHeat::init);
 

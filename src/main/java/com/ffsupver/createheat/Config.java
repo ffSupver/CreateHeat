@@ -4,7 +4,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
-//
+    private static final ModConfigSpec.Builder CLIENT_BUILDER = new ModConfigSpec.Builder();
+// common
     public static final ModConfigSpec.BooleanValue ALLOW_PASSIVE_HEAT = BUILDER
             .comment("Whether to allow passive heat source to be calculated")
             .define("allow_passive_heat", true);
@@ -31,5 +32,11 @@ public class Config {
             .comment("Max range between blocks can be connected")
             .defineInRange("max_connect_range", 32, 1, Integer.MAX_VALUE);
 
+
+    public static final ModConfigSpec.BooleanValue CONNECT_BLOCK_TEXTURE = BUILDER
+            .comment("Should blocks have connected texture")
+            .define("connect_block_texture", true);
+
     static final ModConfigSpec SPEC = BUILDER.build();
+    static final ModConfigSpec CLIENT_SPEC = CLIENT_BUILDER.build();
 }
