@@ -1,6 +1,7 @@
 package com.ffsupver.createheat.item;
 
-import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntity;
+import com.ffsupver.createheat.block.ConnectableBlockEntity;
+import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -21,10 +22,10 @@ public class ThermalTool extends Item {
     public InteractionResult useOn(UseOnContext context) {
         BlockPos pos = context.getClickedPos();
         Level level = context.getLevel();
-        if (level.getBlockEntity(pos) instanceof ThermalBlockEntity thermalBlockEntity){
+        if (level.getBlockEntity(pos) instanceof ConnectableBlockEntity<?> connectableBlockEntity){
             Player player = context.getPlayer();
-            BlockPos controllerPos = thermalBlockEntity.getControllerPos();
-            ThermalBlockEntity controllerEntity = thermalBlockEntity.getControllerEntity();
+            BlockPos controllerPos = connectableBlockEntity.getControllerPos();
+            ThermalBlockEntityBehaviour controllerEntity = connectableBlockEntity.getBehaviour(ThermalBlockEntityBehaviour.TYPE);
             if (player != null && !level.isClientSide()) {
                 if (player.isCrouching()){
                     player.displayClientMessage(Component.literal(
@@ -33,7 +34,7 @@ public class ThermalTool extends Item {
                     );
                 }else {
                     player.displayClientMessage(Component.literal(
-                                    "Connect count :" + controllerEntity.getConnectedBlocks().size() + " heat:" + controllerEntity.getHeat() +
+                                    "Connect count :" + controllerEntity.getBlockSize() + " heat:" + controllerEntity.getHeat() +
                                             " Controller x:" + controllerPos.getX() + " y:" + controllerPos.getY() + " z:" + controllerPos.getZ() + " heatStorage:" + controllerEntity.getHeatStorage()
                             ).withStyle(ChatFormatting.RED), true
                     );

@@ -38,9 +38,7 @@ public class ThermalBlock extends ConnectableBlock<ThermalBlockEntity> implement
     public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
         return switch (state.getValue(HEAT_LEVEL)){
             case NONE -> 0;
-            case SMOULDERING -> 15;
-            case FADING -> 15;
-            case KINDLED -> 15;
+            case SMOULDERING, FADING, KINDLED -> 15;
             case SEETHING -> 12;
         };
     }
@@ -57,6 +55,10 @@ public class ThermalBlock extends ConnectableBlock<ThermalBlockEntity> implement
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        addParticles(state,level,pos,random);
+    }
+
+    public static void addParticles(BlockState state, Level level, BlockPos pos, RandomSource random){
         if (!state.getValue(HEAT_LEVEL).equals(BlazeBurnerBlock.HeatLevel.NONE) && random.nextInt(2) == 0){
             Direction direction = Direction.getRandom(random);
             BlockPos particlePos = pos.relative(direction);

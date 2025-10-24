@@ -6,6 +6,7 @@ import com.simibubi.create.AllItems;
 import com.simibubi.create.content.kinetics.mixer.MechanicalMixerBlockEntity;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
+import net.createmod.catnip.math.Pointing;
 import net.createmod.ponder.api.PonderPalette;
 import net.createmod.ponder.api.scene.SceneBuilder;
 import net.createmod.ponder.api.scene.SceneBuildingUtil;
@@ -16,11 +17,10 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
@@ -260,6 +260,107 @@ public class ThermalBlockScene {
                 .pointAt(recipePos.getCenter());
 
         scene.idle(30);
+        scene.markAsFinished();
+    }
+
+    public static void smartThermalBlock(SceneBuilder builder, SceneBuildingUtil util) {
+        CreateSceneBuilder scene = new CreateSceneBuilder(builder);
+        scene.title("thermal_block.smart_thermal_block", "Using Smart Thermal Block");
+        scene.configureBasePlate(0, 0, 7);
+        scene.world().showSection(util.select().everywhere(), Direction.UP);
+        scene.scaleSceneView(0.9f);
+        scene.setSceneOffsetY(-2);
+
+        scene.idle(5);
+
+        BlockPos blazePos = util.grid().at(4,1,1);
+        BlockPos smartThermalBlockPos = util.grid().at(4,2,5);
+        BlockPos mixerBlockPos = util.grid().at(4,5,5);
+
+        Vec3 scrollSlot = util.vector().of(4, 2 + 8 / 16f, 5 + 8 / 16f);
+        scene.overlay().showFilterSlotInput(scrollSlot, Direction.WEST, 350);
+
+        scene.overlay().showControls(scrollSlot, Pointing.RIGHT, 30).rightClick();
+        scene.idle(10);
+
+        scene.world().setKineticSpeed(util.select().position(mixerBlockPos),64);
+        scene.world().setKineticSpeed(util.select().position(4,5,6),-64);
+
+        scene.overlay().showText(40)
+                .text("You can configure the max heat level with the value panel")
+                .pointAt(scrollSlot)
+                .placeNearTarget();
+
+        scene.idle(50);
+
+        scene.overlay().showText(40)
+                .text("When max heat level is \"No Heat\"")
+                .pointAt(scrollSlot)
+                .placeNearTarget();
+
+        scene.world().modifyBlock(blazePos,setHeatLevel(SEETHING),false);
+
+        scene.idle(50);
+
+        scene.overlay().showText(40)
+                .text("No Heat will be provided")
+                .pointAt(scrollSlot)
+                .placeNearTarget();
+
+        scene.idle(50);
+
+        scene.overlay().showControls(scrollSlot, Pointing.RIGHT, 20).rightClick();
+
+        scene.idle(10);
+
+        scene.world().createItemOnBeltLike(mixerBlockPos.below(2),Direction.UP,Items.COPPER_INGOT.getDefaultInstance());
+        scene.world().createItemOnBeltLike(mixerBlockPos.below(2),Direction.UP,AllItems.ZINC_INGOT.asStack());
+
+        scene.world().modifyBlock(smartThermalBlockPos,setHeatLevel(KINDLED),false);
+        scene.world().modifyBlockEntity(mixerBlockPos, MechanicalMixerBlockEntity.class, MechanicalMixerBlockEntity::startProcessingBasin);
+
+        scene.overlay().showText(30)
+                .text("When max heat level is \"Regular Heat\", ...")
+                .pointAt(scrollSlot)
+                .placeNearTarget();
+
+        scene.idle(40);
+
+        scene.overlay().showText(40)
+                .text("it will provide heat not higher than \"Regular Heat\" level")
+                .pointAt(scrollSlot)
+                .placeNearTarget();
+
+        scene.idle(50);
+
+
+        scene.overlay().showControls(scrollSlot, Pointing.RIGHT, 20).rightClick();
+
+        scene.idle(10);
+
+        scene.world().removeItemsFromBelt(mixerBlockPos.below(2));
+        scene.world().createItemOnBeltLike(mixerBlockPos.below(2),Direction.UP,AllItems.BRASS_INGOT.asStack());
+        scene.world().createItemOnBeltLike(mixerBlockPos.below(2),Direction.UP,Blocks.COBBLESTONE.asItem().getDefaultInstance());
+
+
+        scene.world().modifyBlock(smartThermalBlockPos,setHeatLevel(SEETHING),false);
+        scene.world().modifyBlockEntity(mixerBlockPos, MechanicalMixerBlockEntity.class, MechanicalMixerBlockEntity::startProcessingBasin);
+
+        scene.overlay().showText(30)
+                .text("When max heat level is \"Super Heat\", ...")
+                .pointAt(scrollSlot)
+                .placeNearTarget();
+
+        scene.idle(40);
+
+        scene.overlay().showText(40)
+                .text("it will provide heat not higher than \"Super Heat\" level")
+                .pointAt(scrollSlot)
+                .placeNearTarget();
+
+        scene.idle(50);
+
+
         scene.markAsFinished();
     }
 

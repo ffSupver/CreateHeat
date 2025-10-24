@@ -4,9 +4,15 @@
   "block.createheat.thermal_block": "导热块",
   "block.createheat.tight_compressed_stone": "紧致压缩石",
   "block.createheat.dragon_fire_input": "导热块龙焰口",
+  "block.createheat.smart_thermal_block": "智能导热块",
 
 
   "item.createheat.thermal_tool": "热调试器",
+
+  "createheat.smart_thermal_block.selection_mode.max_heat":"最大热量等级",
+  "createheat.smart_thermal_block.selection_mode.none": "没有热量",
+  "createheat.smart_thermal_block.selection_mode.kindled": "普通加热",
+  "createheat.smart_thermal_block.selection_mode.seething": "超级加热",
 
   "createheat.configuration.title": "机械热力配置",
   "createheat.configuration.section.createheat.common.toml": "机械热力配置",
@@ -54,6 +60,14 @@
   "createheat.ponder.ice_and_fire.use.text_1": "导热块龙焰口可以将龙焰变成热量",
   "createheat.ponder.ice_and_fire.use.text_2": "在导热块龙焰口放一种龙煅炉砖来选定你的龙类型",
   "createheat.ponder.ice_and_fire.use.text_3": "导热块龙焰口会产生热量",
+  "createheat.ponder.thermal_block.smart_thermal_block.header": "使用智能导热块",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_1": "你可以通过面板来配置最大热量",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_2": "当最大热量是\"没有热量\"",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_3": "不提供热量",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_4": "当最大热量是\"普通加热\", ...",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_5": "提供不高于\"普通加热\"的热量",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_6": "当最大热量是\"超级加热\", ...",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_7": "提供不高于\"超级加热\"的热量",
 
   "createheat.recipe.heat":"加热",
   "createheat.recipe.heat.amount": "至少: %s 总共: %s"

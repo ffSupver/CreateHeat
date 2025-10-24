@@ -34,7 +34,7 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
     protected void connectedNewBlock(BlockPos newPos,ConnectableBlockEntity<?> oldBlockEntity){
     }
 
-    protected void mergeController(BlockPos oldControllerPos, ConnectableBlockEntity<?> oldControllerEntity, BlockPos newControllerPos, T newControllerEntity){}
+    protected void mergeController(BlockPos oldControllerPos, ConnectableBlockEntity<?> oldControllerEntity, BlockPos newControllerPos, ConnectableBlockEntity<?> newControllerEntity){}
     /**
     Only called by a controller. Times of Calls equal to new controller count to create.
      */
@@ -42,18 +42,18 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
 
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(tag, registries, clientPacket);
+
         tag.putBoolean("is_controller",isController);
         if (isController){
             tag.put("connected", NbtUtil.writeBlockPosToNbtList(connectedBlocks));
         }else {
             tag.put("controller", NbtUtils.writeBlockPos(controllerPos));
         }
+        super.write(tag, registries, clientPacket);
     }
 
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(tag, registries, clientPacket);
         isController = tag.getBoolean("is_controller");
         if (isController){
             connectedBlocks.clear();
@@ -61,6 +61,7 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
         }else {
             controllerPos = NBTHelper.readBlockPos(tag,"controller");
         }
+        super.read(tag, registries, clientPacket);
     }
 
     public void checkNeighbour(){
@@ -80,7 +81,7 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
                         controllerEntity.addConnectedPos(getBlockPos());
                         if (!neighbourEntity.getControllerPos().equals(controllerPos)){
                             if (neighbourEntity.getControllerEntity() != null){
-                                mergeController(neighbourEntity.getControllerPos(),neighbourEntity.getControllerEntity(),controllerPos,controllerEntity.castToSubclass());
+                                mergeController(neighbourEntity.getControllerPos(),neighbourEntity.getControllerEntity(),controllerPos,controllerEntity);
                                 neighbourEntity.getControllerEntity().isController = false;
                             }
                             controllerEntity.walkAllBlocks(null);

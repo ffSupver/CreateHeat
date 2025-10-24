@@ -9,8 +9,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import static com.ffsupver.createheat.CreateHeat.MODID;
-import static com.ffsupver.createheat.registries.CHBlocks.THERMAL_BLOCK;
-import static com.ffsupver.createheat.registries.CHBlocks.TIGHT_COMPRESSED_STONE;
+import static com.ffsupver.createheat.registries.CHBlocks.*;
 import static com.ffsupver.createheat.registries.CHItems.THERMAL_TOOL;
 
 public class CHCreativeTab {
@@ -23,8 +22,11 @@ public class CHCreativeTab {
                 .withTabsBefore(CreativeModeTabs.SPAWN_EGGS)
                 .icon(THERMAL_BLOCK::asStack)
             .displayItems((parameters, output) -> {
+
                 output.accept(THERMAL_TOOL);
+
                 output.accept(THERMAL_BLOCK);
+                output.accept(SMART_THERMAL_BLOCK);
                 output.accept(TIGHT_COMPRESSED_STONE);
             })
             .build());

@@ -3,7 +3,6 @@ package com.ffsupver.createheat.block.thermalBlock;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.ffsupver.createheat.util.BlockUtil;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -15,15 +14,13 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntity.MAX_HEAT;
+import static com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour.MAX_HEAT;
 import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.HEAT;
 import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.Heat.*;
 
 public class StoneHeatStorage extends HeatStorage{
     private static final Supplier<Integer> HEAT_PER_LAVA = ()->MAX_HEAT.get() * 50;
     public final HashSet<BlockPos> stonePosSet;
-//    private final BlockPos recordControllerPos;
-//    public boolean shouldChangeController = false;
     private BlockCounts lastBlockCounts = new BlockCounts();
     private int superHeatCount;
 
@@ -31,7 +28,6 @@ public class StoneHeatStorage extends HeatStorage{
     public StoneHeatStorage(HashSet<BlockPos> stonePosSet) {
         super(calculateCapacity(stonePosSet));
         this.stonePosSet = stonePosSet;
-//        this.recordControllerPos = recordController;
     }
 
 
@@ -43,10 +39,8 @@ public class StoneHeatStorage extends HeatStorage{
         AtomicInteger stoneCount = new AtomicInteger();
         AtomicInteger superHeatCount = new AtomicInteger();
 
-//        Set<BlockPos> controllerPos = new HashSet<>();
 
         newBlockPosSet.forEach(b->{
-//        walkAllBlocks(startPos,stonePosSet,b->{
             BlockState bsT = level.getBlockState(b);
                 if (isAvailableRegularHeatBlock(bsT)){
                 regularHeatCount.getAndIncrement();
@@ -55,11 +49,7 @@ public class StoneHeatStorage extends HeatStorage{
             }else if (isAvailableTStoneBlock(bsT)) {
                 stoneCount.getAndIncrement();
             }
-//            if (level.getBlockEntity(b) instanceof ThermalBlockEntity connectTBE){
-//                controllerPos.add(connectTBE.getControllerPos());
-//            }
             stonePosSet.add(b);
-//            return isAvailableBlock(bsT);
         });
 
         if (oldSet.size() != stonePosSet.size()){
@@ -77,7 +67,6 @@ public class StoneHeatStorage extends HeatStorage{
         }
 
         lastBlockCounts = new BlockCounts(sC,lC,sHC);
-//        return controllerPos;
     }
 
     public boolean checkSize(Level level,Set<BlockPos> newBlockPosSet) {
@@ -248,9 +237,7 @@ public class StoneHeatStorage extends HeatStorage{
     public void fromNbt(CompoundTag nbt,Set<BlockPos> stonePS) {
         this.fromNbt(nbt);
         stonePosSet.clear();
-//        stonePosSet.addAll(NbtUtil.readBlockPosFromNbtList(nbt.getList("stone_pos", Tag.TAG_COMPOUND)));
         stonePosSet.addAll(stonePS);
-//        shouldChangeController = nbt.getBoolean("should_change_c");
         superHeatCount = nbt.getInt("super_heat_count");
     }
 
@@ -259,9 +246,6 @@ public class StoneHeatStorage extends HeatStorage{
     @Override
     public CompoundTag toNbt() {
         CompoundTag nbt = super.toNbt();
-//        nbt.put("stone_pos",NbtUtil.writeBlockPosToNbtList(stonePosSet));
-//        nbt.put("record_controller", NbtUtils.writeBlockPos(recordControllerPos));
-//        nbt.putBoolean("should_change_c",shouldChangeController);
         nbt.putInt("super_heat_count", superHeatCount);
         return nbt;
     }

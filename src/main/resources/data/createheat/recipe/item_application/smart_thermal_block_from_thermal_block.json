@@ -1,0 +1,16 @@
+{
+  "type": "create:item_application",
+  "ingredients": [
+    {
+      "item": "createheat:thermal_block"
+    },
+    {
+      "item": "create:electron_tube"
+    }
+  ],
+  "results": [
+    {
+      "id": "createheat:smart_thermal_block"
+    }
+  ]
+}

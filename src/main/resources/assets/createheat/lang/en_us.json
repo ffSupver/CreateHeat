@@ -4,8 +4,14 @@
   "block.createheat.thermal_block": "Thermal Block",
   "block.createheat.tight_compressed_stone": "Tight compressed_stone",
   "block.createheat.dragon_fire_input": "Dragon Fire Input",
+  "block.createheat.smart_thermal_block": "Smart Thermal Block",
 
   "item.createheat.thermal_tool": "Thermal Tool",
+
+  "createheat.smart_thermal_block.selection_mode.max_heat":"Max Heat Level",
+  "createheat.smart_thermal_block.selection_mode.none": "No Heat",
+  "createheat.smart_thermal_block.selection_mode.kindled": "Regular Heat",
+  "createheat.smart_thermal_block.selection_mode.seething": "Super Heat",
 
   "createheat.configuration.title": "Create:Heat Configs",
   "createheat.configuration.section.createheat.common.toml": "Create:Heat Configs",
@@ -52,6 +58,14 @@
   "createheat.ponder.ice_and_fire.use.text_1": "Dragon Fire Input can turn dragon fire into heat",
   "createheat.ponder.ice_and_fire.use.text_2": "Place any Dragon Forge Bricks next to Dragon Fire Input to select dragon type you want",
   "createheat.ponder.ice_and_fire.use.text_3": "Dragon Fire Input will provide heat",
+  "createheat.ponder.thermal_block.smart_thermal_block.header": "Using Smart Thermal Block",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_1": "You can configure the max heat level with the value panel",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_2": "When max heat level is \"No Heat\"",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_3": "No Heat will be provided",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_4": "When max heat level is \"Regular Heat\", ...",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_5": "it will provide heat not higher than \"Regular Heat\" level",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_6": "When max heat level is \"Super Heat\", ...",
+  "createheat.ponder.thermal_block.smart_thermal_block.text_7": "it will provide heat not higher than \"Super Heat\" level",
 
   "createheat.recipe.heat":"Heat",
   "createheat.recipe.heat.amount": "Min: %s Total: %s"

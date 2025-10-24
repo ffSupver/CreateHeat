@@ -2,7 +2,7 @@ package com.ffsupver.createheat.registries;
 
 import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
-import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntity;
+import com.ffsupver.createheat.recipe.HeatRecipeTransferProcesser;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
 import net.minecraft.core.BlockPos;
@@ -13,7 +13,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.RegistryBuilder;
 
 import java.util.Optional;
@@ -27,7 +26,7 @@ public class CHHeatTransferProcessers {
 
 
     public static void bootSetup(){
-        registerHeatTransferProcesser(ThermalBlockEntity.HeatRecipeTransferProcesser.TYPE.getPath(),()->ThermalBlockEntity.HeatRecipeTransferProcesser::new);
+        registerHeatTransferProcesser(HeatRecipeTransferProcesser.TYPE.getPath(),()->HeatRecipeTransferProcesser::new);
     }
 
     /** Register HeatTransferProcesser only with name space "createheat"

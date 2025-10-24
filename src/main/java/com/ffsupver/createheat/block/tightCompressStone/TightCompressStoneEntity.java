@@ -2,7 +2,7 @@ package com.ffsupver.createheat.block.tightCompressStone;
 
 import com.ffsupver.createheat.block.ConnectableBlockEntity;
 import com.ffsupver.createheat.block.thermalBlock.StoneHeatStorage;
-import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntity;
+import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour;
 import com.ffsupver.createheat.util.NbtUtil;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
 
-import static com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntity.MAX_COOLDOWN;
+import static com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour.MAX_COOLDOWN;
 
 public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompressStoneEntity> {
     private final StoneHeatStorage stoneHeatStorage = new StoneHeatStorage(new HashSet<>(Set.of(getBlockPos())));
@@ -217,8 +217,11 @@ public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompre
         connectThBlockPos.addAll(superHeatProvideByTh.keySet());
         connectThBlockPos.addAll(superHeatActuallyProvideByTh.keySet());
         for (BlockPos thPos : connectThBlockPos){
-            if (getLevel().getBlockEntity(thPos) instanceof ThermalBlockEntity thermalBlockEntity){
-                thermalBlockEntity.sendData();
+            if (getLevel().getBlockEntity(thPos) instanceof ConnectableBlockEntity<?> connectableBlockEntity){
+                ThermalBlockEntityBehaviour thermalBlockEntityBehaviour = ThermalBlockEntityBehaviour.getFromCBE(connectableBlockEntity);
+                if (thermalBlockEntityBehaviour != null){
+                    thermalBlockEntityBehaviour.sendData();
+                }
             }
         }
     }
@@ -261,7 +264,13 @@ public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompre
     private static boolean removeCountMap(Map<BlockPos,Integer> toRemove, Level level,StoneHeatStorage stoneHeatStorage){
         List<BlockPos> toRemoveList = new ArrayList<>();
         for (BlockPos key : toRemove.keySet()){
-            boolean shouldNotRemove = level.getBlockEntity(key) instanceof ThermalBlockEntity thermalBlockEntity && thermalBlockEntity.isController() && thermalBlockEntity.isConnectTo(stoneHeatStorage);
+            boolean shouldNotRemove = false;
+            if (level.getBlockEntity(key) instanceof ConnectableBlockEntity<?> connectableBlockEntity && connectableBlockEntity.isController()){
+                ThermalBlockEntityBehaviour tBEB = ThermalBlockEntityBehaviour.getFromCBE(connectableBlockEntity);
+                if (tBEB != null && tBEB.isConnectTo(stoneHeatStorage)){
+                    shouldNotRemove = true;
+                }
+            }
             if (!shouldNotRemove){
                 toRemoveList.add(key);
             }

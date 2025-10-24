@@ -9,7 +9,12 @@ import com.simibubi.create.foundation.block.connected.CTType;
 public class CHSpriteShifts {
     public static final CTSpriteShiftEntry THERMAL_BLOCK_NONE = omni("thermal_block/none")
             , THERMAL_BLOCK_KINDLED = omni("thermal_block/kindled")
-            ,THERMAL_BLOCK_SEETHING = omni("thermal_block/seething");
+            ,THERMAL_BLOCK_SEETHING = omni("thermal_block/seething"),
+            SMART_THERMAL_BLOCK_NONE = omni("smart_thermal_block/none"),
+            SMART_THERMAL_BLOCK_KINDLED = omni("smart_thermal_block/kindled"),
+            SMART_THERMAL_BLOCK_SEETHING = omni("smart_thermal_block/seething");
+
+
 
 
     private static CTSpriteShiftEntry omni(String name) {
