@@ -61,6 +61,7 @@ public class CHBlocks {
 
     public static void registerBoilHeater(){
         BoilerHeater.REGISTRY.register(THERMAL_BLOCK.get(),BoilerHeater.BLAZE_BURNER);
+        BoilerHeater.REGISTRY.register(SMART_THERMAL_BLOCK.get(),BoilerHeater.BLAZE_BURNER);
     }
 
     public static void register() {
