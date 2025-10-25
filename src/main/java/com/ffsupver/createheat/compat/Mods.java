@@ -1,5 +1,6 @@
 package com.ffsupver.createheat.compat;
 
+import com.ffsupver.createheat.compat.coldSweat.ColdSweat;
 import com.ffsupver.createheat.compat.iceAndFire.IceAndFire;
 import com.ffsupver.createheat.compat.pneumaticcraft.Pneumaticcraft;
 import com.tterrag.registrate.util.entry.ItemProviderEntry;
@@ -29,6 +30,7 @@ public class Mods {
 
             addMod(ModIds.IceAndFire.ModId, IceAndFire::new);
             addMod(ModIds.PNEUMATICCRAFT.ModId, Pneumaticcraft::new);
+            addMod(ModIds.COLD_SWEAT.ModId, ColdSweat::new);
 
             MOD_SUPPLIERS.forEach(Mods::intiMod);
 
@@ -87,9 +89,16 @@ public class Mods {
         }
     }
 
+    public static void executeIfModLoad(String modTd,Consumer<CHModCompat> runnable){
+        if (MODS.containsKey(modTd)){
+            runnable.accept(MODS.get(modTd));
+        }
+    }
+
     public enum ModIds{
         IceAndFire("iceandfire"),
-        PNEUMATICCRAFT("pneumaticcraft");
+        PNEUMATICCRAFT("pneumaticcraft"),
+        COLD_SWEAT("cold_sweat");
         public final String ModId;
 
         ModIds(String modId) {
