@@ -12,10 +12,10 @@ import java.util.List;
 
 import static com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour.TYPE;
 
-public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntity> implements IHaveGoggleInformation {
+public class BaseThermalBlockEntity extends ConnectableBlockEntity<BaseThermalBlockEntity> implements IHaveGoggleInformation {
 
 
-    public ThermalBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+    public BaseThermalBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 
@@ -25,7 +25,7 @@ public class ThermalBlockEntity extends ConnectableBlockEntity<ThermalBlockEntit
     }
 
     @Override
-    protected ThermalBlockEntity castToSubclass() {
+    protected BaseThermalBlockEntity castToSubclass() {
         return this;
     }
 

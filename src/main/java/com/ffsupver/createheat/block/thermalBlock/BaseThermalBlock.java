@@ -1,6 +1,6 @@
 package com.ffsupver.createheat.block.thermalBlock;
 
-import com.ffsupver.createheat.registries.CHBlocks;
+import com.ffsupver.createheat.block.ConnectableBlock;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import net.minecraft.core.BlockPos;
@@ -8,16 +8,54 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.function.Supplier;
 
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
 
-public class ThermalBlock extends BaseThermalBlock<BaseThermalBlockEntity> implements IWrenchable {
+public class BaseThermalBlock<T extends BaseThermalBlockEntity> extends ConnectableBlock<BaseThermalBlockEntity,T> implements IWrenchable {
 
-    public ThermalBlock(Properties properties) {
-        super(properties,BaseThermalBlockEntity.class,()-> CHBlocks.THERMAL_BLOCK_ENTITY.get());
+    private final Class<T> blockEntityClass;
+    private final Supplier<BlockEntityType<? extends T>> blockEntityType;
+    public BaseThermalBlock(Properties properties, Class<T> blockEntityClass, Supplier<BlockEntityType<? extends T>> blockEntityType) {
+        super(properties);
+        this.blockEntityClass = blockEntityClass;
+        this.blockEntityType = blockEntityType;
+        registerDefaultState(defaultBlockState().setValue(HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.NONE));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(HEAT_LEVEL);
+    }
+
+
+
+    @Override
+    public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
+        return switch (state.getValue(HEAT_LEVEL)){
+            case NONE -> 0;
+            case SMOULDERING, FADING, KINDLED -> 15;
+            case SEETHING -> 12;
+        };
+    }
+
+    @Override
+    public Class<T> getBlockEntityClass() {
+        return blockEntityClass;
+    }
+
+    @Override
+    public BlockEntityType<? extends T> getBlockEntityType() {
+        return blockEntityType.get();
     }
 
     @Override

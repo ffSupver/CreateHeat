@@ -1,5 +1,6 @@
-package com.ffsupver.createheat.block.thermalBlock;
+package com.ffsupver.createheat.block.tightCompressStone;
 
+import com.ffsupver.createheat.block.thermalBlock.HeatStorage;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.ffsupver.createheat.util.BlockUtil;
 import net.minecraft.core.BlockPos;
@@ -18,7 +19,7 @@ import static com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehav
 import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.HEAT;
 import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.Heat.*;
 
-public class StoneHeatStorage extends HeatStorage{
+public class StoneHeatStorage extends HeatStorage {
     private static final Supplier<Integer> HEAT_PER_LAVA = ()->MAX_HEAT.get() * 50;
     public final HashSet<BlockPos> stonePosSet;
     private BlockCounts lastBlockCounts = new BlockCounts();

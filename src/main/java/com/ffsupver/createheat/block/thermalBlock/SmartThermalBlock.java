@@ -1,41 +1,20 @@
 package com.ffsupver.createheat.block.thermalBlock;
 
-import com.ffsupver.createheat.block.tightCompressStone.ConnectableBlock;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
 
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
 
-public  class SmartThermalBlock extends ConnectableBlock<SmartThermalBlockEntity> implements IWrenchable {
+public  class SmartThermalBlock extends BaseThermalBlock<SmartThermalBlockEntity> implements IWrenchable {
     public SmartThermalBlock(Properties properties) {
-        super(properties);
-        registerDefaultState(defaultBlockState().setValue(HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.NONE));
+        super(properties, SmartThermalBlockEntity.class,()->CHBlocks.SMART_THERMAL_BLOCK_ENTITY.get());
     }
 
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        super.createBlockStateDefinition(builder);
-        builder.add(HEAT_LEVEL);
-    }
-
-    @Override
-    public Class<SmartThermalBlockEntity> getBlockEntityClass() {
-        return SmartThermalBlockEntity.class;
-    }
-
-    @Override
-    public BlockEntityType<? extends SmartThermalBlockEntity> getBlockEntityType() {
-        return CHBlocks.SMART_THERMAL_BLOCK_ENTITY.get();
-    }
 
     @Override
     public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {

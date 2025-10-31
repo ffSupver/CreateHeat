@@ -1,7 +1,6 @@
 package com.ffsupver.createheat.block.tightCompressStone;
 
 import com.ffsupver.createheat.block.ConnectableBlockEntity;
-import com.ffsupver.createheat.block.thermalBlock.StoneHeatStorage;
 import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour;
 import com.ffsupver.createheat.util.NbtUtil;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;

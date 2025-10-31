@@ -1,5 +1,6 @@
 package com.ffsupver.createheat.block.tightCompressStone;
 
+import com.ffsupver.createheat.block.ConnectableBlock;
 import com.ffsupver.createheat.registries.CHBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -20,7 +21,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.neoforged.neoforge.common.extensions.IBlockExtension;
 import org.jetbrains.annotations.NotNull;
 
-public class TightCompressStone extends ConnectableBlock<TightCompressStoneEntity> implements IBlockExtension {
+public class TightCompressStone extends ConnectableBlock<TightCompressStoneEntity,TightCompressStoneEntity> implements IBlockExtension {
     public static final Property<Heat> HEAT = EnumProperty.create("heat",Heat.class);
     public TightCompressStone(Properties properties) {
         super(properties);

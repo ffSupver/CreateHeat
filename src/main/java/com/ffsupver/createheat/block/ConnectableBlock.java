@@ -1,13 +1,12 @@
-package com.ffsupver.createheat.block.tightCompressStone;
+package com.ffsupver.createheat.block;
 
-import com.ffsupver.createheat.block.ConnectableBlockEntity;
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
-public abstract class ConnectableBlock<T extends ConnectableBlockEntity<T>> extends Block implements IBE<T> {
+public abstract class ConnectableBlock<T extends ConnectableBlockEntity<T>,C extends T> extends Block implements IBE<C> {
     public ConnectableBlock(Properties properties) {
         super(properties);
     }

@@ -6,6 +6,7 @@ import com.ffsupver.createheat.api.CustomHeater;
 import com.ffsupver.createheat.block.ConnectableBlockEntity;
 import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
+import com.ffsupver.createheat.block.tightCompressStone.StoneHeatStorage;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
 import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
 import com.ffsupver.createheat.util.BlockUtil;

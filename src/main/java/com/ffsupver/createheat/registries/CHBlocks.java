@@ -44,8 +44,8 @@ public class CHBlocks {
             .item(BlockItem::new)
             .build()
             .register();
-    public static final BlockEntityEntry<ThermalBlockEntity> THERMAL_BLOCK_ENTITY = REGISTRATE
-            .blockEntity("thermal_block",ThermalBlockEntity::new)
+    public static final BlockEntityEntry<BaseThermalBlockEntity> THERMAL_BLOCK_ENTITY = REGISTRATE
+            .blockEntity("thermal_block",BaseThermalBlockEntity::new)
             .validBlock(THERMAL_BLOCK)
             .register();
     public static final BlockEntityEntry<TightCompressStoneEntity> TIGHT_COMPRESSED_STONE_ENTITY = REGISTRATE
