@@ -25,10 +25,11 @@ public class SmartThermalBlockEntity extends BaseThermalBlockEntity implements I
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
-        behaviours.add(new ThermalBlockEntityBehaviour(this,
-                tBEB->canHeat(KINDLED),
-                tBEB->canHeat(SEETHING)
-        ));
+        ThermalBlockEntityBehaviour thermalBlockEntityBehaviour = new ThermalBlockEntityBehaviour(this);
+        thermalBlockEntityBehaviour.setCanHeat(tBEB->canHeat(KINDLED));
+        thermalBlockEntityBehaviour.setCanSuperHeat(tBEB->canHeat(SEETHING));
+        thermalBlockEntityBehaviour.setCanGenerateHeatIgnoreHTP(tBEB->canGenerateHeatIgnoreHTP());
+        behaviours.add(thermalBlockEntityBehaviour);
         maxHeatLevelSelections =new ScrollOptionBehaviour<>(
                 MaxHeatSelections.class,
                 Component.translatable("createheat.smart_thermal_block.selection_mode.max_heat"),
@@ -44,6 +45,9 @@ public class SmartThermalBlockEntity extends BaseThermalBlockEntity implements I
         return heatLevel.ordinal() <= maxHeatLevel.ordinal(); //KINDLED是普通里面最大的
     }
 
+    private boolean canGenerateHeatIgnoreHTP(){
+        return this.maxHeatLevelSelections.get().equals(MaxHeatSelections.NONE_HEAT);
+    }
 
     private enum MaxHeatSelections implements INamedIconOptions{
         NONE_HEAT("none", CHIcons.I_HEAT_LEVEL_NONE, NONE),

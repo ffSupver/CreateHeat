@@ -32,9 +32,6 @@ public class HeatableBlockTransferProcesser extends HeatTransferProcesser {
 
     @Override
     public boolean needHeat(Level level, BlockPos pos, @Nullable Direction face) {
-        if (Direction.DOWN.equals(face)){
-            return false;
-        }
         Optional<HeatableBlockHeatTransferProcesserData> dataOptional = HeatableBlockHeatTransferProcesserData.getFromBlockState(level.getBlockState(pos),level.registryAccess());
         if(dataOptional.isPresent()){
             heatPos = pos;

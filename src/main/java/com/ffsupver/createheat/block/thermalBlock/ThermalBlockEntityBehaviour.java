@@ -54,19 +54,26 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
     private final HeatStorage displayHeatStorage = new HeatStorage(0);
 
     private final ConnectableBlockEntity<?> connectableBlockEntity;
-    private final Predicate<ThermalBlockEntityBehaviour> canSuperHeat;
-    private final Predicate<ThermalBlockEntityBehaviour> canHeat;
+    private Predicate<ThermalBlockEntityBehaviour> canSuperHeat;
+    private Predicate<ThermalBlockEntityBehaviour> canHeat;
+    private Predicate<ThermalBlockEntityBehaviour> canGenerateHeatIgnoreHTP;
 
-    public ThermalBlockEntityBehaviour(ConnectableBlockEntity<?> be,Predicate<ThermalBlockEntityBehaviour> canHeat,Predicate<ThermalBlockEntityBehaviour> canSuperHeat) {
+    public ThermalBlockEntityBehaviour(ConnectableBlockEntity<?> be) {
         super(be);
         cooldown = 0;
         connectableBlockEntity = be;
+    }
+
+    public void setCanHeat(Predicate<ThermalBlockEntityBehaviour> canHeat) {
         this.canHeat = canHeat;
+    }
+
+    public void setCanSuperHeat(Predicate<ThermalBlockEntityBehaviour> canSuperHeat) {
         this.canSuperHeat = canSuperHeat;
     }
 
-    public ThermalBlockEntityBehaviour(ConnectableBlockEntity<?> be){
-        this(be,null,null);
+    public void setCanGenerateHeatIgnoreHTP(Predicate<ThermalBlockEntityBehaviour> canGenerateHeatIgnoreHTP) {
+        this.canGenerateHeatIgnoreHTP = canGenerateHeatIgnoreHTP;
     }
 
     @Override
@@ -179,7 +186,10 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
 
         //移除不合条件的传热处理器
         List<BlockPos> heatTransferProcesserToRemove = transferProcesserMap.entrySet().stream()
-                .filter(e->!e.getValue().needHeat(getLevel(),e.getKey(),null) || !BlockUtil.isConnect(getConnectedBlocks(),Set.of(e.getKey())))
+                .filter(
+                        e->!e.getValue().needHeat(getLevel(),e.getKey(),null) ||
+                                !BlockUtil.isConnect(getConnectedBlocks(),Set.of(e.getKey()))
+                )
                 .map(Map.Entry::getKey).toList();
         heatTransferProcesserToRemove.forEach(blockPos -> {
             transferProcesserMap.get(blockPos).onControllerRemove();
@@ -247,10 +257,13 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
         }
     }
 
-
+/**
+在每个behaviour分别运行
+ */
     private HeatData genHeat() {
         BlockPos belowPos = getBlockPos().below();
-        if (getControllerEntity().getConnectedBlocks().contains(belowPos) || getHeatTransferProcesserByOther(belowPos).isPresent()){ //防止加热自己或者被处理的热源
+        boolean avoidHTP = !onCanGenerateHeatIgnoreHTPTest() && getHeatTransferProcesserByOther(belowPos).isPresent();
+        if (getControllerEntity().getConnectedBlocks().contains(belowPos) || avoidHTP){ //防止加热自己或者被处理的热源
             return new HeatData(0,0);
         }
         Optional<Holder.Reference<CustomHeater>> customHeatOp = CustomHeater.getFromBlockState(getLevel().registryAccess(), getLevel().getBlockState(belowPos));
@@ -375,6 +388,9 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
     private boolean onCanSuperHeaTest(){
         return onTest(canSuperHeat,this);
     }
+    private boolean onCanGenerateHeatIgnoreHTPTest(){
+        return onTest(canGenerateHeatIgnoreHTP,this,false);
+    }
 
     public Optional<HeatTransferProcesser> getHeatTransferProcesserByOther(BlockPos pos){
         return Optional.ofNullable(getControllerEntity().transferProcesserMap.get(pos));
@@ -487,18 +503,6 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
         }
     }
 
-    private static int calculateHeatProvide(BlockPos cPos,ThermalBlockEntityBehaviour controller,int tickSkip){
-        AtomicInteger heatAccept = new AtomicInteger();
-        AllDirectionOf(cPos,pos -> {
-            if (controller.getConnectedBlocks().contains(pos)){
-                BlazeBurnerBlock.HeatLevel heatLevel = controller.getHeatLevel(pos);
-                heatAccept.addAndGet(calculateHeatCost(tickSkip, heatLevel));
-            }
-        });
-        return heatAccept.get();
-    }
-
-
     public int getHeat() {
         return heat;
     }
@@ -554,6 +558,17 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
         return TYPE;
     }
 
+    private static int calculateHeatProvide(BlockPos cPos,ThermalBlockEntityBehaviour controller,int tickSkip){
+        AtomicInteger heatAccept = new AtomicInteger();
+        AllDirectionOf(cPos,pos -> {
+            if (controller.getConnectedBlocks().contains(pos)){
+                BlazeBurnerBlock.HeatLevel heatLevel = controller.getHeatLevel(pos);
+                heatAccept.addAndGet(calculateHeatCost(tickSkip, heatLevel));
+            }
+        });
+        return heatAccept.get();
+    }
+
     public static int calculateHeatCost(int tickSkip, BlazeBurnerBlock.HeatLevel heatLevel){
         return tickSkip * getHeatPerTick(heatLevel);
     }
@@ -575,12 +590,16 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
         return getFromCBE(toCheck) != null;
     }
 
-    private static boolean onTest(Predicate<ThermalBlockEntityBehaviour> test,ThermalBlockEntityBehaviour behaviour){
+    private static boolean onTest(Predicate<ThermalBlockEntityBehaviour> test,ThermalBlockEntityBehaviour behaviour,boolean defaultResult){
         if (test == null){
-            return true;
+            return defaultResult;
         }else {
             return test.test(behaviour);
         }
+    }
+
+    private static boolean onTest(Predicate<ThermalBlockEntityBehaviour> test,ThermalBlockEntityBehaviour behaviour){
+        return onTest(test,behaviour,true);
     }
 
 
