@@ -6,6 +6,7 @@
   "refmap": "createheat.refmap.json",
   "mixins": [
     "ChunkMapAccessor",
+    "RegistryDataLoaderMixin",
     "iceAndFire.EntityDragonBaseMixin",
     "iceAndFire.IafDragonDestructionManagerMixin"
   ],

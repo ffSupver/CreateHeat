@@ -132,7 +132,6 @@ public class BlockStateTester {
                 BuiltInRegistries.BLOCK.byNameCodec().optionalFieldOf("block").forGetter(b-> b.block),
                 Codec.STRING.optionalFieldOf("tag").forGetter(b-> b.blockTagS),
                 Codec.list(PropertyTester.CODEC).optionalFieldOf("properties",List.of()).forGetter(b-> b.pTL)
-
         ).apply(i,BlockStateTesterBuilder::new));
     }
 }

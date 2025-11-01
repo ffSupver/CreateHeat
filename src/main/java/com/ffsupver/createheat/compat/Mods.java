@@ -70,7 +70,7 @@ public class Mods {
         MODS.put(modId,modCompatSupplier.get());
     }
 
-    private static boolean isModLoad(String modId){
+    public static boolean isModLoad(String modId){
         return ModList.get().isLoaded(modId);
     }
 
