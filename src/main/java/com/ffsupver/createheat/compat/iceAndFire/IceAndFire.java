@@ -22,7 +22,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
-import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 
 public class IceAndFire implements CHModCompat {
     private static final CreateRegistrate REGISTRATE = CreateHeat.registrate();
@@ -47,15 +46,11 @@ public class IceAndFire implements CHModCompat {
 
     public void init(IEventBus eventBus) {
         eventBus.addListener(IceAndFire::addItemsToCreativeTabA);
-        eventBus.addListener(IceAndFire::registerDatapack);
+        eventBus.addListener(Mods.registerDatapack(DRAGON_HEATER,DragonHeater.CODEC));
     }
 
     private static void addItemsToCreativeTabA(BuildCreativeModeTabContentsEvent event){
         Mods.addItemsToCreativeTab(event,CHCreativeTab.MAIN_TAB.getKey(),DRAGON_FIRE_INPUT);
-    }
-
-    private static void registerDatapack(DataPackRegistryEvent.NewRegistry event) {
-        event.dataPackRegistry(DRAGON_HEATER,DragonHeater.CODEC,DragonHeater.CODEC);
     }
 
     @Override

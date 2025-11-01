@@ -2,8 +2,7 @@
   "type": "createheat:heat",
   "input": {
     "tester": {
-      "block": "minecraft:deepslate_tiles",
-      "properties": []
+      "block": "minecraft:deepslate_tiles"
     }
   },
   "output": {"Name":"minecraft:cracked_deepslate_tiles"},

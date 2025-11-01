@@ -2,8 +2,7 @@
   "type": "createheat:heat",
   "input": {
     "tester": {
-      "block": "minecraft:deepslate_bricks",
-      "properties": []
+      "block": "minecraft:deepslate_bricks"
     }
   },
   "output": {"Name":"minecraft:cracked_deepslate_bricks"},

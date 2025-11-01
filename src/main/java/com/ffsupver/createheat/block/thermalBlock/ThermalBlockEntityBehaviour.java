@@ -250,7 +250,7 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
 
     private HeatData genHeat() {
         BlockPos belowPos = getBlockPos().below();
-        if (getControllerEntity().getConnectedBlocks().contains(belowPos)){ //防止加热自己
+        if (getControllerEntity().getConnectedBlocks().contains(belowPos) || getHeatTransferProcesserByOther(belowPos).isPresent()){ //防止加热自己或者被处理的热源
             return new HeatData(0,0);
         }
         Optional<Holder.Reference<CustomHeater>> customHeatOp = CustomHeater.getFromBlockState(getLevel().registryAccess(), getLevel().getBlockState(belowPos));

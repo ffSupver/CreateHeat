@@ -2,8 +2,7 @@
   "type": "createheat:heat",
   "input": {
     "tester": {
-      "block": "minecraft:honey_block",
-      "properties": []
+      "block": "minecraft:honey_block"
     }
   },
   "output": {"Name":"create:honey"},

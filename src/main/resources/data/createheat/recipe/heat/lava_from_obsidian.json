@@ -2,8 +2,7 @@
   "type": "createheat:heat",
   "input": {
     "tester": {
-      "block": "minecraft:obsidian",
-      "properties": []
+      "block": "minecraft:obsidian"
     }
   },
   "output": {"Name":"minecraft:lava"},

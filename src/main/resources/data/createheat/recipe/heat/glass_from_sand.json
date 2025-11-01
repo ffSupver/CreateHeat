@@ -2,8 +2,7 @@
   "type": "createheat:heat",
   "input": {
     "tester": {
-      "tag": "c:sands",
-      "properties": []
+      "tag": "c:sands"
     }
   },
   "output": {"Name":"minecraft:glass"},

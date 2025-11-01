@@ -2,8 +2,7 @@
   "type": "createheat:heat",
   "input": {
     "tester": {
-      "block": "minecraft:polished_blackstone_bricks",
-      "properties": []
+      "block": "minecraft:polished_blackstone_bricks"
     }
   },
   "output": {"Name":"minecraft:cracked_polished_blackstone_bricks"},

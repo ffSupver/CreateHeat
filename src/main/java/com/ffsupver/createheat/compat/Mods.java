@@ -1,10 +1,13 @@
 package com.ffsupver.createheat.compat;
 
+import com.ffsupver.createheat.compat.anvilCraft.AnvilCraft;
 import com.ffsupver.createheat.compat.coldSweat.ColdSweat;
 import com.ffsupver.createheat.compat.iceAndFire.IceAndFire;
 import com.ffsupver.createheat.compat.pneumaticcraft.Pneumaticcraft;
+import com.mojang.serialization.Codec;
 import com.tterrag.registrate.util.entry.ItemProviderEntry;
 import net.createmod.ponder.api.registration.PonderSceneRegistrationHelper;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.ItemLike;
@@ -12,6 +15,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,6 +35,7 @@ public class Mods {
             addMod(ModIds.IceAndFire.ModId, IceAndFire::new);
             addMod(ModIds.PNEUMATICCRAFT.ModId, Pneumaticcraft::new);
             addMod(ModIds.COLD_SWEAT.ModId, ColdSweat::new);
+            addMod(ModIds.ANVIL_CRAFT.ModId, AnvilCraft::new);
 
             MOD_SUPPLIERS.forEach(Mods::intiMod);
 
@@ -75,6 +80,10 @@ public class Mods {
         }
     }
 
+    public static <T> Consumer<DataPackRegistryEvent.NewRegistry> registerDatapack(ResourceKey<Registry<T>> key, Codec<T> codec) {
+       return event ->  event.dataPackRegistry(key,codec,codec);
+    }
+
     private static void registerBoilerHeater(FMLCommonSetupEvent event){
         event.enqueueWork(()->{
             executeIfLoad(CHModCompat::registerBoilerHeater);
@@ -98,7 +107,8 @@ public class Mods {
     public enum ModIds{
         IceAndFire("iceandfire"),
         PNEUMATICCRAFT("pneumaticcraft"),
-        COLD_SWEAT("cold_sweat");
+        COLD_SWEAT("cold_sweat"),
+        ANVIL_CRAFT("anvilcraft");
         public final String ModId;
 
         ModIds(String modId) {

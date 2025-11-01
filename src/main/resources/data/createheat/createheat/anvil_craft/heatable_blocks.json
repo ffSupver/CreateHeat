@@ -1,0 +1,39 @@
+{
+  "heat_tier_line": [
+    {
+      "heat_tier":"normal",
+      "to_next": 1
+    },
+    {
+      "heat_tier":"heated",
+      "to_next": 8,
+      "duration": 1
+    },
+    {
+      "heat_tier":"redhot",
+      "to_next": 12,
+      "duration": 1
+    },
+    {
+      "heat_tier":"glowing",
+      "to_next": 16,
+      "duration": 1
+    },
+    {
+      "heat_tier":"incandescent",
+      "duration": 1
+    }
+  ],
+  "blocks": [
+    {"tester": {"block": "minecraft:netherite_block"}},
+    {"tester": {"block": "anvilcraft:heated_netherite_block"}},
+    {"tester": {"block": "anvilcraft:redhot_netherite_block"}},
+    {"tester": {"block": "anvilcraft:glowing_netherite_block"}},
+    {"tester": {"block": "anvilcraft:incandescent_netherite_block"}},
+    {"tester": {"block": "anvilcraft:tungsten_block"}},
+    {"tester": {"block": "anvilcraft:heated_tungsten_block"}},
+    {"tester": {"block": "anvilcraft:redhot_tungsten_block"}},
+    {"tester": {"block": "anvilcraft:glowing_tungsten_block"}},
+    {"tester": {"block": "anvilcraft:incandescent_tungsten_block"}}
+  ]
+}

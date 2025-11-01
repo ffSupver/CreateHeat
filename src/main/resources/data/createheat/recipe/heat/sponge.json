@@ -2,8 +2,7 @@
   "type": "createheat:heat",
   "input": {
     "tester": {
-      "block": "minecraft:wet_sponge",
-      "properties": []
+      "block": "minecraft:wet_sponge"
     }
   },
   "output": {"Name":"minecraft:sponge"},

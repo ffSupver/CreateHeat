@@ -2,8 +2,7 @@
   "type": "createheat:heat",
   "input": {
     "tester": {
-      "block": "minecraft:stone_bricks",
-      "properties": []
+      "block": "minecraft:stone_bricks"
     }
   },
   "output": {"Name":"minecraft:cracked_stone_bricks"},
