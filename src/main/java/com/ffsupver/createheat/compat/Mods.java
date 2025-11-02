@@ -1,6 +1,7 @@
 package com.ffsupver.createheat.compat;
 
 import com.ffsupver.createheat.compat.anvilCraft.AnvilCraft;
+import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.compat.coldSweat.ColdSweat;
 import com.ffsupver.createheat.compat.iceAndFire.IceAndFire;
 import com.ffsupver.createheat.compat.pneumaticcraft.Pneumaticcraft;
@@ -32,10 +33,10 @@ public class Mods {
         if (!hasInit){
             MOD_SUPPLIERS.clear();
 
-            addMod(ModIds.IceAndFire.ModId, IceAndFire::new);
-            addMod(ModIds.PNEUMATICCRAFT.ModId, Pneumaticcraft::new);
-            addMod(ModIds.COLD_SWEAT.ModId, ColdSweat::new);
-            addMod(ModIds.ANVIL_CRAFT.ModId, AnvilCraft::new);
+            addMod(ModIds.ICE_AND_FIRE,IceAndFire.class);
+            addMod(ModIds.PNEUMATICCRAFT, Pneumaticcraft.class);
+            addMod(ModIds.COLD_SWEAT, ColdSweat.class);
+            addMod(ModIds.ANVIL_CRAFT, AnvilCraft.class);
 
             MOD_SUPPLIERS.forEach(Mods::intiMod);
 
@@ -57,9 +58,20 @@ public class Mods {
         executeIfLoad(chModCompat-> chModCompat.registerPonder(HELPER));
     }
 
-    private static void addMod(String modId,Supplier<CHModCompat> modCompatSupplier){
-        if (isModLoad(modId)){
-            MOD_SUPPLIERS.put(modId,modCompatSupplier);
+    private static void addMod(ModIds modId,Class<? extends CHModCompat> modCompatClass){
+        CreateHeat.LOGGER.info("[Mod Compat]{}:is {}!",modId.ModId,isModLoad(modId.ModId)?"loaded":"not loaded");
+        if (isModLoad(modId.ModId)){
+
+                Supplier<CHModCompat> modCompatSupplier = ()-> {
+                    try {
+                        return modCompatClass.getDeclaredConstructor().newInstance();
+                    }catch (Exception e) {
+                        CreateHeat.LOGGER.error("[Mod Compat Fail]{}:{}", modId.ModId, e.getMessage());
+                        throw new RuntimeException(e);
+                    }
+                };
+                MOD_SUPPLIERS.put(modId.ModId, modCompatSupplier);
+
         }
     }
 
@@ -105,7 +117,7 @@ public class Mods {
     }
 
     public enum ModIds{
-        IceAndFire("iceandfire"),
+        ICE_AND_FIRE("iceandfire"),
         PNEUMATICCRAFT("pneumaticcraft"),
         COLD_SWEAT("cold_sweat"),
         ANVIL_CRAFT("anvilcraft");

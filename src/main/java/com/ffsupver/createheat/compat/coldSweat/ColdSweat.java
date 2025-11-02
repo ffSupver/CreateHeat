@@ -27,7 +27,7 @@ public class ColdSweat implements CHModCompat {
                 CHBlocks.SMART_THERMAL_BLOCK.get()
         ));
 
-        Mods.executeIfModLoad(Mods.ModIds.IceAndFire.ModId, iceAndFire->{
+        Mods.executeIfModLoad(Mods.ModIds.ICE_AND_FIRE.ModId, iceAndFire->{
             event.register(new DragonFireInputEffect());
         });
     }
