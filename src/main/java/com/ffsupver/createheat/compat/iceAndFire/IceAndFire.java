@@ -42,7 +42,7 @@ public class IceAndFire implements CHModCompat {
 
     @Override
     public String getModId() {
-        return Mods.ModIds.IceAndFire.ModId;
+        return Mods.ModIds.ICE_AND_FIRE.ModId;
     }
 
     public void init(IEventBus eventBus) {
