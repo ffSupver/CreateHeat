@@ -27,5 +27,6 @@ public class CHTags {
     public static class BlockTag{
         public static TagKey<Block> SHOULD_HEAT = cHBlockTag("should_heat");
         public static TagKey<Block> CUSTOM_BOILER_HEATER = cHBlockTag("custom_boiler_heater");
+        public static TagKey<Block> CAN_HEAT_THROUGH = cHBlockTag("anvilcraft/can_heat_through");
     }
 }

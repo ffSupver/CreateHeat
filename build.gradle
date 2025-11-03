@@ -164,7 +164,6 @@ dependencies {
     //Cold Sweat ColdSweat-2.4-b05d
     compileOnly("curse.maven:cold-sweat-506194:7113736-sources-7113738")
     runtimeOnly("curse.maven:cold-sweat-506194:7113736-sources-7113738")
-    implementation("curse.maven:cold-sweat-506194:7113736-sources-7113738")
 
     //铁砧工艺 AnvilCraft: Gravity Technology
     implementation("curse.maven:anvilcraft-986251:7160263-sources-7160264")

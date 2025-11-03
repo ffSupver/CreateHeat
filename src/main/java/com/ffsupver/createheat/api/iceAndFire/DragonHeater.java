@@ -3,6 +3,7 @@ package com.ffsupver.createheat.api.iceAndFire;
 import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.compat.iceAndFire.IceAndFire;
+import com.ffsupver.createheat.util.DataUtil;
 import com.iafenvoy.iceandfire.data.DragonType;
 import com.iafenvoy.iceandfire.registry.IafRegistries;
 import com.iafenvoy.iceandfire.registry.IafRegistryKeys;
@@ -15,7 +16,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Optional;
 
 public record DragonHeater(DragonType dragonType, StageToHeatProviderFunc heatProviderByStage) {
@@ -42,18 +42,7 @@ public record DragonHeater(DragonType dragonType, StageToHeatProviderFunc heatPr
 
 
     public static Optional<Holder.Reference<DragonHeater>> getFromDragonType(RegistryAccess registryAccess, DragonType dragonType){
-        List<Holder.Reference<DragonHeater>> dragonHeaterList = registryAccess.lookupOrThrow(IceAndFire.DRAGON_HEATER)
-                .listElements()
-                .filter(hR->{
-                    if (hR.value().dragonType == null){
-                        CreateHeat.LOGGER.error("[DragonHeater]find null dragon type {} ; Check you datapack createheat/dragon_heater", hR);
-                        return false;
-                    }
-                    return true;
-                })
-                .filter(hR->hR.value().dragonType.equals(dragonType))
-                .toList();
-        return dragonHeaterList.isEmpty() ? Optional.empty() : Optional.of(dragonHeaterList.getLast());
+        return DataUtil.getLastMatchData(IceAndFire.DRAGON_HEATER,registryAccess,hR->hR.value().dragonType.equals(dragonType));
     }
 
 

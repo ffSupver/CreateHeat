@@ -2,6 +2,7 @@ package com.ffsupver.createheat.api.anvilCraft;
 
 import com.ffsupver.createheat.api.BlockStateTester;
 import com.ffsupver.createheat.compat.anvilCraft.AnvilCraft;
+import com.ffsupver.createheat.util.DataUtil;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.dubhe.anvilcraft.api.heat.HeatTier;
@@ -12,7 +13,6 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 public class HeatableBlockHeatTransferProcesserData {
     public static Codec<HeatableBlockHeatTransferProcesserData> CODEC = RecordCodecBuilder.create(i->i.group(
@@ -43,13 +43,8 @@ public class HeatableBlockHeatTransferProcesserData {
         return heatTierLine;
     }
 
-    public static Optional<HeatableBlockHeatTransferProcesserData> getFromBlockState(BlockState state, RegistryAccess registryAccess){
-       Stream<Holder.Reference<HeatableBlockHeatTransferProcesserData>> all = registryAccess.lookupOrThrow(AnvilCraft.HEATABLE_BLOCK_HTP_DATA).listElements();
-       return all.filter(
-               h->h.value().testers().stream().anyMatch(
-                       tester -> tester.test(state)
-               )
-       ).map(Holder.Reference::value).findAny();
+    public static Optional<Holder.Reference<HeatableBlockHeatTransferProcesserData>> getFromBlockState(BlockState state, RegistryAccess registryAccess){
+       return DataUtil.getLastMatchData(AnvilCraft.HEATABLE_BLOCK_HTP_DATA,registryAccess,h -> h.value().testers().stream().anyMatch(tester -> tester.test(state)));
     }
 
     private static HeatTierLine buildHeatTierLine(List<HeatTierLineData> dataList){

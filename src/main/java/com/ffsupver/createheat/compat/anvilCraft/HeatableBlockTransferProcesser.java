@@ -11,6 +11,7 @@ import dev.dubhe.anvilcraft.api.heat.HeaterInfo;
 import dev.dubhe.anvilcraft.api.heat.HeaterManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,7 @@ public class HeatableBlockTransferProcesser extends HeatTransferProcesser {
     public static final ResourceLocation TYPE = CreateHeat.asResource("anvil_craft_heatable_block_regular");
 
     private BlockPos heatPos;
-    private HeatableBlockHeatTransferProcesserData data;
+    private ResourceLocation id;
     private int count;
     private HeaterInfo<HeatableBlockTransferProcesser> info = null;
     protected HeatableBlockTransferProcesser() {
@@ -32,10 +33,16 @@ public class HeatableBlockTransferProcesser extends HeatTransferProcesser {
 
     @Override
     public boolean needHeat(Level level, BlockPos pos, @Nullable Direction face) {
-        Optional<HeatableBlockHeatTransferProcesserData> dataOptional = HeatableBlockHeatTransferProcesserData.getFromBlockState(level.getBlockState(pos),level.registryAccess());
+        Optional<Holder.Reference<HeatableBlockHeatTransferProcesserData>> dataOptional = HeatableBlockHeatTransferProcesserData.getFromBlockState(level.getBlockState(pos),level.registryAccess());
         if(dataOptional.isPresent()){
+            ResourceLocation lastId = id;
             heatPos = pos;
-            data = dataOptional.get();
+            HeatableBlockHeatTransferProcesserData data = dataOptional.get().value();
+            id = dataOptional.get().getKey().location();
+            if (lastId != null && !lastId.equals(id)){ //当检测条件不符合时切换
+                HeaterManager.removeProducer(heatPos,level,info);
+                return false;
+            }
             if (info == null){
                 info = createInfo(data.heatTierLine());
             }

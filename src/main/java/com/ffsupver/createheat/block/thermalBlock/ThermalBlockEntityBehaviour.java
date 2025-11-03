@@ -10,6 +10,7 @@ import com.ffsupver.createheat.block.tightCompressStone.StoneHeatStorage;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
 import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
 import com.ffsupver.createheat.util.BlockUtil;
+import com.ffsupver.createheat.util.HeatUtil;
 import com.ffsupver.createheat.util.NbtUtil;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
@@ -202,9 +203,9 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
         //计算加热数
         for (ThermalBlockEntityBehaviour thermalBlockEntity : connectedBlockList){
             if (thermalBlockEntity.getControllerEntity() != null) {
-                HeatData heatBelow = thermalBlockEntity.genHeat();
-                heat += heatBelow.heat * tickSkip;
-                superHeatCount += heatBelow.superHeatCount;
+                HeatUtil.HeatData heatBelow = thermalBlockEntity.genHeat();
+                heat += heatBelow.heat() * tickSkip;
+                superHeatCount += heatBelow.superHeatCount();
 
 
                 // 寻找新储热器,传热处理器
@@ -260,27 +261,20 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
 /**
 在每个behaviour分别运行
  */
-    private HeatData genHeat() {
+    private HeatUtil.HeatData genHeat() {
         BlockPos belowPos = getBlockPos().below();
         boolean avoidHTP = !onCanGenerateHeatIgnoreHTPTest() && getHeatTransferProcesserByOther(belowPos).isPresent();
         if (getControllerEntity().getConnectedBlocks().contains(belowPos) || avoidHTP){ //防止加热自己或者被处理的热源
-            return new HeatData(0,0);
+            return HeatUtil.NO_HEAT_PROVIDE;
         }
         Optional<Holder.Reference<CustomHeater>> customHeatOp = CustomHeater.getFromBlockState(getLevel().registryAccess(), getLevel().getBlockState(belowPos));
         if (getLevel().getBlockEntity(belowPos) instanceof HeatProvider provider){
-            return new HeatData(provider.getHeatPerTick(),provider.getSupperHeatCount());
+            return new HeatUtil.HeatData(provider.getHeatPerTick(),provider.getSupperHeatCount());
         }else if (customHeatOp.isPresent()){
             CustomHeater customHeater = customHeatOp.get().value();
-            return new HeatData(customHeater.heatPerTick(),customHeater.superHeatCount());
+            return new HeatUtil.HeatData(customHeater.heatPerTick(),customHeater.superHeatCount());
         }else {
-            BlazeBurnerBlock.HeatLevel heatLevelB = getHeatLevel(belowPos);
-            int boilHeat = (int) BoilerHeater.findHeat(getLevel(), getBlockPos().below(), getLevel().getBlockState(getBlockPos().below())) + 1;
-
-            int result = Math.max(getHeatPerTick(heatLevelB), boilHeat);
-            if (!Config.ALLOW_PASSIVE_HEAT.get()) {
-                result = result == 1 ? 0 : result;
-            }
-            return new HeatData(result, result >= 3 ? 1 : 0);
+            return HeatUtil.fromBoilerHeat(BoilerHeater.findHeat(getLevel(), getBlockPos().below(), getLevel().getBlockState(getBlockPos().below())));
         }
     }
 
@@ -604,7 +598,4 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
 
 
     private record CostHeatResult(int heat, int superHeatCount){}
-
-
-    private record HeatData(int heat,int superHeatCount){}
 }

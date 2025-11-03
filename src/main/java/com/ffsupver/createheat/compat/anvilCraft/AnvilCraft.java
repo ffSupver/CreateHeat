@@ -3,11 +3,15 @@ package com.ffsupver.createheat.compat.anvilCraft;
 import com.ffsupver.createheat.api.anvilCraft.HeatableBlockHeatTransferProcesserData;
 import com.ffsupver.createheat.compat.CHModCompat;
 import com.ffsupver.createheat.compat.Mods;
+import com.ffsupver.createheat.registries.CHBoilerUpdaters;
 import com.ffsupver.createheat.registries.CHDatapacks;
 import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
+import com.simibubi.create.api.boiler.BoilerHeater;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.neoforged.bus.api.IEventBus;
+
+import static com.simibubi.create.api.registry.SimpleRegistry.Provider.forBlockTag;
 
 
 public class AnvilCraft implements CHModCompat {
@@ -22,6 +26,13 @@ public class AnvilCraft implements CHModCompat {
     @Override
     public void init(IEventBus eventBus) {
         CHHeatTransferProcessers.registerHeatTransferProcesser(HeatableBlockTransferProcesser.TYPE.getPath(), () -> HeatableBlockTransferProcesser::new);
+        CHBoilerUpdaters.registerBoilerUpdater(HeatProducerBoilHeater::shouldUpdateBoiler);
+
         eventBus.addListener(Mods.registerDatapack(HEATABLE_BLOCK_HTP_DATA,HeatableBlockHeatTransferProcesserData.CODEC));
+    }
+
+    @Override
+    public void registerBoilerHeater() {
+        BoilerHeater.REGISTRY.registerProvider(forBlockTag(HeatProducerBoilHeater.BLOCK_TAG,new HeatProducerBoilHeater()));
     }
 }
