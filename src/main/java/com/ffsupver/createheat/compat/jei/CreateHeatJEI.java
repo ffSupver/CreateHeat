@@ -5,6 +5,7 @@ import com.ffsupver.createheat.compat.jei.category.HeatCategory;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.ffsupver.createheat.registries.CHItems;
 import com.ffsupver.createheat.registries.CHRecipes;
+import dev.dubhe.anvilcraft.integration.jei.AnvilCraftJeiPlugin;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.VanillaTypes;
@@ -17,8 +18,11 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.block.Block;
 
 import java.util.List;
+import java.util.function.Consumer;
+
 @JeiPlugin
 public class CreateHeatJEI implements IModPlugin {
     public static ResourceLocation ID = CreateHeat.asResource("jei_plugin");
@@ -42,7 +46,8 @@ public class CreateHeatJEI implements IModPlugin {
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-        registration.addRecipeCatalyst(CHBlocks.THERMAL_BLOCK.get(),HeatCategory.TYPE);
+        registerWithThermalBlocks(b->registration.addRecipeCatalyst(b,HeatCategory.TYPE));
+       registerWithThermalBlocks(b->registration.addRecipeCatalyst(b, AnvilCraftJeiPlugin.SUPER_HEATING));
     }
 
     public static <T> mezz.jei.api.recipe.RecipeType<T> recipeType(String path, Class<T> recipeClass){
@@ -55,5 +60,10 @@ public class CreateHeatJEI implements IModPlugin {
 
     private static <I extends RecipeInput,T extends Recipe<I>> List<T> fillRecipes(RecipeType<T> recipeType){
         return getAllRecipes(recipeType).stream().map(RecipeHolder::value).toList();
+    }
+
+    private static void registerWithThermalBlocks(Consumer<Block> registerFunc){
+        registerFunc.accept(CHBlocks.THERMAL_BLOCK.get());
+        registerFunc.accept(CHBlocks.SMART_THERMAL_BLOCK.get());
     }
 }
