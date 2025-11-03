@@ -366,10 +366,15 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
         }
 
         AtomicBoolean findProcesser = new AtomicBoolean(false);
-        List<BlockPos> transferProcesserKeys = List.copyOf(getControllerEntity().transferProcesserMap.keySet());
-        AllDirectionOf(getBlockPos(),blockPos->{
+        Map<BlockPos, HeatTransferProcesser> tPM = getControllerEntity().transferProcesserMap;
+        AllDirectionOf(getBlockPos(),(blockPos,f)->{
             if (!findProcesser.get()){
-                findProcesser.set(transferProcesserKeys.contains(blockPos));
+                boolean find = false;
+                if (tPM.containsKey(blockPos)){
+                    HeatTransferProcesser htp = tPM.get(blockPos);
+                    find = htp.shouldHeatAt(f);
+                }
+                findProcesser.set(find);
             }
         });
         return needToHeatAbove() || findProcesser.get();

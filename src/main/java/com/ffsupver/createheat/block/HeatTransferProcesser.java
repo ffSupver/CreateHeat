@@ -25,6 +25,7 @@ public abstract class HeatTransferProcesser {
     public abstract boolean needHeat(Level level, BlockPos pos, @Nullable Direction face);
     public abstract void acceptHeat(Level level, BlockPos hTPPos,int heatProvide,int tickSkip);
     public abstract boolean shouldProcessEveryTick();
+    public boolean shouldHeatAt(Direction face){return true;}
     public boolean shouldWriteAndReadFromNbt(){return false;}
     public CompoundTag toNbt(){
         return null;

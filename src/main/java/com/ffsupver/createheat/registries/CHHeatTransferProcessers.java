@@ -13,13 +13,20 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.registries.RegistryBuilder;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class CHHeatTransferProcessers {
     private static final CreateRegistrate REGISTRATE = CreateHeat.registrate();
+    private static final CreateRegistrate t = CreateRegistrate.create("dasd");
+    private static final Set<Predicate<BlockState>> NEED_TO_HEAT_UP_OPTIONAL = new HashSet<>();
     public static final ResourceKey<Registry<HeatTransferProcesserBuilder>> HEAT_PROCESSOR_REGISTRY_KEY = REGISTRATE.makeRegistry(
             "htp", RegistryBuilder::new
 );
@@ -27,6 +34,7 @@ public class CHHeatTransferProcessers {
 
     public static void bootSetup(){
         registerHeatTransferProcesser(HeatRecipeTransferProcesser.TYPE.getPath(),()->HeatRecipeTransferProcesser::new);
+        registerHeatTransferProcesser(OptionalNeedHeatUpBlockHTP.TYPE.getPath(),()->OptionalNeedHeatUpBlockHTP::new);
     }
 
     /** Register HeatTransferProcesser only with name space "createheat"
@@ -34,6 +42,10 @@ public class CHHeatTransferProcessers {
      */
     public static void registerHeatTransferProcesser(String name,Supplier<HeatTransferProcesserBuilder> heatTransferProcesserBuilder){
         REGISTRATE.generic(name,HEAT_PROCESSOR_REGISTRY_KEY, NonNullSupplier.of(heatTransferProcesserBuilder)).register();
+    }
+
+    public static void registerOptionalNeedHeatBlock(Predicate<BlockState> tester){
+        NEED_TO_HEAT_UP_OPTIONAL.add(tester);
     }
 
     public static Optional<HeatTransferProcesser> findProcesser(Level level, BlockPos blockPos, Direction face){
@@ -69,4 +81,29 @@ public class CHHeatTransferProcessers {
     public interface HeatTransferProcesserBuilder{
         HeatTransferProcesser create();
     }
+
+    private static class OptionalNeedHeatUpBlockHTP extends HeatTransferProcesser {
+        protected static ResourceLocation TYPE = CreateHeat.asResource("optional_need_heat_up");
+        public OptionalNeedHeatUpBlockHTP() {
+            super(TYPE);
+        }
+        @Override
+        public boolean needHeat(Level level, BlockPos pos, @Nullable Direction face) {
+            boolean dirT = face == null || Direction.UP.equals(face);
+            if (!dirT){
+                return false;
+            }
+            BlockState state = level.getBlockState(pos);
+            return NEED_TO_HEAT_UP_OPTIONAL.stream().anyMatch(sP->sP.test(state));
+        }
+        @Override
+        public boolean shouldHeatAt(Direction face) {
+            return face.equals(Direction.UP);
+        }
+        @Override
+        public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide, int tickSkip) {}
+        @Override
+        public boolean shouldProcessEveryTick() {return false;}
+    }
+
 }

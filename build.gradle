@@ -58,6 +58,10 @@ repositories {
         name = "Curse maven"
         url = "https://cursemaven.com"
     }
+    maven { // Anvil Lib
+        name = "Cjsah Maven"
+        url = "https://server.cjsah.net:1002/maven/"
+    }
 
     mavenLocal()
 }
@@ -166,6 +170,7 @@ dependencies {
     runtimeOnly("curse.maven:cold-sweat-506194:7113736-sources-7113738")
 
     //铁砧工艺 AnvilCraft: Gravity Technology
+    implementation( "dev.anvilcraft.lib:anvillib-neoforge-1.21.1:1.4.0+build.160") //anvilLib
     implementation("curse.maven:anvilcraft-986251:7160263-sources-7160264")
 }
 
