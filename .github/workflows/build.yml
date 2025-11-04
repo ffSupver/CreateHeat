@@ -21,10 +21,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Download dependencies
-        run: |
-          chmod +x download-dependencies.sh
-          ./download-dependencies.sh
 
       # This is needed to be able to run ./gradlew below
       # You can run `git update-index --chmod +x gradlew` then remove this step.
