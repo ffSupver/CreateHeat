@@ -4,6 +4,7 @@ import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.api.anvilCraft.HeatableBlockHeatTransferProcesserData;
 import com.ffsupver.createheat.block.ConnectableBlockEntity;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
+import com.ffsupver.createheat.block.MainHeatTransferProcesser;
 import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour;
 import com.ffsupver.createheat.util.BlockUtil;
 import dev.dubhe.anvilcraft.api.heat.HeatTierLine;
@@ -20,7 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class HeatableBlockTransferProcesser extends HeatTransferProcesser {
+public class HeatableBlockTransferProcesser extends MainHeatTransferProcesser {
     public static final ResourceLocation TYPE = CreateHeat.asResource("anvil_craft_heatable_block_regular");
 
     private BlockPos heatPos;
@@ -32,7 +33,7 @@ public class HeatableBlockTransferProcesser extends HeatTransferProcesser {
     }
 
     @Override
-    public boolean needHeat(Level level, BlockPos pos, @Nullable Direction face) {
+    public boolean needHeatBefore(Level level, BlockPos pos, @Nullable Direction face) {
         Optional<Holder.Reference<HeatableBlockHeatTransferProcesserData>> dataOptional = HeatableBlockHeatTransferProcesserData.getFromBlockState(level.getBlockState(pos),level.registryAccess());
         if(dataOptional.isPresent()){
             ResourceLocation lastId = id;
@@ -52,7 +53,7 @@ public class HeatableBlockTransferProcesser extends HeatTransferProcesser {
     }
 
     @Override
-    public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide, int tickSkip) {
+    public void acceptHeatAsMain(Level level, BlockPos hTPPos, int heatProvide, int tickSkip) {
         count = heatProvide / tickSkip;
         HeaterManager.addProducer(heatPos,level,info);
     }
@@ -77,7 +78,7 @@ public class HeatableBlockTransferProcesser extends HeatTransferProcesser {
                 ThermalBlockEntityBehaviour tBEB = ThermalBlockEntityBehaviour.getFromCBE(cbe);
                 if (tBEB != null){
                     Optional<HeatTransferProcesser> hTPOp = tBEB.getHeatTransferProcesserByOther(pos);
-                    if (hTPOp.isPresent() && hTPOp.get() instanceof HeatableBlockTransferProcesser hBTP ){
+                    if (hTPOp.isPresent() && hTPOp.get() instanceof HeatableBlockTransferProcesser hBTP && hBTP.isMainProcesser){
                         result.set(Optional.of(hBTP));
                     }
                 }
