@@ -5,6 +5,7 @@ import com.ffsupver.createheat.compat.Mods;
 import com.ffsupver.createheat.item.ItemAttackEvent;
 import com.ffsupver.createheat.item.thermalTool.ThermalToolPointRenderNetwork;
 import com.ffsupver.createheat.item.thermalTool.ThermalToolPointServer;
+import com.ffsupver.createheat.item.thermalTool.ThermalToolUseActions;
 import com.ffsupver.createheat.registries.*;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -52,6 +53,7 @@ public class CreateHeat {
         CHRecipes.register(modEventBus);
 
         CHHeatTransferProcessers.bootSetup();
+        ThermalToolUseActions.bootSetup();
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (CreateHeat) to respond directly to events.

@@ -1,14 +1,10 @@
 package com.ffsupver.createheat.item.thermalTool;
 
 import com.ffsupver.createheat.CreateHeat;
-import com.ffsupver.createheat.block.ConnectableBlockEntity;
-import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour;
 import com.ffsupver.createheat.util.BlockUtil;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.kinetics.steamEngine.SteamEngineBlock;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -17,7 +13,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
@@ -41,41 +36,14 @@ public class ThermalTool extends Item {
         BlockState state = level.getBlockState(pos);
         Player player = context.getPlayer();
         boolean shiftDown = player.isShiftKeyDown();
-        if (level.getBlockEntity(pos) instanceof ConnectableBlockEntity<?> connectableBlockEntity){
-          return   userOnConnectableBlock(shiftDown,level,connectableBlockEntity,player);
-        }else if (state.is(AllBlocks.FLUID_TANK)){
-            if (level instanceof ServerLevel serverLevel){
-                ThermalToolPointLogic logic = ThermalToolPointLogic.FLUID_TANK;
-                ThermalToolPointServer.tiggerPoint(serverLevel.dimension(),pos,logic);
-            }
-        }else if (state.is(Blocks.TNT)){
-            if (!level.isClientSide()){
-                level.setBlockAndUpdate(pos,Blocks.AIR.defaultBlockState());
-                level.explode(null, pos.getX(),pos.getY(),pos.getZ(), 5, true, Level.ExplosionInteraction.TRIGGER);
-            }
+        boolean used = ThermalToolUseActions.onUse(level,pos,state,player,shiftDown);
+        if (used){
+            return InteractionResult.SUCCESS;
         }
         return super.useOn(context);
     }
 
-    private static InteractionResult userOnConnectableBlock(boolean shiftDown,Level level,ConnectableBlockEntity<?> connectableBlockEntity,Player player){
-        BlockPos controllerPos = connectableBlockEntity.getControllerPos();
-        ThermalBlockEntityBehaviour controllerEntity = connectableBlockEntity.getBehaviour(ThermalBlockEntityBehaviour.TYPE);
-        if (player != null && !level.isClientSide()) {
-            if (shiftDown){
-                player.displayClientMessage(Component.literal(
-                                "total heat:" + controllerEntity.getAllHeatForDisplay()
-                        ).withStyle(ChatFormatting.RED), true
-                );
-            }else {
-                player.displayClientMessage(Component.literal(
-                                "Connect count :" + controllerEntity.getBlockSize() + " heat:" + controllerEntity.getHeat() +
-                                        " Controller x:" + controllerPos.getX() + " y:" + controllerPos.getY() + " z:" + controllerPos.getZ() + " heatStorage:" + controllerEntity.getHeatStorage()
-                        ).withStyle(ChatFormatting.RED), true
-                );
-            }
-        }
-        return InteractionResult.SUCCESS;
-    }
+
 
     public static boolean attackOnBlock(Level level, BlockPos pos, BlockState state, Player player) {
         if (level instanceof ServerLevel serverLevel){
