@@ -6,6 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -85,5 +86,14 @@ public final class NbtUtil {
 
     public static Integer intFromNbt(Tag tag){
         return ((CompoundTag)tag).getInt("i");
+    }
+    public static CompoundTag resourceLocationToNbt(ResourceLocation id){
+        CompoundTag tag = new CompoundTag();
+        tag.putString("id",id.toString());
+        return tag;
+    }
+    
+    public static ResourceLocation resourceLocationFromNbt(Tag tag){
+        return ResourceLocation.parse(((CompoundTag)tag).getString("id"));
     }
 }

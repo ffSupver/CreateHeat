@@ -1,7 +1,7 @@
 package com.ffsupver.createheat.registries;
 
 import com.ffsupver.createheat.CreateHeat;
-import com.ffsupver.createheat.item.ThermalTool;
+import com.ffsupver.createheat.item.thermalTool.ThermalTool;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.ItemEntry;
 import net.minecraft.world.effect.MobEffectInstance;

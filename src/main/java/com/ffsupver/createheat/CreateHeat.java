@@ -2,6 +2,9 @@ package com.ffsupver.createheat;
 
 import com.ffsupver.createheat.api.BoilerUpdater;
 import com.ffsupver.createheat.compat.Mods;
+import com.ffsupver.createheat.item.ItemAttackEvent;
+import com.ffsupver.createheat.item.thermalTool.ThermalToolPointRenderNetwork;
+import com.ffsupver.createheat.item.thermalTool.ThermalToolPointServer;
 import com.ffsupver.createheat.registries.*;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -59,7 +62,7 @@ public class CreateHeat {
         modContainer.registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_SPEC);
         modEventBus.addListener(CHDatapacks::register);
         modEventBus.addListener(CreateHeat::init);
-
+        modEventBus.addListener(ThermalToolPointRenderNetwork::register);
         Mods.init(modEventBus);
     }
 
@@ -68,6 +71,8 @@ public class CreateHeat {
             CHBlocks.registerBoilHeater();
         });
         NeoForge.EVENT_BUS.addListener(CHDatapacks::onDatapackReload);
+        NeoForge.EVENT_BUS.addListener(ItemAttackEvent::onAttack);
+        ThermalToolPointServer.registerEvent();
     }
 
 
@@ -88,5 +93,6 @@ public class CreateHeat {
     @SubscribeEvent
     public void onServerTicking(ServerTickEvent.Post serverTickEvent){
         BoilerUpdater.registerEvent(serverTickEvent);
+        ThermalToolPointServer.tick(serverTickEvent);
     }
 }

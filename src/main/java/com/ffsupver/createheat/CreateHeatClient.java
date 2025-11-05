@@ -1,6 +1,7 @@
 package com.ffsupver.createheat;
 
 import com.ffsupver.createheat.compat.ponder.CHPonderPlugin;
+import com.ffsupver.createheat.item.thermalTool.ThermalToolPointRenderer;
 import net.createmod.ponder.foundation.PonderIndex;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -8,6 +9,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
@@ -24,5 +26,10 @@ public class CreateHeatClient {
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
 //      Not thing to do
+    }
+
+    @SubscribeEvent
+    static void onTickPost(ClientTickEvent.Pre event){
+        ThermalToolPointRenderer.tick();
     }
 }

@@ -48,8 +48,11 @@ public final class BlockUtil {
         });
     }
 
+    public static void walkAllBlocks(BlockPos startPos, Set<BlockPos> walkedBlockPos, Predicate<BlockPos> check,int maxRange){
+        walkAllBlocks(startPos,walkedBlockPos,check, maxRange,0);
+    }
     public static void walkAllBlocks(BlockPos startPos, Set<BlockPos> walkedBlockPos, Predicate<BlockPos> check){
-        walkAllBlocks(startPos,walkedBlockPos,check, Config.MAX_CONNECT_RANGE.get(),0);
+        walkAllBlocks(startPos,walkedBlockPos,check, Config.MAX_CONNECT_RANGE.get());
     }
 
     public static boolean checkState(BlockState checkState,BlockState state) {
