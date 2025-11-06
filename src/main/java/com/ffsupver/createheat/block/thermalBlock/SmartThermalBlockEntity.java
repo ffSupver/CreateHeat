@@ -49,6 +49,11 @@ public class SmartThermalBlockEntity extends BaseThermalBlockEntity implements I
         return this.maxHeatLevelSelections.get().equals(MaxHeatSelections.NONE_HEAT);
     }
 
+    @Override
+    public boolean isBurning() {
+        return !maxHeatLevelSelections.get().equals(MaxHeatSelections.NONE_HEAT) && super.isBurning();
+    }
+
     private enum MaxHeatSelections implements INamedIconOptions{
         NONE_HEAT("none", CHIcons.I_HEAT_LEVEL_NONE, NONE),
         KINDLED_HEAT("kindled",CHIcons.I_HEAT_LEVEL_KINDLED, KINDLED),

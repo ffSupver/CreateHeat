@@ -29,4 +29,10 @@ public  class SmartThermalBlock extends BaseThermalBlock<SmartThermalBlockEntity
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         ThermalBlock.addParticles(state,level,pos,random);
     }
+
+    @Override
+    public boolean isBurning(BlockState state, BlockGetter level, BlockPos pos) {
+        SmartThermalBlockEntity smartThermalBlock = getBlockEntity(level,pos);
+        return smartThermalBlock != null && smartThermalBlock.isBurning() && super.isBurning(state, level, pos);
+    }
 }

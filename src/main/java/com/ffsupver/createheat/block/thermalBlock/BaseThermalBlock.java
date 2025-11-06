@@ -8,6 +8,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -61,6 +62,21 @@ public class BaseThermalBlock<T extends BaseThermalBlockEntity> extends Connecta
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         addParticles(state,level,pos,random);
+    }
+
+
+    @Override
+    public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
+        super.stepOn(level, pos, state, entity);
+        if (isBurning(state,level,pos)){
+            withBlockEntityDo(level, pos, baseThermalBlockEntity -> baseThermalBlockEntity.stepOn(entity));
+        }
+    }
+
+    @Override
+    public boolean isBurning(BlockState state, BlockGetter level, BlockPos pos) {
+        BaseThermalBlockEntity baseThermalBlock = getBlockEntity(level,pos);
+        return baseThermalBlock != null && baseThermalBlock.isBurning();
     }
 
     public static void addParticles(BlockState state, Level level, BlockPos pos, RandomSource random){

@@ -5,6 +5,8 @@ import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -63,6 +65,20 @@ public class BaseThermalBlockEntity extends ConnectableBlockEntity<BaseThermalBl
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         behaviours.add(new ThermalBlockEntityBehaviour(this));
+    }
+
+    public void stepOn(Entity entity){
+        if (isBurning() && !entity.isSteppingCarefully() && entity instanceof LivingEntity){
+            boolean hurt = entity.hurt(getLevel().damageSources().hotFloor(),1);
+            if (hurt){
+                getThBehaviour().getHeatStorage().extract(ThermalBlockEntityBehaviour.MAX_COOLDOWN, false);
+            }
+        }
+    }
+
+    public boolean isBurning(){
+        ThermalBlockEntityBehaviour thermalBlockEntityBehaviour = getControllerEntity().getThBehaviour();
+        return thermalBlockEntityBehaviour != null && thermalBlockEntityBehaviour.getHeatStorage().getAmount() > ThermalBlockEntityBehaviour.MAX_HEAT.get();
     }
 
     private ThermalBlockEntityBehaviour getThBehaviour(){
