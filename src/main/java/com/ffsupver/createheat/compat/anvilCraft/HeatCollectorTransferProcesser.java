@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public class HeatCollectorTransferProcesser extends HeatTransferProcesser {
     public static final ResourceLocation TYPE = CreateHeat.asResource("anvil_craft_heat_collector");
 
-    private final static int MAX_COOLDOWN = 5;
+    private final static int MAX_COOLDOWN = 4; //要是2的倍数否则可能导致余数丢失
     private int coolDown = 0;
     private int totalPerCoolDown = 0;
     private int avgHeatPerTick;
@@ -32,7 +32,8 @@ public class HeatCollectorTransferProcesser extends HeatTransferProcesser {
             boolean shouldAddHeat = acceptHeatToTotal(heatProvide,tickSkip);
             int superHeatCount = avgHeatPerTick / Config.HEAT_PER_SEETHING_BLAZE.get();
             if (shouldAddHeat){
-                heatCollectorBlockEntity.inputtingHeat(superHeatCount * MAX_COOLDOWN / 2);
+                int heatToInput = superHeatCount * MAX_COOLDOWN / 2;
+                heatCollectorBlockEntity.inputtingHeat(heatToInput);
             }
         }
     }
