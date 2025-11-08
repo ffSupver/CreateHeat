@@ -5,6 +5,7 @@
   "block.createheat.tight_compressed_stone": "紧致压缩石",
   "block.createheat.dragon_fire_input": "导热块龙焰口",
   "block.createheat.smart_thermal_block": "智能导热块",
+  "block.createheat.copycat_thermal_block": "伪装导热块",
 
 
   "item.createheat.thermal_tool": "热调试器",

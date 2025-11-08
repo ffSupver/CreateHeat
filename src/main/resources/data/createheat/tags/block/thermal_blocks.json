@@ -1,6 +1,7 @@
 {
   "values":[
     "createheat:thermal_block",
-    "createheat:smart_thermal_block"
+    "createheat:smart_thermal_block",
+    "createheat:copycat_thermal_block"
   ]
 }

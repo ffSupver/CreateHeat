@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "blaze=none": {
+      "model": "createheat:block/copycat_thermal_block/none"
+    },
+    "blaze=kindled": {
+      "model": "createheat:block/copycat_thermal_block/kindled"
+    },
+    "blaze=seething": {
+      "model": "createheat:block/copycat_thermal_block/seething"
+    },
+    "blaze=fading": {
+      "model": "createheat:block/copycat_thermal_block/kindled"
+    },
+    "blaze=smouldering": {
+      "model": "createheat:block/copycat_thermal_block/kindled"
+    }
+  }
+}

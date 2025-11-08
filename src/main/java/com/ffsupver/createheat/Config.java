@@ -32,8 +32,8 @@ public class Config {
             .comment("Max range between blocks can be connected")
             .defineInRange("max_connect_range", 32, 1, Integer.MAX_VALUE);
 
-
-    public static final ModConfigSpec.BooleanValue CONNECT_BLOCK_TEXTURE = BUILDER
+//client
+    public static final ModConfigSpec.BooleanValue CONNECT_BLOCK_TEXTURE = CLIENT_BUILDER
             .comment("Should blocks have connected texture")
             .define("connect_block_texture", true);
 

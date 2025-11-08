@@ -77,8 +77,11 @@ public class BaseThermalBlockEntity extends ConnectableBlockEntity<BaseThermalBl
     }
 
     public boolean isBurning(){
-        ThermalBlockEntityBehaviour thermalBlockEntityBehaviour = getControllerEntity().getThBehaviour();
-        return thermalBlockEntityBehaviour != null && thermalBlockEntityBehaviour.getHeatStorage().getAmount() > ThermalBlockEntityBehaviour.MAX_HEAT.get();
+        if (getControllerEntity()!= null) {
+            ThermalBlockEntityBehaviour thermalBlockEntityBehaviour = getControllerEntity().getThBehaviour();
+            return thermalBlockEntityBehaviour != null && thermalBlockEntityBehaviour.getHeatStorage().getAmount() > ThermalBlockEntityBehaviour.MAX_HEAT.get();
+        }
+        return false;
     }
 
     private ThermalBlockEntityBehaviour getThBehaviour(){

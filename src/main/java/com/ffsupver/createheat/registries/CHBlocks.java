@@ -1,10 +1,12 @@
 package com.ffsupver.createheat.registries;
 
+import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.block.thermalBlock.*;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStone;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
 import com.simibubi.create.api.boiler.BoilerHeater;
+import com.simibubi.create.api.registry.SimpleRegistry;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.tterrag.registrate.util.entry.BlockEntry;
@@ -44,6 +46,14 @@ public class CHBlocks {
             .item(BlockItem::new)
             .build()
             .register();
+
+    public static final BlockEntry<CopycatThermalBlock> COPYCAT_THERMAL_BLOCK = REGISTRATE
+            .block("copycat_thermal_block", CopycatThermalBlock::new)
+            .properties(p-> BlockBehaviour.Properties.ofFullCopy(Blocks.COPPER_BLOCK))
+            .onRegister(CreateRegistrate.blockModel(()-> CopycatThermalBlockModel::new))
+            .item(BlockItem::new)
+            .build()
+            .register();
     public static final BlockEntityEntry<BaseThermalBlockEntity> THERMAL_BLOCK_ENTITY = REGISTRATE
             .blockEntity("thermal_block",BaseThermalBlockEntity::new)
             .validBlock(THERMAL_BLOCK)
@@ -58,10 +68,14 @@ public class CHBlocks {
             .validBlock(SMART_THERMAL_BLOCK)
             .register();
 
+    public static final BlockEntityEntry<CopycatThermalBlockEntity> COPYCAT_THERMAL_BLOCK_ENTITY = REGISTRATE
+            .blockEntity("copycat_thermal_block",CopycatThermalBlockEntity::new)
+            .validBlock(COPYCAT_THERMAL_BLOCK)
+            .register();
+
 
     public static void registerBoilHeater(){
-        BoilerHeater.REGISTRY.register(THERMAL_BLOCK.get(),BoilerHeater.BLAZE_BURNER);
-        BoilerHeater.REGISTRY.register(SMART_THERMAL_BLOCK.get(),BoilerHeater.BLAZE_BURNER);
+        BoilerHeater.REGISTRY.registerProvider(SimpleRegistry.Provider.forBlockTag(CHTags.BlockTag.THERMAL_BLOCKS,BoilerHeater.BLAZE_BURNER));
     }
 
     public static void register() {

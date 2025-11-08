@@ -27,6 +27,7 @@ public class CHCreativeTab {
 
                 output.accept(THERMAL_BLOCK);
                 output.accept(SMART_THERMAL_BLOCK);
+                output.accept(COPYCAT_THERMAL_BLOCK);
                 output.accept(TIGHT_COMPRESSED_STONE);
             })
             .build());
