@@ -15,6 +15,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.client.model.data.ModelProperty;
 import org.jetbrains.annotations.Nullable;
@@ -130,6 +131,15 @@ public class CopycatThermalBlockModel extends BakedModelWrapperWithData {
             wrappedData = ModelData.EMPTY;
 
         return getModelOf(material).getParticleIcon(wrappedData);
+    }
+
+    @Override
+    public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource rand, ModelData data) {
+        BlockState material = getMaterial(data);
+        if (material != null){
+            return Minecraft.getInstance().getBlockRenderer().getBlockModel(material).getRenderTypes(material, rand, data);
+        }
+        return super.getRenderTypes(state, rand, data);
     }
 
     public static BlockState getMaterial(ModelData data) {

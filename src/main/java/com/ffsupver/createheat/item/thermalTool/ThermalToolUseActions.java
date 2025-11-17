@@ -3,6 +3,8 @@ package com.ffsupver.createheat.item.thermalTool;
 import com.ffsupver.createheat.block.ConnectableBlockEntity;
 import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour;
 import com.simibubi.create.AllBlocks;
+import com.simibubi.create.AllItems;
+import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -11,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -18,6 +21,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
 
 public class ThermalToolUseActions {
     private static Map<LevelBlockPosTester, LevelBlockPosConsumer> ACTIONS = new HashMap<>();
@@ -41,6 +46,17 @@ public class ThermalToolUseActions {
                 }
                 return true;
             }
+        );
+        registerAction(
+                isBlock(AllBlocks.BLAZE_BURNER),
+                (level, pos, state, player, isShift) -> {
+                    if (state.getValue(HEAT_LEVEL)!= BlazeBurnerBlock.HeatLevel.NONE){
+                        ItemStack creativeCake = AllItems.CREATIVE_BLAZE_CAKE.asStack();
+                        BlazeBurnerBlock.tryInsert(state,level,pos,creativeCake,true,false,false);
+                        return true;
+                    }
+                    return false;
+                }
         );
         registerAction(
                 isBlock(Blocks.TNT),

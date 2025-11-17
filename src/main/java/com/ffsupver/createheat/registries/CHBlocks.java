@@ -50,6 +50,7 @@ public class CHBlocks {
     public static final BlockEntry<CopycatThermalBlock> COPYCAT_THERMAL_BLOCK = REGISTRATE
             .block("copycat_thermal_block", CopycatThermalBlock::new)
             .properties(p-> BlockBehaviour.Properties.ofFullCopy(Blocks.COPPER_BLOCK))
+            .color(()-> CopycatThermalBlock::wrappedColor)
             .onRegister(CreateRegistrate.blockModel(()-> CopycatThermalBlockModel::new))
             .item(BlockItem::new)
             .build()

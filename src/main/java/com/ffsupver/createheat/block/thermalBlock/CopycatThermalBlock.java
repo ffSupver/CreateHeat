@@ -2,6 +2,8 @@ package com.ffsupver.createheat.block.thermalBlock;
 
 import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.registries.CHBlocks;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -13,6 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -71,7 +74,7 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
         Block block = bi.getBlock();
         BlockState material = block.defaultBlockState();
         if (material.is(CHTags.BlockTag.COPYCAT_THERMAL_BLOCK_DENY) ||
-                !material.isSolid() || !material.isCollisionShapeFullBlock(level,pos)
+                 !material.isCollisionShapeFullBlock(level,pos)
                         || !material.canOcclude() || !material.getRenderShape().equals(RenderShape.MODEL)
         ){
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
@@ -121,5 +124,29 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
                 case SMOULDERING, FADING, KINDLED -> 4;
                 case SEETHING -> 8;
             };
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public static BlockColor wrappedColor() {
+        return new WrappedBlockColor();
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public static class WrappedBlockColor implements BlockColor {
+
+        @Override
+        public int getColor(BlockState pState, @Nullable BlockAndTintGetter pLevel, @Nullable BlockPos pPos,
+                            int pTintIndex) {
+            if (pLevel == null || pPos == null)
+                return GrassColor.get(0.5D, 1.0D);
+            BlockState material = getMaterial(pLevel,pPos);
+            if (material.getBlock() instanceof CopycatThermalBlock){
+                return 0x000000;
+            }
+            return Minecraft.getInstance()
+                    .getBlockColors()
+                    .getColor(getMaterial(pLevel, pPos), pLevel, pPos, pTintIndex);
+        }
+
     }
 }
