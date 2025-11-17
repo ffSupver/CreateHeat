@@ -1,7 +1,7 @@
 package com.ffsupver.createheat.api;
 
 import com.ffsupver.createheat.CHTags;
-import com.ffsupver.createheat.Config;
+import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.registries.CHDatapacks;
 import com.ffsupver.createheat.util.HeatUtil;
 import com.mojang.serialization.Codec;
@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.List;
 import java.util.Optional;
 
-public record CustomHeater(BlockStateTester heaterState, int heatPerTick, int superHeatCount) {
+public record CustomHeater(BlockStateTester heaterState, int heatPerTick, int superHeatCount) implements HeatProvider {
     public static Codec<CustomHeater> CODEC = RecordCodecBuilder.create(i->i.group(
             BlockStateTester.CODEC.fieldOf("block").forGetter(CustomHeater::heaterState),
             Codec.INT.fieldOf("heat_per_tick").forGetter(CustomHeater::heatPerTick),
@@ -36,6 +36,16 @@ public record CustomHeater(BlockStateTester heaterState, int heatPerTick, int su
 
     public static void registerBoilerHeater(RegistryAccess registryAccess){
         BoilerHeater.REGISTRY.registerProvider(SimpleRegistry.Provider.forBlockTag(CHTags.BlockTag.CUSTOM_BOILER_HEATER,new CustomBoilerHeater(registryAccess)));
+    }
+
+    @Override
+    public int getHeatPerTick() {
+        return heatPerTick;
+    }
+
+    @Override
+    public int getSupperHeatCount() {
+        return superHeatCount;
     }
 
     public static class CustomBoilerHeater implements BoilerHeater{

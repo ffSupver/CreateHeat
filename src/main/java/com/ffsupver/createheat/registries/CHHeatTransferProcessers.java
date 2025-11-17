@@ -25,7 +25,6 @@ import java.util.function.Supplier;
 
 public class CHHeatTransferProcessers {
     private static final CreateRegistrate REGISTRATE = CreateHeat.registrate();
-    private static final CreateRegistrate t = CreateRegistrate.create("dasd");
     private static final Set<Predicate<BlockState>> NEED_TO_HEAT_UP_OPTIONAL = new HashSet<>();
     public static final ResourceKey<Registry<HeatTransferProcesserBuilder>> HEAT_PROCESSOR_REGISTRY_KEY = REGISTRATE.makeRegistry(
             "htp", RegistryBuilder::new

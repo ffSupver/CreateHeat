@@ -17,18 +17,24 @@ public enum ThermalToolPointLogic {
         if (iFH != null) {
             iFH.fill(new FluidStack(Fluids.WATER,90), IFluidHandler.FluidAction.EXECUTE);
         }
-    },ThermalToolPointType.WATER);
+    },(level, pos) -> null,ThermalToolPointType.WATER),
+    SUPER_HEAT_SOURCE((lLevel,lPos)->{},(level, pos) -> null,ThermalToolPointType.SUPER_HEAT),
+    HEAT_SOURCE((lLevel,lPos)->{},(level, pos) -> SUPER_HEAT_SOURCE,ThermalToolPointType.HEAT);
+
     private final BiConsumer<ServerLevel, BlockPos> tick;
+    private final NextLogic nextLogic;
     private final ThermalToolPointType type;
 
-    ThermalToolPointLogic(BiConsumer<ServerLevel, BlockPos> tick, ThermalToolPointType type) {
+    ThermalToolPointLogic(BiConsumer<ServerLevel, BlockPos> tick,NextLogic nextLogic,ThermalToolPointType type) {
         this.tick = tick;
         this.type = type;
+        this.nextLogic = nextLogic;
     }
 
     public void tick(ServerLevel level,BlockPos pos){
         tick.accept(level,pos);
     }
+    public ThermalToolPointLogic nextLogic(ServerLevel level,BlockPos pos){return nextLogic.next(level,pos);}
 
     public ThermalToolPointType getType() {
         return type;
@@ -46,5 +52,10 @@ public enum ThermalToolPointLogic {
     public static ThermalToolPointLogic fromNbt(CompoundTag tag){
         String name = tag.getString("logic");
         return ThermalToolPointLogic.valueOf(name);
+    }
+
+    @FunctionalInterface
+    interface NextLogic{
+       ThermalToolPointLogic next(ServerLevel level,BlockPos pos);
     }
 }

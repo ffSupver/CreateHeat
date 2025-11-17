@@ -5,7 +5,9 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 
 public enum ThermalToolPointType {
-    WATER(0x3366FF);
+    WATER(0x3366FF),
+    HEAT(0xCC9900),
+    SUPER_HEAT(0x33CCDD);
     public static final StreamCodec<RegistryFriendlyByteBuf,ThermalToolPointType> STREAM_CODEC = StreamCodec.of(
             FriendlyByteBuf::writeEnum,
             buf->buf.readEnum(ThermalToolPointType.class)

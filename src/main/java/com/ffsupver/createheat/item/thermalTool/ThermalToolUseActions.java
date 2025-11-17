@@ -32,7 +32,7 @@ public class ThermalToolUseActions {
                 level, pos, state, player,isShift) -> level.getBlockEntity(pos) instanceof ConnectableBlockEntity<?>,
                 (level, pos, state, player,isShift) -> {
                     if (level.getBlockEntity(pos) instanceof ConnectableBlockEntity<?> connectableBlockEntity){
-                       return userOnConnectableBlock(isShift,level,connectableBlockEntity,player);
+                       return userOnConnectableBlock(isShift,level,pos,connectableBlockEntity,player);
                     }
                     return false;
                 }
@@ -42,7 +42,7 @@ public class ThermalToolUseActions {
             (level, pos, state, player, isShift) -> {
                 if (level instanceof ServerLevel serverLevel){
                     ThermalToolPointLogic logic = ThermalToolPointLogic.FLUID_TANK;
-                    ThermalToolPointServer.tiggerPoint(serverLevel.dimension(),pos,logic);
+                    ThermalToolPointServer.tiggerPoint(serverLevel,pos,logic);
                 }
                 return true;
             }
@@ -108,21 +108,20 @@ public class ThermalToolUseActions {
         boolean accept(Level level,BlockPos pos,BlockState state,Player player,boolean isShift);
     }
 
-    private static boolean userOnConnectableBlock(boolean shiftDown, Level level, ConnectableBlockEntity<?> connectableBlockEntity, Player player){
+    private static boolean userOnConnectableBlock(boolean shiftDown, Level level,BlockPos pos, ConnectableBlockEntity<?> connectableBlockEntity, Player player){
         BlockPos controllerPos = connectableBlockEntity.getControllerPos();
         ThermalBlockEntityBehaviour controllerEntity = connectableBlockEntity.getBehaviour(ThermalBlockEntityBehaviour.TYPE);
         if (player != null && !level.isClientSide()) {
             if (shiftDown){
                 player.displayClientMessage(Component.literal(
-                                "total heat:" + ThermalBlockEntityBehaviour.getFromCBE(connectableBlockEntity.getControllerEntity()).getAllHeatForDisplay()
-                        ).withStyle(ChatFormatting.RED), true
-                );
-            }else {
-                player.displayClientMessage(Component.literal(
                                 "Connect count :" + controllerEntity.getBlockSize() + " heat:" + controllerEntity.getHeat() +
                                         " Controller x:" + controllerPos.getX() + " y:" + controllerPos.getY() + " z:" + controllerPos.getZ() + " heatStorage:" + controllerEntity.getHeatStorage()
                         ).withStyle(ChatFormatting.RED), true
                 );
+            }else {
+                if (level instanceof ServerLevel serverLevel) {
+                    ThermalToolPointServer.tiggerPoint(serverLevel,pos,ThermalToolPointLogic.HEAT_SOURCE);
+                }
             }
         }
         return true;

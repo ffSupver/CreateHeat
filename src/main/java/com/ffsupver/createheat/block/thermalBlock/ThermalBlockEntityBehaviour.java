@@ -2,12 +2,12 @@ package com.ffsupver.createheat.block.thermalBlock;
 
 import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.Config;
-import com.ffsupver.createheat.api.CustomHeater;
 import com.ffsupver.createheat.block.ConnectableBlockEntity;
 import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
 import com.ffsupver.createheat.block.tightCompressStone.StoneHeatStorage;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
+import com.ffsupver.createheat.registries.CHHeatProviders;
 import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
 import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.HeatUtil;
@@ -19,7 +19,6 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import joptsimple.internal.Strings;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -267,12 +266,10 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
         if (getControllerEntity().getConnectedBlocks().contains(belowPos) || avoidHTP){ //防止加热自己或者被处理的热源
             return HeatUtil.NO_HEAT_PROVIDE;
         }
-        Optional<Holder.Reference<CustomHeater>> customHeatOp = CustomHeater.getFromBlockState(getLevel().registryAccess(), getLevel().getBlockState(belowPos));
-        if (getLevel().getBlockEntity(belowPos) instanceof HeatProvider provider){
-            return new HeatUtil.HeatData(provider.getHeatPerTick(),provider.getSupperHeatCount());
-        }else if (customHeatOp.isPresent()){
-            CustomHeater customHeater = customHeatOp.get().value();
-            return new HeatUtil.HeatData(customHeater.heatPerTick(),customHeater.superHeatCount());
+        Optional<HeatProvider> heatProviderOp = CHHeatProviders.findHeatProvider(getLevel(),belowPos,getLevel().getBlockState(belowPos));
+        if (heatProviderOp.isPresent()) {
+            HeatProvider provider = heatProviderOp.get();
+            return new HeatUtil.HeatData(provider.getHeatPerTick(), provider.getSupperHeatCount());
         }else {
             return HeatUtil.fromBoilerHeat(BoilerHeater.findHeat(getLevel(), getBlockPos().below(), getLevel().getBlockState(getBlockPos().below())));
         }

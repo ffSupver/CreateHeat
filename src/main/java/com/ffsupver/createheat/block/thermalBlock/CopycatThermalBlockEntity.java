@@ -114,7 +114,6 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity{
                     case SEETHING -> 8;
                 };
                 int r = Math.min(15, blockLight + workLight);
-                System.out.println(blockLight + " " + workLight + " " + r);
                 lightManager.setLightAt(getBlockPos(),r);
             }
         }

@@ -110,11 +110,17 @@ public class ThermalToolPointServer {
         player.connection.send(pointRenderPack);
     }
 
-    public static void tiggerPoint(ResourceKey<Level> key,BlockPos pos,ThermalToolPointLogic logic){
+    public static void tiggerPoint(ServerLevel serverLevel,BlockPos pos,ThermalToolPointLogic logic){
+        ResourceKey<Level> key = serverLevel.dimension();
         points().putIfAbsent(key,new HashMap<>());
         Map<BlockPos,ThermalToolPointLogic> levelPointMap = points().get(key);
         if (levelPointMap.containsKey(pos)){
-            levelPointMap.remove(pos);
+            ThermalToolPointLogic newLogic = levelPointMap.get(pos).nextLogic(serverLevel,pos);
+            if (newLogic == null){
+                levelPointMap.remove(pos);
+            }else {
+                levelPointMap.replace(pos,newLogic);
+            }
         }else {
             levelPointMap.putIfAbsent(pos,logic);
         }
@@ -125,8 +131,13 @@ public class ThermalToolPointServer {
         needToUpdate = true;
     }
 
-
-
+    public static ThermalToolPointLogic getPoint(ResourceKey<Level> levelKey,BlockPos pos) {
+        Map<ResourceKey<Level>,Map<BlockPos,ThermalToolPointLogic>> pM = pointMapData.pointMaps;
+        if (pM.containsKey(levelKey)&& pM.get(levelKey).containsKey(pos)){
+            return pM.get(levelKey).get(pos);
+        }
+        return null;
+    }
 
     public static class PointMapData extends SavedData{
         private final Map<ResourceKey<Level>,Map<BlockPos,ThermalToolPointLogic>> pointMaps = new HashMap<>();

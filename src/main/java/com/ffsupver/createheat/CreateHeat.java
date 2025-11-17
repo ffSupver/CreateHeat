@@ -53,6 +53,7 @@ public class CreateHeat {
         CHRecipes.register(modEventBus);
 
         CHHeatTransferProcessers.bootSetup();
+        CHHeatProviders.bootSetup();
         ThermalToolUseActions.bootSetup();
 
         // Register ourselves for server and other game events we are interested in.
