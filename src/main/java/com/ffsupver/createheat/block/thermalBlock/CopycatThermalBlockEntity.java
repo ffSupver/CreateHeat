@@ -12,8 +12,12 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.common.world.AuxiliaryLightManager;
+
+import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
 
 public class CopycatThermalBlockEntity extends BaseThermalBlockEntity{
+    private BlockState cashedState;
     private BlockState material;
     private ItemStack itemStack;
     public CopycatThermalBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -47,7 +51,17 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity{
         tag.put("item",itemStack.saveOptional(registries));
     }
 
-    public boolean setMaterial(BlockState material,ItemStack stack) {
+    @Override
+    public void tick() {
+        super.tick();
+
+        if (!getBlockState().equals(cashedState)){
+            cashedState = getBlockState();
+            updateLight();
+        }
+    }
+
+    public boolean setMaterial(BlockState material, ItemStack stack) {
         if (!hasMaterial() && !material.is(CHBlocks.COPYCAT_THERMAL_BLOCK.get())){
             this.material = material;
             this.itemStack = stack.copyWithCount(1);
@@ -75,8 +89,8 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity{
 
     @Override
     public void notifyUpdate() {
-        super.notifyUpdate();
         redraw();
+        super.notifyUpdate();
     }
 
     private void redraw() {
@@ -84,8 +98,25 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity{
             requestModelDataUpdate();
         }
         if (level != null) {
+            updateLight(); //更新发光
             level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 16);
-//            updateLight(); 没有透光的方块
+        }
+    }
+
+    private void updateLight() {
+        if (level != null) {
+            AuxiliaryLightManager lightManager = level.getAuxLightManager(getBlockPos());
+            if (lightManager != null) {
+                int blockLight = material.is(CHBlocks.COPYCAT_THERMAL_BLOCK) ? 1 : material.getLightEmission(level, getBlockPos());
+                int workLight = switch (getBlockState().getValue(HEAT_LEVEL)) {
+                    case NONE -> 0;
+                    case SMOULDERING, FADING, KINDLED -> 4;
+                    case SEETHING -> 8;
+                };
+                int r = Math.min(15, blockLight + workLight);
+                System.out.println(blockLight + " " + workLight + " " + r);
+                lightManager.setLightAt(getBlockPos(),r);
+            }
         }
     }
 

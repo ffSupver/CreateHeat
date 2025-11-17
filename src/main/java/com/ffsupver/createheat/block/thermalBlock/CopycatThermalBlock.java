@@ -6,17 +6,17 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.GrassColor;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,12 +24,12 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.common.world.AuxiliaryLightManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
+import java.util.function.Supplier;
 
 public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEntity>{
 
@@ -118,12 +118,17 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
     }
 
     @Override
+    public boolean hasDynamicLightEmission(BlockState state) {
+        return true;
+    }
+
+    @Override
     public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
-            return switch (state.getValue(HEAT_LEVEL)) {
-                case NONE -> 0;
-                case SMOULDERING, FADING, KINDLED -> 4;
-                case SEETHING -> 8;
-            };
+        AuxiliaryLightManager lightManager = level.getAuxLightManager(pos);
+        if (lightManager != null)
+            return lightManager.getLightAt(pos);
+
+        return super.getLightEmission(state, level, pos);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -147,6 +152,99 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
                     .getBlockColors()
                     .getColor(getMaterial(pLevel, pPos), pLevel, pPos, pTintIndex);
         }
+    }
 
+    @Override
+    public float getExplosionResistance(BlockState state, BlockGetter level, BlockPos pos, Explosion explosion) {
+        return executeWithMaterial(state,level,pos,
+                (m,s,l,p)->m.getExplosionResistance(l,p,explosion),
+                ()->super.getExplosionResistance(state,level, pos,explosion)
+        );
+    }
+
+    @Override
+    public boolean addLandingEffects(BlockState state1, ServerLevel level, BlockPos pos, BlockState state2, LivingEntity entity, int numberOfParticles) {
+        return executeWithMaterial(state1,level,pos,
+                (m,s,l,p)->m.addLandingEffects((ServerLevel) l,p,state2,entity,numberOfParticles),
+                ()->super.addLandingEffects(state1, level, pos,state2,entity,numberOfParticles)
+        );
+    }
+
+    @Override
+    public boolean addRunningEffects(BlockState state, Level level, BlockPos pos, Entity entity) {
+        return executeWithMaterial(state,level,pos,
+                (m,s,l,p)->m.addRunningEffects((Level) l,p,entity),
+                ()->super.addRunningEffects(state, level, pos,entity)
+        );
+    }
+
+    @Override
+    public float getEnchantPowerBonus(BlockState state, LevelReader level, BlockPos pos) {
+        return executeWithMaterial(state,level,pos,
+                (m,s,l,p)->m.getEnchantPowerBonus((LevelReader) l,p),
+                ()->super.getEnchantPowerBonus(state, level, pos)
+        );
+    }
+
+    @Override
+    public boolean canEntityDestroy(BlockState state, BlockGetter level, BlockPos pos, Entity entity) {
+        return executeWithMaterial(state,level,pos,
+                (m,s,l,p)->m.canEntityDestroy(l,p,entity),
+                ()->super.canEntityDestroy(state, level, pos, entity)
+        );
+    }
+
+    @Override
+    public void fallOn(Level level, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
+        executeWithMaterial(state,level,pos,
+                ((material, s, l, p) -> {
+                    material.getBlock().fallOn((Level) l, s, p, entity, fallDistance);
+                    return null;
+                }),
+                ()-> {
+                    super.fallOn(level, state, pos, entity, fallDistance);
+                    return null;
+                }
+        );
+    }
+
+    @Override
+    public boolean isBurning(BlockState state, BlockGetter level, BlockPos pos) {
+        return executeWithMaterial(state, level, pos,
+                (material, s, l, p) -> material.getBlock().isBurning(s, l, p),
+                () -> super.isBurning(state, level, pos)
+        );
+    }
+
+    @Override
+    public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
+        executeWithMaterial(state, level, pos,
+                (material, s, l, p) -> {
+                    material.getBlock().stepOn((Level) l, p, s, entity);
+                    return null;
+                },
+                () -> {
+                    super.stepOn(level, pos, state, entity);
+                    return null;
+                }
+        );
+    }
+
+
+    /**模仿伪装方块方法
+     * void返回null
+     * */
+    private <T> T executeWithMaterial(BlockState state, BlockGetter level, BlockPos pos,
+                                      MaterialFunction<T> materialFunction, Supplier<T> fallback) {
+        BlockState material = getMaterial(level, pos);
+        if (material != null && !(material.getBlock() instanceof CopycatThermalBlock)) {
+            return materialFunction.apply(material, state, level, pos);
+        }
+        return fallback.get();
+    }
+
+    @FunctionalInterface
+    private interface MaterialFunction<T> {
+        T apply(BlockState material, BlockState state, BlockGetter level, BlockPos pos);
     }
 }
