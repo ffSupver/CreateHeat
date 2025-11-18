@@ -41,8 +41,13 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity{
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
+        BlockState preMaterial = material;
         material = NbtUtils.readBlockState(blockHolderGetter(), tag.getCompound("Material"));
         itemStack = ItemStack.parseOptional(registries,tag.getCompound("item"));
+
+        if (clientPacket && preMaterial != material){
+            redraw();
+        }
     }
 
     @Override

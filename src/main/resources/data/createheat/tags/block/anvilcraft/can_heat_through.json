@@ -1,7 +1,7 @@
 {
   "values": [
     "minecraft:air",
-    "#anvilcraft:spectral_can_through",
+    {"id":"#anvilcraft:spectral_can_through", "required": false},
     {
       "id": "anvilcraft:mineral_fountain",
       "required": false
