@@ -31,6 +31,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import static net.minecraft.world.level.block.CommandBlock.FACING;
+import static net.minecraft.world.level.block.state.properties.BlockStateProperties.AXIS;
+import static net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT;
+
 public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEntity>{
 
     public CopycatThermalBlock(Properties properties) {
@@ -67,6 +71,16 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
+        if (stack.isEmpty() && player.isShiftKeyDown()){
+           BlockState material = getMaterial(level,pos);
+           if (material.hasProperty(LIT)){
+               withBlockEntityDo(level,pos,copycatThermalBlockEntity ->
+                       copycatThermalBlockEntity.forceSetMaterial(material.setValue(LIT,!material.getValue(LIT)))
+               );
+               return ItemInteractionResult.SUCCESS;
+           }
+        }
+
         if (!(stack.getItem() instanceof BlockItem bi)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
@@ -79,11 +93,18 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
         ){
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
+        if (material.hasProperty(FACING)){
+            material = material.setValue(FACING,player.getNearestViewDirection().getOpposite());
+        }
+        if (material.hasProperty(AXIS)){
+            material = material.setValue(AXIS,player.getNearestViewDirection().getAxis());
+        }
 
 
         AtomicBoolean set = new AtomicBoolean(false);
-        withBlockEntityDo(level,pos,copycatThermalBlockEntity -> {
-           set.set(copycatThermalBlockEntity.setMaterial(material,stack));
+        BlockState finalMaterial = material;
+        withBlockEntityDo(level,pos, copycatThermalBlockEntity -> {
+           set.set(copycatThermalBlockEntity.setMaterial(finalMaterial,stack));
         });
         if (set.get()){
             if (!player.isCreative()){
@@ -97,7 +118,6 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
     }
-
 
     @Override
     @OnlyIn(Dist.CLIENT)

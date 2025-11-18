@@ -77,7 +77,7 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity{
     }
 
     public void forceSetMaterial(BlockState material) {
-        forceSetMaterial(material, material.getBlock().asItem().getDefaultInstance());
+        this.material = material;
     }
 
     public void forceSetMaterial(BlockState material, ItemStack stack){
