@@ -40,6 +40,7 @@
     {"id": "anvilcraft:smooth_royal_steel_block", "required": false},
     {"id": "anvilcraft:cut_royal_steel_block", "required": false},
     {"id": "anvilcraft:cut_royal_steel_block", "required": false},
+    {"id": "anvilcraft:royal_smithing_table", "required": false},
     {"id": "anvilcraft:magnet_block", "required": false}
   ]
 }

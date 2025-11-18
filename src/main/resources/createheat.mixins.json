@@ -5,7 +5,9 @@
   "compatibilityLevel": "JAVA_21",
   "refmap": "createheat.refmap.json",
   "mixins": [
+    "AbstractContainerMenuMixin",
     "ChunkMapAccessor",
+    "ItemCombinerMenuMixin",
     "RegistryDataLoaderMixin",
     "anvilCraft.AbstractProcessRecipeMixin",
     "anvilCraft.HeatManagerMixin",

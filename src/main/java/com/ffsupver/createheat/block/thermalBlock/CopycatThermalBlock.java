@@ -120,6 +120,20 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
     }
 
     @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        InteractionResult result = super.useWithoutItem(state, level, pos, player, hitResult);
+        if (result.equals(InteractionResult.PASS)) {
+            return executeWithMaterial(
+                    state, level, pos,
+                    (m, s, l, p) -> m.useWithoutItem((Level) l,player,hitResult),
+                    () -> result
+            );
+        }else {
+            return result;
+        }
+    }
+
+    @Override
     @OnlyIn(Dist.CLIENT)
     public BlockState getAppearance(BlockState state, BlockAndTintGetter level, BlockPos pos, Direction side, @Nullable BlockState queryState, @Nullable BlockPos queryPos) {
         ModelData modelData = level.getModelData(pos);
