@@ -211,23 +211,37 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
     @Override
     public boolean isBurning(BlockState state, BlockGetter level, BlockPos pos) {
         return executeWithMaterial(state, level, pos,
-                (material, s, l, p) -> material.getBlock().isBurning(s, l, p),
+                (material, s, l, p) -> {
+                    if (material.is(CHTags.BlockTag.HEAT_ENTITY_ABOVE)){
+                        return super.isBurning(state,level,pos);
+                    }else {
+                        return material.getBlock().isBurning(s, l, p);
+                    }
+                },
                 () -> super.isBurning(state, level, pos)
         );
     }
 
     @Override
     public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
-        executeWithMaterial(state, level, pos,
-                (material, s, l, p) -> {
-                    material.getBlock().stepOn((Level) l, p, s, entity);
-                    return null;
-                },
-                () -> {
-                    super.stepOn(level, pos, state, entity);
-                    return null;
-                }
-        );
+        if (state.is(CHTags.BlockTag.HEAT_ENTITY_ABOVE)){
+            super.stepOn(level,pos,state,entity);
+        }else {
+            executeWithMaterial(state, level, pos,
+                    (material, s, l, p) -> {
+                        if (material.is(CHTags.BlockTag.HEAT_ENTITY_ABOVE)) {
+                            super.stepOn(level, pos, state, entity);
+                        }else {
+                            material.getBlock().stepOn((Level) l, p, s, entity);
+                        }
+                        return null;
+                    },
+                    () -> {
+                        super.stepOn(level, pos, state, entity);
+                        return null;
+                    }
+            );
+        }
     }
 
 

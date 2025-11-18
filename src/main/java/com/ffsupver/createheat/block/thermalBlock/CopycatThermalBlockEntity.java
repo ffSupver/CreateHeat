@@ -18,6 +18,7 @@ import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEA
 
 public class CopycatThermalBlockEntity extends BaseThermalBlockEntity{
     private BlockState cashedState;
+    private BlockState cashedMaterial;
     private BlockState material;
     private ItemStack itemStack;
     public CopycatThermalBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -59,17 +60,30 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity{
             cashedState = getBlockState();
             updateLight();
         }
+
+        if (!material.equals(cashedMaterial)){
+            cashedMaterial = material;
+            redraw();
+        }
     }
 
     public boolean setMaterial(BlockState material, ItemStack stack) {
         if (!hasMaterial() && !material.is(CHBlocks.COPYCAT_THERMAL_BLOCK.get())){
-            this.material = material;
-            this.itemStack = stack.copyWithCount(1);
-            notifyUpdate();
+            forceSetMaterial(material,stack);
             return true;
         }else {
             return false;
         }
+    }
+
+    public void forceSetMaterial(BlockState material) {
+        forceSetMaterial(material, material.getBlock().asItem().getDefaultInstance());
+    }
+
+    public void forceSetMaterial(BlockState material, ItemStack stack){
+        this.material = material;
+        this.itemStack = stack.copyWithCount(1);
+//        notifyUpdate();
     }
 
     public ItemStack removeMaterial(){
@@ -77,7 +91,7 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity{
             this.material = CHBlocks.COPYCAT_THERMAL_BLOCK.getDefaultState();
             ItemStack result = itemStack;
             this.itemStack = ItemStack.EMPTY;
-            notifyUpdate();
+//            notifyUpdate();
             return result;
         }
         return ItemStack.EMPTY;
