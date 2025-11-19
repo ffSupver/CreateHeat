@@ -5,6 +5,8 @@ import com.ffsupver.createheat.compat.jei.category.HeatCategory;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.ffsupver.createheat.registries.CHItems;
 import com.ffsupver.createheat.registries.CHRecipes;
+import com.simibubi.create.AllBlocks;
+import com.simibubi.create.AllItems;
 import dev.dubhe.anvilcraft.integration.jei.AnvilCraftJeiPlugin;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -48,6 +50,8 @@ public class CreateHeatJEI implements IModPlugin {
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         registerWithThermalBlocks(b->registration.addRecipeCatalyst(b,HeatCategory.TYPE));
        registerWithThermalBlocks(b->registration.addRecipeCatalyst(b, AnvilCraftJeiPlugin.SUPER_HEATING));
+        registration.addRecipeCatalyst(AllBlocks.BLAZE_BURNER,AnvilCraftJeiPlugin.SUPER_HEATING);
+       registration.addRecipeCatalyst(AllItems.BLAZE_CAKE,AnvilCraftJeiPlugin.SUPER_HEATING);
     }
 
     public static <T> mezz.jei.api.recipe.RecipeType<T> recipeType(String path, Class<T> recipeClass){
@@ -65,5 +69,6 @@ public class CreateHeatJEI implements IModPlugin {
     private static void registerWithThermalBlocks(Consumer<Block> registerFunc){
         registerFunc.accept(CHBlocks.THERMAL_BLOCK.get());
         registerFunc.accept(CHBlocks.SMART_THERMAL_BLOCK.get());
+        registerFunc.accept(CHBlocks.COPYCAT_THERMAL_BLOCK.get());
     }
 }
