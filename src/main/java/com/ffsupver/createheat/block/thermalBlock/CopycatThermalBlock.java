@@ -2,6 +2,7 @@ package com.ffsupver.createheat.block.thermalBlock;
 
 import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.registries.CHBlocks;
+import com.simibubi.create.content.equipment.wrench.WrenchItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.core.BlockPos;
@@ -31,9 +32,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import static com.simibubi.create.content.redstone.RoseQuartzLampBlock.POWERING;
 import static net.minecraft.world.level.block.CommandBlock.FACING;
-import static net.minecraft.world.level.block.state.properties.BlockStateProperties.AXIS;
-import static net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT;
+import static net.minecraft.world.level.block.state.properties.BlockStateProperties.*;
 
 public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEntity>{
 
@@ -73,10 +74,7 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
 
         if (stack.isEmpty() && player.isShiftKeyDown()){
            BlockState material = getMaterial(level,pos);
-           if (material.hasProperty(LIT)){
-               withBlockEntityDo(level,pos,copycatThermalBlockEntity ->
-                       copycatThermalBlockEntity.forceSetMaterial(material.setValue(LIT,!material.getValue(LIT)))
-               );
+           if (cycleStateProperty(level,pos,material)){
                return ItemInteractionResult.SUCCESS;
            }
         }
@@ -122,7 +120,7 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         InteractionResult result = super.useWithoutItem(state, level, pos, player, hitResult);
-        if (result.equals(InteractionResult.PASS)) {
+        if (!(player.getItemInHand(InteractionHand.MAIN_HAND).getItem() instanceof WrenchItem) && result.equals(InteractionResult.PASS)) {
             return executeWithMaterial(
                     state, level, pos,
                     (m, s, l, p) -> m.useWithoutItem((Level) l,player,hitResult),
@@ -149,6 +147,32 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
             return copycatThermalBlockEntity.getMaterial();
         }
         return CHBlocks.COPYCAT_THERMAL_BLOCK.getDefaultState();
+    }
+
+    private boolean cycleStateProperty(Level level,BlockPos pos,BlockState material){
+        boolean hasLit = material.hasProperty(LIT);
+        boolean hasPowered = material.hasProperty(POWERED);
+        boolean hasPowering = material.hasProperty(POWERING); //玫瑰石英灯
+        BlockState newMaterial = material;
+        if (hasLit){
+            newMaterial = newMaterial.setValue(LIT,!newMaterial.getValue(LIT));
+        }
+        if (hasPowered && (!hasLit || hasLit && newMaterial.getValue(LIT))){ // 不能省略 hasLit && 检测,否则可能导致缺少property报错
+            newMaterial = newMaterial.setValue(POWERED,!newMaterial.getValue(POWERED));
+        }
+        if (hasPowering){
+            newMaterial = newMaterial.setValue(POWERING,!newMaterial.getValue(POWERING));
+        }
+
+
+        if (!newMaterial.equals(material)){
+            BlockState finalMaterial = newMaterial;
+            withBlockEntityDo(level,pos,copycatThermalBlockEntity ->
+                    copycatThermalBlockEntity.forceSetMaterial(finalMaterial)
+            );
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -180,7 +204,7 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
                 return GrassColor.get(0.5D, 1.0D);
             BlockState material = getMaterial(pLevel,pPos);
             if (material.getBlock() instanceof CopycatThermalBlock){
-                return 0x000000;
+                return 0xFFFFFF;
             }
             return Minecraft.getInstance()
                     .getBlockColors()
