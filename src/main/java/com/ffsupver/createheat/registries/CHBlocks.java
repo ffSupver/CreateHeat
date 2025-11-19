@@ -8,8 +8,10 @@ import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.api.registry.SimpleRegistry;
 import com.simibubi.create.foundation.data.CreateRegistrate;
+import com.simibubi.create.foundation.item.ItemDescription;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.tterrag.registrate.util.entry.BlockEntry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -52,7 +54,8 @@ public class CHBlocks {
             .properties(p-> BlockBehaviour.Properties.ofFullCopy(Blocks.COPPER_BLOCK))
             .color(()-> CopycatThermalBlock::wrappedColor)
             .onRegister(CreateRegistrate.blockModel(()-> CopycatThermalBlockModel::new))
-            .item(BlockItem::new)
+            .onRegisterAfter(Registries.ITEM,b-> ItemDescription.useKey(b,"block.createheat.copycat_thermal_block"))
+            .item()
             .build()
             .register();
     public static final BlockEntityEntry<BaseThermalBlockEntity> THERMAL_BLOCK_ENTITY = REGISTRATE

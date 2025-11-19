@@ -6,6 +6,12 @@
   "block.createheat.dragon_fire_input": "Dragon Fire Input",
   "block.createheat.smart_thermal_block": "Smart Thermal Block",
   "block.createheat.copycat_thermal_block": "Copycat Thermal Block",
+  "block.createheat.copycat_thermal_block.tooltip.summary": "_Converts_ any _full block_ into a _Thermal Block_.",
+  "block.createheat.copycat_thermal_block.tooltip.condition1": "When R-Clicked",
+  "block.createheat.copycat_thermal_block.tooltip.behaviour1": "Applies _held item_ as its _material_ if possible. _Click again_ to open _Interface_ according to _material_. Use a _Wrench_ to _reset_ the material.",
+  "block.createheat.copycat_thermal_block.tooltip.condition2": "When Sneak-click with empty hand",
+  "block.createheat.copycat_thermal_block.tooltip.behaviour2": "Will cycle _powered_ state if possible.",
+
 
   "item.createheat.thermal_tool": "Thermal Tool",
 

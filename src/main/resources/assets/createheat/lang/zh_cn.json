@@ -6,6 +6,11 @@
   "block.createheat.dragon_fire_input": "导热块龙焰口",
   "block.createheat.smart_thermal_block": "智能导热块",
   "block.createheat.copycat_thermal_block": "伪装导热块",
+  "block.createheat.copycat_thermal_block.tooltip.summary": "把所有_完整方块_变成_导热块_",
+  "block.createheat.copycat_thermal_block.tooltip.condition1": "右击时",
+  "block.createheat.copycat_thermal_block.tooltip.behaviour1": "如果可能，将根据_手持物品_改变_材质_。_再次点击_将根据_材质_打开界面。使用_扳手_重置材质。",
+  "block.createheat.copycat_thermal_block.tooltip.condition2": "空手潜行右击时",
+  "block.createheat.copycat_thermal_block.tooltip.behaviour2": "如果可能，将循环切换_充能_状态。",
 
 
   "item.createheat.thermal_tool": "热调试器",
