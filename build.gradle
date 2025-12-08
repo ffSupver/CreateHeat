@@ -144,8 +144,9 @@ dependencies {
 //    runtimeOnly "mezz.jei:jei-${minecraft_version}:${jei_version}"
      localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
 
-//    localRuntime files("./libs/sodium-neoforge-0.6.9+mc1.21.1.jar")
-//    localRuntime files("./libs/iris-neoforge-1.8.12+mc1.21.1.jar")
+    // Shader test
+    localRuntime files("./libs/sodium-neoforge-0.6.9+mc1.21.1.jar")
+    localRuntime files("./libs/iris-neoforge-1.8.12+mc1.21.1.jar")
 
 
     implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = true }
