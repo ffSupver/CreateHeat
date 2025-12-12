@@ -1,0 +1,6 @@
+{
+  "values": [
+    {"id":"pneumaticcraft:vortex_tube", "required": false},
+    {"id":"pneumaticcraft:compressed_iron_block", "required": false}
+  ]
+}

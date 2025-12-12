@@ -19,6 +19,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import joptsimple.internal.Strings;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -142,8 +143,8 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
         //处理需要每tick的传热处理器
         transferProcesserMap.forEach((hTPPos,hTP)->{
             if (hTP.shouldProcessEveryTick()){
-                int heatProvider = calculateHeatProvide(hTPPos,this,1);
-                hTP.acceptHeat(getLevel(),hTPPos,heatProvider,1);
+                HeatTransferProcesser.HeatAcceptData heatAcceptData = calculateHeatProvide(hTPPos,this,1);
+                hTP.acceptHeat(getLevel(),hTPPos,heatAcceptData);
             }
         });
 
@@ -184,22 +185,10 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
         }
 
 
-        //移除不合条件的传热处理器
-        List<BlockPos> heatTransferProcesserToRemove = transferProcesserMap.entrySet().stream()
-                .filter(
-                        e->!e.getValue().needHeat(getLevel(),e.getKey(),null) ||
-                                !BlockUtil.isConnect(getConnectedBlocks(),Set.of(e.getKey()))
-                )
-                .map(Map.Entry::getKey).toList();
-        heatTransferProcesserToRemove.forEach(blockPos -> {
-            transferProcesserMap.get(blockPos).onControllerRemove();
-            transferProcesserMap.remove(blockPos);
-        });
-
         //====加热部分====
 
-
         //计算加热数
+        Map<BlockPos,Set<Direction>> newHeatTransferProcesserToCheck = new HashMap<>();
         for (ThermalBlockEntityBehaviour thermalBlockEntity : connectedBlockList){
             if (thermalBlockEntity.getControllerEntity() != null) {
                 HeatUtil.HeatData heatBelow = thermalBlockEntity.genHeat();
@@ -213,8 +202,8 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
                         return;  //避免重复搜索
                     }
 
-                    Optional<HeatTransferProcesser> transferProcesserOp = CHHeatTransferProcessers.findProcesser(getLevel(), checkPos, f);
-                    transferProcesserOp.ifPresent(hTP -> transferProcesserMap.putIfAbsent(checkPos, hTP));
+                    newHeatTransferProcesserToCheck.putIfAbsent(checkPos,new HashSet<>());
+                    newHeatTransferProcesserToCheck.get(checkPos).add(f);
 
                     if (getLevel().getBlockEntity(checkPos) instanceof TightCompressStoneEntity sHS) {
                         BlockPos sHSPosToAdd = sHS.getControllerPos();
@@ -231,6 +220,23 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
         int superHeatCountFromHeater = superHeatCount;
         superHeatCount += superHeatCountFromSHS;
 
+        //移除不合条件的传热处理器
+        List<BlockPos> heatTransferProcesserToRemove = transferProcesserMap.entrySet().stream()
+                .filter(
+                        e->!e.getValue().needHeat(getLevel(),e.getKey(),null,heat,tickSkip,superHeatCountFromHeater) ||
+                                !BlockUtil.isConnect(getConnectedBlocks(),Set.of(e.getKey()))
+                )
+                .map(Map.Entry::getKey).toList();
+        heatTransferProcesserToRemove.forEach(blockPos -> {
+            transferProcesserMap.get(blockPos).onControllerRemove();
+            transferProcesserMap.remove(blockPos);
+        });
+
+        //添加新传热处理器
+        newHeatTransferProcesserToCheck.forEach((checkPos,fSet) -> fSet.forEach(f -> {
+            Optional<HeatTransferProcesser> transferProcesserOp = CHHeatTransferProcessers.findProcesser(getLevel(), checkPos, f,heat,tickSkip,superHeatCountFromHeater);
+            transferProcesserOp.ifPresent(hTP -> transferProcesserMap.putIfAbsent(checkPos, hTP));
+        }));
 
 
         //====耗热部分====
@@ -245,8 +251,8 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
         //处理传热处理器
         transferProcesserMap.forEach((hTPPos, hTP) -> {
             if (!hTP.shouldProcessEveryTick()){
-                int heatProvide = calculateHeatProvide(hTPPos, this, tickSkip);
-                hTP.acceptHeat(getLevel(), hTPPos, heatProvide,tickSkip);
+                HeatTransferProcesser.HeatAcceptData heatAcceptData = calculateHeatProvide(hTPPos, this, tickSkip);
+                hTP.acceptHeat(getLevel(), hTPPos, heatAcceptData);
             }
         });
 
@@ -554,15 +560,19 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
         return TYPE;
     }
 
-    private static int calculateHeatProvide(BlockPos cPos,ThermalBlockEntityBehaviour controller,int tickSkip){
+    private static HeatTransferProcesser.HeatAcceptData calculateHeatProvide(BlockPos cPos, ThermalBlockEntityBehaviour controller, int tickSkip){
         AtomicInteger heatAccept = new AtomicInteger();
+        AtomicInteger superHeatCount = new AtomicInteger();
         AllDirectionOf(cPos,pos -> {
             if (controller.getConnectedBlocks().contains(pos)){
                 BlazeBurnerBlock.HeatLevel heatLevel = controller.getHeatLevel(pos);
+                if (heatLevel.isAtLeast(SEETHING)){
+                    superHeatCount.addAndGet(1);
+                }
                 heatAccept.addAndGet(calculateHeatCost(tickSkip, heatLevel));
             }
         });
-        return heatAccept.get();
+        return new HeatTransferProcesser.HeatAcceptData(heatAccept.get(), tickSkip, superHeatCount.get());
     }
 
     public static int calculateHeatCost(int tickSkip, BlazeBurnerBlock.HeatLevel heatLevel){

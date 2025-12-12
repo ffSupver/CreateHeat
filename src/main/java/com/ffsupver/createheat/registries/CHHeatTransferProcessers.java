@@ -47,8 +47,9 @@ public class CHHeatTransferProcessers {
         NEED_TO_HEAT_UP_OPTIONAL.add(tester);
     }
 
-    public static Optional<HeatTransferProcesser> findProcesser(Level level, BlockPos blockPos, Direction face){
-       return REGISTRATE.getAll(HEAT_PROCESSOR_REGISTRY_KEY).stream().map(d->d.get().create()).filter(h->h.needHeat(level,blockPos,face)).findFirst();
+    public static Optional<HeatTransferProcesser> findProcesser(Level level, BlockPos blockPos, Direction face,int heat,int tickSkip,int superHeatCount){
+       return REGISTRATE.getAll(HEAT_PROCESSOR_REGISTRY_KEY).stream().map(d->d.get().create())
+               .filter(h->h.needHeat(level,blockPos,face,heat,tickSkip,superHeatCount)).findFirst();
     }
 
     public static HeatTransferProcesser fromNbt(Tag tag){
@@ -87,7 +88,7 @@ public class CHHeatTransferProcessers {
             super(TYPE);
         }
         @Override
-        public boolean needHeat(Level level, BlockPos pos, @Nullable Direction face) {
+        public boolean needHeat(Level level, BlockPos pos, @Nullable Direction face,int heat,int tickSkip,int superHeatCount) {
             boolean dirT = face == null || Direction.UP.equals(face);
             if (!dirT){
                 return false;
@@ -100,7 +101,7 @@ public class CHHeatTransferProcessers {
             return face.equals(Direction.UP);
         }
         @Override
-        public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide, int tickSkip) {}
+        public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide, int tickSkip,int superHeatCount) {}
         @Override
         public boolean shouldProcessEveryTick() {return false;}
     }

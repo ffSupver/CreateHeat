@@ -24,7 +24,7 @@ public abstract class MainHeatTransferProcesser extends HeatTransferProcesser{
         super(typeId);
     }
     /** 判断是否可以传热
-     *  Replace{@link com.ffsupver.createheat.block.HeatTransferProcesser#needHeat(Level, BlockPos, Direction)}
+     *  Replace{@link com.ffsupver.createheat.block.HeatTransferProcesser#needHeat(Level, BlockPos, Direction, int, int, int)}
      * with this method instead of overriding it
      * */
     protected abstract boolean needHeatBefore(Level level,BlockPos pos,Direction face);
@@ -60,7 +60,7 @@ public abstract class MainHeatTransferProcesser extends HeatTransferProcesser{
     }
 
     @Override
-    public boolean needHeat(Level level, BlockPos pos, @Nullable Direction face) {
+    public boolean needHeat(Level level, BlockPos pos, @Nullable Direction face,int heat,int tickSkip,int superHeatCount) {
         boolean needHeat = needHeatBefore(level,pos,face);
         if (face != null && needHeat){
             Optional<MainHeatTransferProcesser> mainProcesserOptional = findMainProcesser(level,pos,face);
@@ -79,7 +79,7 @@ public abstract class MainHeatTransferProcesser extends HeatTransferProcesser{
     }
 
     @Override
-    public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide, int tickSkip) {
+    public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide, int tickSkip,int superHeatCount) {
             if (isMainProcesser){
                 acceptHeatAsMain(level,hTPPos,heatProvide,tickSkip,acceptedHeat);
                 acceptedHeat = 0;

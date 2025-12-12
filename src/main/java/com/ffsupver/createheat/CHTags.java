@@ -32,5 +32,7 @@ public class CHTags {
         public static TagKey<Block> HEAT_ENTITY_ABOVE = cHBlockTag("heat_entity_above");
         //铁砧工艺联动
         public static TagKey<Block> CAN_HEAT_THROUGH = cHBlockTag("anvilcraft/can_heat_through");
+        //气动工艺联动
+        public static TagKey<Block> PNEUMATIC_BOILER_HEATER = cHBlockTag("pneumaticcraft/boiler_heater");
     }
 }

@@ -22,17 +22,17 @@ public class HeatCollectorTransferProcesser extends HeatTransferProcesser {
     }
 
     @Override
-    public boolean needHeat(Level level, BlockPos pos, @Nullable Direction face) {
+    public boolean needHeat(Level level, BlockPos pos, @Nullable Direction face,int heat,int tickSkip,int superHeatCount) {
         return level.getBlockEntity(pos) instanceof HeatCollectorBlockEntity;
     }
 
     @Override
-    public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide, int tickSkip) {
+    public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide, int tickSkip,int superHeatCount) {
         if (level.getBlockEntity(hTPPos) instanceof HeatCollectorBlockEntity heatCollectorBlockEntity){
             boolean shouldAddHeat = acceptHeatToTotal(heatProvide,tickSkip);
-            int superHeatCount = avgHeatPerTick / Config.HEAT_PER_SEETHING_BLAZE.get();
+            int equalSuperHeatCount = avgHeatPerTick / Config.HEAT_PER_SEETHING_BLAZE.get();
             if (shouldAddHeat){
-                int heatToInput = superHeatCount * MAX_COOLDOWN / 2;
+                int heatToInput = equalSuperHeatCount * MAX_COOLDOWN / 2;
                 heatCollectorBlockEntity.inputtingHeat(heatToInput);
             }
         }
