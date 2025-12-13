@@ -15,6 +15,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
 public class CHBlocks {
 
@@ -82,7 +84,12 @@ public class CHBlocks {
         BoilerHeater.REGISTRY.registerProvider(SimpleRegistry.Provider.forBlockTag(CHTags.BlockTag.THERMAL_BLOCKS,BoilerHeater.BLAZE_BURNER));
     }
 
-    public static void register() {
+    public static void registerCapacity(RegisterCapabilitiesEvent capabilitiesEvent){
+        CopycatThermalBlockEntity.registerCapacity(capabilitiesEvent);
+    }
+
+    public static void register(IEventBus modBus) {
+        modBus.addListener(CHBlocks::registerCapacity);
     }
 }
 

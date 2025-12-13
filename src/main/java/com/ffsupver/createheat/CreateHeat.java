@@ -48,7 +48,7 @@ public class CreateHeat {
         REGISTRATE.registerEventListeners(modEventBus);
 
         CHItems.register();
-        CHBlocks.register();
+        CHBlocks.register(modEventBus);
         CHTags.register();
         CHRecipes.register(modEventBus);
 

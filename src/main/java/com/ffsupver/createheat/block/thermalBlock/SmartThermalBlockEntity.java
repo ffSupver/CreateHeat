@@ -25,11 +25,7 @@ public class SmartThermalBlockEntity extends BaseThermalBlockEntity implements I
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
-        ThermalBlockEntityBehaviour thermalBlockEntityBehaviour = new ThermalBlockEntityBehaviour(this);
-        thermalBlockEntityBehaviour.setCanHeat(tBEB->canHeat(KINDLED));
-        thermalBlockEntityBehaviour.setCanSuperHeat(tBEB->canHeat(SEETHING));
-        thermalBlockEntityBehaviour.setCanGenerateHeatIgnoreHTP(tBEB->canGenerateHeatIgnoreHTP());
-        behaviours.add(thermalBlockEntityBehaviour);
+        super.addBehaviours(behaviours);
         maxHeatLevelSelections =new ScrollOptionBehaviour<>(
                 MaxHeatSelections.class,
                 Component.translatable("createheat.smart_thermal_block.selection_mode.max_heat"),
@@ -38,7 +34,12 @@ public class SmartThermalBlockEntity extends BaseThermalBlockEntity implements I
         behaviours.add(maxHeatLevelSelections);
     }
 
-
+    @Override
+    protected void setUpThermalBlockEntityBehaviour(ThermalBlockEntityBehaviour thermalBlockEntityBehaviour) {
+        thermalBlockEntityBehaviour.setCanHeat(tBEB->canHeat(KINDLED));
+        thermalBlockEntityBehaviour.setCanSuperHeat(tBEB->canHeat(SEETHING));
+        thermalBlockEntityBehaviour.setCanGenerateHeatIgnoreHTP(tBEB->canGenerateHeatIgnoreHTP());
+    }
 
     private boolean canHeat(BlazeBurnerBlock.HeatLevel heatLevel){
         BlazeBurnerBlock.HeatLevel maxHeatLevel = this.maxHeatLevelSelections.get().getHeatLevel();

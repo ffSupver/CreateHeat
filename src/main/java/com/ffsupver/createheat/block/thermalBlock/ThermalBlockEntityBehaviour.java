@@ -58,6 +58,7 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
     private Predicate<ThermalBlockEntityBehaviour> canSuperHeat;
     private Predicate<ThermalBlockEntityBehaviour> canHeat;
     private Predicate<ThermalBlockEntityBehaviour> canGenerateHeatIgnoreHTP;
+    private Predicate<ThermalBlockEntityBehaviour> shouldHeatUp;
 
     public ThermalBlockEntityBehaviour(ConnectableBlockEntity<?> be) {
         super(be);
@@ -75,6 +76,10 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
 
     public void setCanGenerateHeatIgnoreHTP(Predicate<ThermalBlockEntityBehaviour> canGenerateHeatIgnoreHTP) {
         this.canGenerateHeatIgnoreHTP = canGenerateHeatIgnoreHTP;
+    }
+
+    public void setShouldHeatUp(Predicate<ThermalBlockEntityBehaviour> shouldHeatUp) {
+        this.shouldHeatUp = shouldHeatUp;
     }
 
     @Override
@@ -380,7 +385,7 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
                 findProcesser.set(find);
             }
         });
-        return needToHeatAbove() || findProcesser.get();
+        return needToHeatAbove() || findProcesser.get() || onShouldHeatUp();
     }
 
     private boolean onCanHeatTest(){
@@ -392,6 +397,10 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
     }
     private boolean onCanGenerateHeatIgnoreHTPTest(){
         return onTest(canGenerateHeatIgnoreHTP,this,false);
+    }
+
+    private boolean onShouldHeatUp(){
+        return onTest(shouldHeatUp,this,false);
     }
 
     public Optional<HeatTransferProcesser> getHeatTransferProcesserByOther(BlockPos pos){

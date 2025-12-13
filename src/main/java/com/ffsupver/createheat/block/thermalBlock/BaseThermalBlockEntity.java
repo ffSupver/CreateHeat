@@ -64,8 +64,15 @@ public class BaseThermalBlockEntity extends ConnectableBlockEntity<BaseThermalBl
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
-        behaviours.add(new ThermalBlockEntityBehaviour(this));
+        ThermalBlockEntityBehaviour thermalBlockEntityBehaviour = new ThermalBlockEntityBehaviour(this);
+        setUpThermalBlockEntityBehaviour(thermalBlockEntityBehaviour);
+        behaviours.add(thermalBlockEntityBehaviour);
     }
+    /** 初始化ThermalBlockEntityBehaviour的监听器
+     *  init ThermalBlockEntityBehaviour
+     * */
+    protected void setUpThermalBlockEntityBehaviour(ThermalBlockEntityBehaviour thermalBlockEntityBehaviour){}
+
 
     public void stepOn(Entity entity){
         if (isBurning() && !entity.isSteppingCarefully() && entity instanceof LivingEntity){
@@ -84,7 +91,7 @@ public class BaseThermalBlockEntity extends ConnectableBlockEntity<BaseThermalBl
         return false;
     }
 
-    private ThermalBlockEntityBehaviour getThBehaviour(){
+    protected ThermalBlockEntityBehaviour getThBehaviour(){
        return getBehaviour(TYPE);
     }
 }
