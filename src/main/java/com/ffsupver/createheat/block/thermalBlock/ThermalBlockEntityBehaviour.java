@@ -31,6 +31,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -59,6 +60,7 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
     private Predicate<ThermalBlockEntityBehaviour> canHeat;
     private Predicate<ThermalBlockEntityBehaviour> canGenerateHeatIgnoreHTP;
     private Predicate<ThermalBlockEntityBehaviour> shouldHeatUp;
+    private Consumer<BlazeBurnerBlock.HeatLevel> onSetHeatLevel;
 
     public ThermalBlockEntityBehaviour(ConnectableBlockEntity<?> be) {
         super(be);
@@ -80,6 +82,10 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
 
     public void setShouldHeatUp(Predicate<ThermalBlockEntityBehaviour> shouldHeatUp) {
         this.shouldHeatUp = shouldHeatUp;
+    }
+
+    public void setOnSetHeatLevel(Consumer<BlazeBurnerBlock.HeatLevel> onSetHeatLevel) {
+        this.onSetHeatLevel = onSetHeatLevel;
     }
 
     @Override
@@ -424,6 +430,9 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
 
     public void setBlockHeat(BlazeBurnerBlock.HeatLevel heatLevel){
         getLevel().setBlock(getBlockPos(),getBlockState().setValue(HEAT_LEVEL, heatLevel), 3);
+        if (onSetHeatLevel != null){
+            onSetHeatLevel.accept(heatLevel);
+        }
         notifyUpdate();
     }
 

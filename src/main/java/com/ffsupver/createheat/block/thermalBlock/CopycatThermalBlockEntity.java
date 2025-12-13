@@ -27,9 +27,9 @@ import net.neoforged.neoforge.items.wrapper.CombinedInvWrapper;
 import java.util.Optional;
 
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
-import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.KINDLED;
-import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.SEETHING;
+import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.*;
 import static net.minecraft.world.level.block.Blocks.*;
+import static net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT;
 
 public class CopycatThermalBlockEntity extends BaseThermalBlockEntity {
     private BlockState cashedState;
@@ -160,9 +160,9 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity {
             this.material = CHBlocks.COPYCAT_THERMAL_BLOCK.getDefaultState();
             ItemStack result = itemStack;
             this.itemStack = ItemStack.EMPTY;
+            dropInv();
             return result;
         }
-        dropInv();
         return ItemStack.EMPTY;
     }
 
@@ -246,10 +246,41 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity {
     private boolean needProcess(){
         return isFurnace() && !inputInventory.getStackInSlot(0).isEmpty();
     }
+    public ItemStack getInputItemStack(){
+        return inputInventory.getStackInSlot(0);
+    }
+    public ItemStack getOutputItemStack(){
+        return outputInventory.getStackInSlot(0);
+    }
+
+    public float getItemRenderOffset(){
+        if (material.is(FURNACE)){
+            return 3/16f;
+        }else if (material.is(BLAST_FURNACE)){
+            return -2/16f;
+        }else if (material.is(SMOKER)) {
+            return 2/16f;
+        }
+        return 0;
+    }
+
+    public ItemStack tryInsertItem(ItemStack itemStack){
+        return this.inv.insertItem(0,itemStack,false);
+    }
+
+    public ItemStack tryExtractItem(){
+        return this.inv.extractItem(1,Integer.MAX_VALUE,false);
+    }
 
     @Override
     protected void setUpThermalBlockEntityBehaviour(ThermalBlockEntityBehaviour thermalBlockEntityBehaviour) {
         thermalBlockEntityBehaviour.setShouldHeatUp(b->needProcess());
+        thermalBlockEntityBehaviour.setOnSetHeatLevel(heatLevel -> {
+            if (isFurnace()){
+                boolean lit = !heatLevel.equals(NONE);
+                forceSetMaterial(this.material.setValue(LIT,lit));
+            }
+        });
     }
 
     public class CopycatThermalBlockInv extends CombinedInvWrapper {
@@ -268,6 +299,7 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity {
             if (getRecipe(stack).isEmpty()){ // 不可熔炼物品不能进入
                 return stack;
             }
+            notifyUpdate();
             return super.insertItem(slot, stack, simulate);
         }
 
@@ -276,6 +308,7 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity {
             if (inputInventory == getHandlerFromIndex(getIndexForSlot(slot))) { //不能从输入槽提取物品
                 return ItemStack.EMPTY;
             }
+            notifyUpdate();
             return super.extractItem(slot, amount, simulate);
         }
     }

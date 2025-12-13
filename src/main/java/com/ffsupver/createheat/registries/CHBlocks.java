@@ -77,6 +77,7 @@ public class CHBlocks {
     public static final BlockEntityEntry<CopycatThermalBlockEntity> COPYCAT_THERMAL_BLOCK_ENTITY = REGISTRATE
             .blockEntity("copycat_thermal_block",CopycatThermalBlockEntity::new)
             .validBlock(COPYCAT_THERMAL_BLOCK)
+            .renderer(()->CopycatThermalBlockEntityRenderer::new)
             .register();
 
 

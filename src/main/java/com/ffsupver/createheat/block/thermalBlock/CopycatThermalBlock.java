@@ -19,6 +19,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DirectionalBlock;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -33,7 +35,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static com.simibubi.create.content.redstone.RoseQuartzLampBlock.POWERING;
-import static net.minecraft.world.level.block.CommandBlock.FACING;
 import static net.minecraft.world.level.block.state.properties.BlockStateProperties.*;
 
 public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEntity>{
@@ -79,6 +80,25 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
            }
         }
 
+        if (level.getBlockEntity(pos) instanceof CopycatThermalBlockEntity copycatThermalBlockEntity && copycatThermalBlockEntity.isFurnace()){
+            Direction facing = copycatThermalBlockEntity.getMaterial().getValue(HorizontalDirectionalBlock.FACING);
+            if (facing.equals(hitResult.getDirection())) {
+                ItemStack handItem = player.getItemInHand(hand);
+                if (handItem.isEmpty()) {
+                    ItemStack output = copycatThermalBlockEntity.tryExtractItem();
+                    player.setItemInHand(hand, output);
+                    return ItemInteractionResult.SUCCESS;
+                } else {
+                    ItemStack insertedItem = copycatThermalBlockEntity.tryInsertItem(handItem.copyWithCount(1));
+                    if (insertedItem.isEmpty()) {
+                        handItem.shrink(1);
+                        player.setItemInHand(hand, handItem);
+                        return ItemInteractionResult.SUCCESS;
+                    }
+                }
+            }
+        }
+
         if (!(stack.getItem() instanceof BlockItem bi)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
@@ -91,8 +111,11 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
         ){
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        if (material.hasProperty(FACING)){
-            material = material.setValue(FACING,player.getNearestViewDirection().getOpposite());
+        if (material.hasProperty(DirectionalBlock.FACING)){
+            material = material.setValue(DirectionalBlock.FACING,player.getNearestViewDirection().getOpposite());
+        }
+        if (material.hasProperty(HorizontalDirectionalBlock.FACING)){
+            material = material.setValue(HorizontalDirectionalBlock.FACING,player.getDirection().getOpposite());
         }
         if (material.hasProperty(AXIS)){
             material = material.setValue(AXIS,player.getNearestViewDirection().getAxis());
@@ -150,12 +173,17 @@ public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEnt
     }
 
     private boolean cycleStateProperty(Level level,BlockPos pos,BlockState material){
+        if (level.getBlockEntity(pos) instanceof CopycatThermalBlockEntity copycatThermalBlockEntity && copycatThermalBlockEntity.isFurnace()){
+            return false;
+        }
+
         boolean hasLit = material.hasProperty(LIT);
         boolean hasPowered = material.hasProperty(POWERED);
         boolean hasPowering = material.hasProperty(POWERING); //玫瑰石英灯
         BlockState newMaterial = material;
         if (hasLit){
-            newMaterial = newMaterial.setValue(LIT,!newMaterial.getValue(LIT));
+            newMaterial = newMaterial.setValue(LIT, !newMaterial.getValue(LIT));
+
         }
         if (hasPowered && (!hasLit || hasLit && newMaterial.getValue(LIT))){ // 不能省略 hasLit && 检测,否则可能导致缺少property报错
             newMaterial = newMaterial.setValue(POWERED,!newMaterial.getValue(POWERED));
