@@ -1,5 +1,6 @@
 package com.ffsupver.createheat;
 
+import com.ffsupver.createheat.api.BlockEntityTicker;
 import com.ffsupver.createheat.api.BoilerUpdater;
 import com.ffsupver.createheat.compat.Mods;
 import com.ffsupver.createheat.item.ItemAttackEvent;
@@ -56,9 +57,9 @@ public class CreateHeat {
         CHHeatProviders.bootSetup();
         ThermalToolUseActions.bootSetup();
 
-        // Register ourselves for server and other game events we are interested in.
-        // Note that this is necessary if and only if we want *this* class (CreateHeat) to respond directly to events.
-        // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
+        BoilerUpdater.registerTicker();
+
+        //@SubscribeEvent-annotated functions
         NeoForge.EVENT_BUS.register(this);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
@@ -80,7 +81,7 @@ public class CreateHeat {
 
 
 
-    // You can use SubscribeEvent and let the Event Bus discover methods to call
+
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         LOGGER.info("Create Heat Loading");
@@ -95,7 +96,7 @@ public class CreateHeat {
 
     @SubscribeEvent
     public void onServerTicking(ServerTickEvent.Post serverTickEvent){
-        BoilerUpdater.registerEvent(serverTickEvent);
+        BlockEntityTicker.registerEvent(serverTickEvent);
         ThermalToolPointServer.tick(serverTickEvent);
     }
 }
