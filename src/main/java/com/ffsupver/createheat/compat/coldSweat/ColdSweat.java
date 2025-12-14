@@ -24,7 +24,8 @@ public class ColdSweat implements CHModCompat {
         event.register(new ThermalBlockEffect(
                 0.4,2,
                 CHBlocks.THERMAL_BLOCK.get(),
-                CHBlocks.SMART_THERMAL_BLOCK.get()
+                CHBlocks.SMART_THERMAL_BLOCK.get(),
+                CHBlocks.COPYCAT_THERMAL_BLOCK.get()
         ));
 
         Mods.executeIfModLoad(Mods.ModIds.ICE_AND_FIRE.ModId, iceAndFire->{
