@@ -32,7 +32,7 @@ public class ThermalToolUseActions {
                 level, pos, state, player,isShift) -> level.getBlockEntity(pos) instanceof ConnectableBlockEntity<?>,
                 (level, pos, state, player,isShift) -> {
                     if (level.getBlockEntity(pos) instanceof ConnectableBlockEntity<?> connectableBlockEntity){
-                       return userOnConnectableBlock(isShift,level,pos,connectableBlockEntity,player);
+                       return useOnConnectableBlock(isShift,level,pos,connectableBlockEntity,player);
                     }
                     return false;
                 }
@@ -108,7 +108,7 @@ public class ThermalToolUseActions {
         boolean accept(Level level,BlockPos pos,BlockState state,Player player,boolean isShift);
     }
 
-    private static boolean userOnConnectableBlock(boolean shiftDown, Level level,BlockPos pos, ConnectableBlockEntity<?> connectableBlockEntity, Player player){
+    private static boolean useOnConnectableBlock(boolean shiftDown, Level level, BlockPos pos, ConnectableBlockEntity<?> connectableBlockEntity, Player player){
         BlockPos controllerPos = connectableBlockEntity.getControllerPos();
         ThermalBlockEntityBehaviour controllerEntity = connectableBlockEntity.getBehaviour(ThermalBlockEntityBehaviour.TYPE);
         if (player != null && !level.isClientSide()) {
