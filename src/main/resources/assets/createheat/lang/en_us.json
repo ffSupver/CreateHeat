@@ -14,6 +14,7 @@
 
 
   "item.createheat.thermal_tool": "Thermal Tool",
+  "item.createheat.thermal_tool.pneumaticcraft_temperature": "Temperature: %s K",
 
   "createheat.smart_thermal_block.selection_mode.max_heat":"Max Heat Level",
   "createheat.smart_thermal_block.selection_mode.none": "No Heat",

@@ -43,7 +43,7 @@ public class Pneumaticcraft implements CHModCompat {
                 (level, pos, state, player, isShift) -> {
                     if (!level.isClientSide() && level.getBlockEntity(pos) instanceof IHeatExchangingTE iHeatExchangingTE) {
                         double temperature = iHeatExchangingTE.getHeatExchanger().getTemperature();
-                        player.displayClientMessage(Component.literal("Temperature: %.4f".formatted( temperature)),true);
+                        player.displayClientMessage(Component.translatable("item.createheat.thermal_tool.pneumaticcraft_temperature","%.4f".formatted( temperature)),true);
                         return true;
                     }
                     return false;

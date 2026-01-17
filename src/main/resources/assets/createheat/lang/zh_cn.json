@@ -14,6 +14,7 @@
 
 
   "item.createheat.thermal_tool": "热调试器",
+  "item.createheat.thermal_tool.pneumaticcraft_temperature": "温度: %s K",
 
   "createheat.smart_thermal_block.selection_mode.max_heat":"最大热量等级",
   "createheat.smart_thermal_block.selection_mode.none": "没有热量",
