@@ -21,6 +21,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
 
+import java.util.Optional;
+
+import static com.ffsupver.createheat.api.BoilerUpdater.getBoilerControllerBE;
+
 public class Pneumaticcraft implements CHModCompat {
     public static final double SUPER_HEAT_TEMPERATURE = 805; // 805->烈焰人燃烧室超级加热的温度(K)
     public static final double REGULAR_HEAT_TEMPERATURE = 390;
@@ -75,7 +79,8 @@ public class Pneumaticcraft implements CHModCompat {
 
     private static void tickBoilerHeater(BlockPos pos, ServerLevel level, BlockEntity blockEntity){
         BlockEntity blockEntityAbove = level.getBlockEntity(pos.above());
-        boolean hasBoilerAbove = blockEntityAbove instanceof FluidTankBlockEntity fluidTankBlockEntity && fluidTankBlockEntity.getControllerBE().boiler.attachedEngines > 0;
+        Optional<FluidTankBlockEntity> fluidTankControllerBEOptional = getBoilerControllerBE(blockEntityAbove);
+        boolean hasBoilerAbove = fluidTankControllerBEOptional.isPresent();
         boolean hasThermalBlock = level.getBlockState(pos.above()).is(CHTags.BlockTag.THERMAL_BLOCKS);
         if ((hasBoilerAbove || hasThermalBlock) && blockEntity instanceof IHeatExchangingTE iHeatExchangingTE){
             IHeatExchangerLogic exchangerLogic = iHeatExchangingTE.getHeatExchanger(Direction.UP);

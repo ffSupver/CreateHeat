@@ -7,17 +7,20 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import java.util.Optional;
+
 public class BoilerUpdater {
     public static void registerTicker(){
         CHBlockEntityTickers.registerBlockEntityTicker(BoilerUpdater::tick);
     }
 
     private static void tick(BlockPos pos, ServerLevel level, BlockEntity blockEntity) {
-            if (blockEntity instanceof FluidTankBlockEntity fluidTankBlockEntity && fluidTankBlockEntity.getControllerBE().boiler.attachedEngines > 0){
+            Optional<FluidTankBlockEntity> fluidTankControllerBEOptional = getBoilerControllerBE(blockEntity);
+            if (fluidTankControllerBEOptional.isPresent()){
                 BlockPos posBelow = pos.below();
                 if (!(level.getBlockEntity(posBelow) instanceof FluidTankBlockEntity)){
                     if (CHBoilerUpdaters.shouldUpdate(posBelow,level)){
-                        fluidTankBlockEntity.getControllerBE().updateBoilerTemperature();
+                        fluidTankControllerBEOptional.get().updateBoilerTemperature();
                     }
                 }
             }
@@ -27,5 +30,14 @@ public class BoilerUpdater {
     @FunctionalInterface
     public interface Tester{
         boolean shouldUpdate(BlockPos posBelowBoiler,ServerLevel level);
+    }
+
+    public static Optional<FluidTankBlockEntity> getBoilerControllerBE(BlockEntity blockEntity){
+        if (blockEntity instanceof FluidTankBlockEntity fluidTankBlockEntity){
+            if(fluidTankBlockEntity.getControllerBE() instanceof FluidTankBlockEntity fCBE && fCBE.boiler.attachedEngines > 0){
+                return Optional.of(fCBE);
+            }
+        }
+        return Optional.empty();
     }
 }
