@@ -36,6 +36,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.ffsupver.createheat.api.BoilerUpdater.getBoilerControllerBE;
 import static com.ffsupver.createheat.util.BlockUtil.AllDirectionOf;
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.*;
@@ -415,8 +416,7 @@ public class ThermalBlockEntityBehaviour extends BlockEntityBehaviour {
 
     public boolean needToHeatAbove(){
         boolean needToHeatAbove = getLevel().getBlockState(getBlockPos().above()).is(CHTags.BlockTag.SHOULD_HEAT);
-        boolean needToHeatBoiler = getLevel().getBlockEntity(getBlockPos().above()) instanceof FluidTankBlockEntity fluidTankBlockEntity &&
-                fluidTankBlockEntity.getControllerBE().boiler.attachedEngines > 0;
+        boolean needToHeatBoiler = getBoilerControllerBE(getLevel().getBlockEntity(getBlockPos().above())).isPresent();
         return needToHeatAbove || needToHeatBoiler;
     }
 

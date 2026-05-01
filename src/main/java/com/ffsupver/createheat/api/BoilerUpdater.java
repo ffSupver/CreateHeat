@@ -32,6 +32,11 @@ public class BoilerUpdater {
         boolean shouldUpdate(BlockPos posBelowBoiler,ServerLevel level);
     }
 
+    /***
+     * Safely check if block above is boiler
+     * @param blockEntity blockEntity to check(block above this will be checked)
+     * @return Boiler Controller BlockEntity
+     */
     public static Optional<FluidTankBlockEntity> getBoilerControllerBE(BlockEntity blockEntity){
         if (blockEntity instanceof FluidTankBlockEntity fluidTankBlockEntity){
             if(fluidTankBlockEntity.getControllerBE() instanceof FluidTankBlockEntity fCBE && fCBE.boiler.attachedEngines > 0){
