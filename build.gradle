@@ -31,6 +31,12 @@ repositories {
 
     maven { url = "https://maven.createmod.net" } // Create, Ponder, Flywheel
     maven { url = "https://maven.ithundxr.dev/snapshots" } // Registrate
+    maven {
+        url = "https://maven.squiddev.cc"
+        content {
+            includeGroup("cc.tweaked")
+        }
+    }
 
     maven { url = "https://maven.ftb.dev/releases" } // FTB
     maven {
@@ -58,16 +64,16 @@ repositories {
         url = 'https://maven.nucleoid.xyz/'
     }
     maven {
-        name = "Jared's maven"
-        url = "https://maven.blamejared.com/"
-    }
-    maven {
         name = "Curse maven"
         url = "https://cursemaven.com"
     }
     maven { // Anvil Lib
         name = "Cjsah Maven"
         url = "https://server.cjsah.net:1002/maven/"
+    }
+
+    maven {
+        url = "https://maven.ryanhcode.dev/releases"
     }
 
     mavenLocal()
@@ -156,11 +162,16 @@ dependencies {
     localRuntime files("./libs/iris-neoforge-1.8.12+mc1.21.1.jar")
 
 
-    implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = true }
-    implementation("net.createmod.ponder:Ponder-NeoForge-${minecraft_version}:${ponder_version}")
+    implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") {
+        transitive = true
+        exclude group: "com.tterrag.registrate", module: "Registrate"
+    }
+//    implementation("net.createmod.ponder:Ponder-NeoForge-${minecraft_version}:${ponder_version}")
+    compileOnly("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
     compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
     runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
-    implementation("com.tterrag.registrate:Registrate:${registrate_version}")
+    implementation("com.tterrag.registrate:Registrate:${registrate_version}"){transitive = false}
+    compileOnly("cc.tweaked:cc-tweaked-$minecraft_version-common-api:$computercraft_tweaked_version")
 
     implementation("maven.modrinth:journeymap:1.21.1-6.0.0-beta.54+neoforge") // 旅行地图
     implementation("info.journeymap:journeymap-api-neoforge:2.0.0-1.21.1-20260205.200232-15") {
@@ -185,6 +196,17 @@ dependencies {
     //铁砧工艺 AnvilCraft: Gravity Technology
     implementation( "dev.anvilcraft.lib:anvillib-neoforge-1.21.1:1.4.0+build.160") //anvilLib
     implementation("curse.maven:anvilcraft-986251:7160263-sources-7160264")
+
+    // create aeronautics
+    compileOnly("dev.ryanhcode.sable-companion:sable-companion-common-${project.minecraft_version}:${project.sable_companion_version}")
+    implementation ("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}") {
+        exclude group: "foundry.veil"
+        exclude group: "com.tterrag.registrate"
+    }
+    implementation("foundry.veil:veil-common-${minecraft_version}:${project.veil_version}") {
+        exclude group: "maven.modrinth"
+        exclude group: "com.tterrag.registrate"
+    }
 }
 
 
