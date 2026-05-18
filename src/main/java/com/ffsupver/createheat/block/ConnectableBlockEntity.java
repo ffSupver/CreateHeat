@@ -21,11 +21,14 @@ import static com.ffsupver.createheat.util.BlockUtil.AllDirectionOf;
 public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>> extends SmartBlockEntity {
     protected boolean isController;
     private BlockPos controllerPos;
+    private BlockPos lastRememberedPos;
+    protected boolean markUpdateForPos;
     protected final Set<BlockPos> connectedBlocks = new HashSet<>();
 
     public ConnectableBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         controllerPos = getBlockPos();
+        lastRememberedPos = getBlockPos();
     }
 
     public abstract boolean canConnect(ConnectableBlockEntity<?> toCheck);
@@ -44,6 +47,7 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
 
         tag.putBoolean("is_controller",isController);
+        tag.put("last_remembered_pos",NbtUtil.blockPosToNbt(lastRememberedPos));
         if (isController){
             tag.put("connected", NbtUtil.writeBlockPosToNbtList(connectedBlocks));
         }else {
@@ -55,6 +59,7 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         isController = tag.getBoolean("is_controller");
+        lastRememberedPos = NbtUtil.blockPosFromNbt(tag.getCompound("last_remembered_pos"));
         if (isController){
             connectedBlocks.clear();
             connectedBlocks.addAll(NbtUtil.readBlockPosFromNbtList(tag.getList("connected", Tag.TAG_COMPOUND)));
@@ -62,6 +67,55 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
             controllerPos = NBTHelper.readBlockPos(tag,"controller");
         }
         super.read(tag, registries, clientPacket);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        // on pos change
+        if (markUpdateForPos){
+            lastRememberedPos = getBlockPos();
+            if (isController){
+                walkAllBlocks(null);
+                markUpdateForPos = false;
+            }else {
+                T oldControllerEntity = getControllerEntity();
+                if (oldControllerEntity != null) {
+                    if (!oldControllerEntity.markUpdateForPos) {
+                        oldControllerEntity.walkAllBlocks(null); // remove markUpdateForPos if oldControllerEntity touch this block
+
+                        if (markUpdateForPos) { // if not connect to oldControllerEntity
+                            this.isController = true;
+                            this.walkAllBlocks(null);
+                            markUpdateForPos = false;
+                        }
+                    }
+                }else{ // missing original controller
+                    AtomicBoolean foundConnect = new AtomicBoolean(false);
+                    // try attach to neighbor controller
+                    BlockUtil.AllDirectionOf(getBlockPos(),pos->{
+                        if (getLevel().getBlockEntity(pos) instanceof ConnectableBlockEntity<?> neighbourEntity && canConnect(neighbourEntity) && !neighbourEntity.markUpdateForPos) {
+                            this.controllerPos = neighbourEntity.getControllerPos();
+                            foundConnect.set(true);
+                        }
+                    });
+                    // neighbor controller not found
+                    if (!foundConnect.get()){
+                        // This block becomes a new controller and establishes its own network
+                        this.isController = true;
+                        this.controllerPos = getBlockPos();
+                        this.walkAllBlocks(null); // original controller will be merged if transferred to here and touched by this step
+                        markUpdateForPos = false;
+                    }
+                }
+            }
+        }
+
+        // check pos change
+        if (!getBlockPos().equals(lastRememberedPos)) {
+            markUpdateForPos = true;
+        }
     }
 
     public void checkNeighbour(){
@@ -122,7 +176,7 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
         BlockUtil.walkAllBlocks(getBlockPos(),connectedBlocks, pos -> {
             if (!pos.equals(exceptFor) && getLevel().getBlockEntity(pos) instanceof ConnectableBlockEntity<?> connectableBlockEntity && canConnect(connectableBlockEntity)) {
                 connectedNewBlock(pos, connectableBlockEntity);
-                connectableBlockEntity.controllerPos = getBlockPos();
+                connectableBlockEntity.setControllerPos(getBlockPos());
                 return true;
             }else {
                 return false;
@@ -150,6 +204,21 @@ public abstract class ConnectableBlockEntity<T extends ConnectableBlockEntity<T>
             return controllerEntity.isController() ? (T) controllerEntity : null;
         }else {
             return null;
+        }
+    }
+
+
+    // set by walkAllBlocks, remove markUpdateForPos flag when set
+    public void setControllerPos(BlockPos controllerPos) {
+        if (isController){
+            if(!controllerPos.equals(getBlockPos()) && getLevel().getBlockEntity(controllerPos) instanceof ConnectableBlockEntity<?> connectableBlockEntity && canConnect(connectableBlockEntity)) {
+                this.isController = false;
+                mergeController(getBlockPos(), this, controllerPos, connectableBlockEntity);
+                this.controllerPos = controllerPos;
+            }
+        }else {
+            this.controllerPos = controllerPos;
+            markUpdateForPos = false;
         }
     }
 
