@@ -2,6 +2,7 @@ package com.ffsupver.createheat.item.thermalTool;
 
 import com.ffsupver.createheat.block.ConnectableBlockEntity;
 import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour;
+import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
@@ -113,13 +114,21 @@ public class ThermalToolUseActions {
         ThermalBlockEntityBehaviour controllerEntity = connectableBlockEntity.getBehaviour(ThermalBlockEntityBehaviour.TYPE);
         if (player != null && !level.isClientSide()) {
             if (shiftDown){
-                player.displayClientMessage(Component.literal(
-                                "Connect count :" + controllerEntity.getBlockSize() + " heat:" + controllerEntity.getHeat() +
-                                        " Controller x:" + controllerPos.getX() + " y:" + controllerPos.getY() + " z:" + controllerPos.getZ() + " heatStorage:" + controllerEntity.getHeatStorage()
-                        ).withStyle(ChatFormatting.RED), true
-                );
+                if (controllerEntity != null){
+                    player.displayClientMessage(Component.literal(
+                                    "Thermal Block:  Connect count :" + controllerEntity.getBlockSize() + " heat:" + controllerEntity.getHeat() +
+                                            " Controller x:" + controllerPos.getX() + " y:" + controllerPos.getY() + " z:" + controllerPos.getZ() + " heatStorage:" + controllerEntity.getHeatStorage()
+                            ).withStyle(ChatFormatting.RED), true
+                    );
+                }else if (connectableBlockEntity.getControllerEntity() instanceof TightCompressStoneEntity tightCompressStoneEntity){
+                    player.displayClientMessage(Component.literal(
+                                    "Tight Compress Stone:  Connect count :"+tightCompressStoneEntity.getConnectedBlocks().size()+" x:" + tightCompressStoneEntity.getBlockPos().getX() + " y:" + tightCompressStoneEntity.getBlockPos().getY() + " z:" + tightCompressStoneEntity.getBlockPos().getZ() +
+                                            " heatStorage:" + tightCompressStoneEntity.getStoneHeatStorage()
+                            ).withStyle(ChatFormatting.RED), true
+                    );
+                }
             }else {
-                if (level instanceof ServerLevel serverLevel) {
+                if (controllerEntity != null && level instanceof ServerLevel serverLevel) {
                     ThermalToolPointServer.tiggerPoint(serverLevel,pos,ThermalToolPointLogic.HEAT_SOURCE);
                 }
             }
