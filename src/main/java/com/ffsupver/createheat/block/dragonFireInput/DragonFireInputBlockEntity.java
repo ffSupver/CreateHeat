@@ -78,6 +78,8 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity implements Heat
                     }
                 }
             }
+        }else {
+            dragonHeater = null; // remove the old dragon heater
         }
 
         updateBurning();
@@ -249,7 +251,7 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity implements Heat
     }
 
     private HeatProvider getHeatProvider(){
-        if (!assembled() || dragonHeater == null){
+        if (!assembled() || dragonHeater == null || !getBurning()){
             return DragonHeater.NO_HEAT_PROVIDER;
         }
         return dragonHeater.heatProviderByStage().apply(lastStage);
