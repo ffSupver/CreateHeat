@@ -2,6 +2,7 @@ package com.ffsupver.createheat.block.dragonFireInput;
 
 import com.ffsupver.createheat.api.iceAndFire.DragonHeater;
 import com.ffsupver.createheat.block.HeatProvider;
+import com.ffsupver.createheat.compat.Mods;
 import com.iafenvoy.iceandfire.data.DragonType;
 import com.iafenvoy.iceandfire.entity.DragonBaseEntity;
 import com.iafenvoy.iceandfire.registry.IafRegistries;
@@ -19,9 +20,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static com.ffsupver.createheat.block.dragonFireInput.DragonFireInputBlock.BURNING;
 
@@ -141,41 +140,58 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity implements Heat
         }
     }
 
+    public Map<BlockPos,Set<DragonBaseEntity>> getDragonsInRange(Set<BlockPos> logicalPosSet) {
+        Map<BlockPos,Set<DragonBaseEntity>> dragonsInRange = new HashMap<>();
+        for (BlockPos pos : logicalPosSet){
+            BlockPos worldPosition = pos.immutable(); // why?
+            AABB searchArea = new AABB((double)worldPosition.getX() - RADIUS, (double)worldPosition.getY() - RADIUS, (double)worldPosition.getZ() - RADIUS, (double)worldPosition.getX() + RADIUS, (double)worldPosition.getY() + RADIUS, (double)worldPosition.getZ() + RADIUS);
+            dragonsInRange.put(pos,Set.copyOf(this.level.getEntitiesOfClass(DragonBaseEntity.class, searchArea)));
+        }
+        return dragonsInRange;
+    }
 
 
     protected void lureDragons(DragonType dragonType) {
         boolean canLungType = canLungDragon(dragonType,this.level);
 
-        Vec3 targetPosition = new Vec3((float)this.getBlockPos().getX() + 0.5F, (float)this.getBlockPos().getY() + 0.5F, (float)this.getBlockPos().getZ() + 0.5F);
-        AABB searchArea = new AABB((double)this.worldPosition.getX() - RADIUS, (double)this.worldPosition.getY() - RADIUS, (double)this.worldPosition.getZ() - RADIUS, (double)this.worldPosition.getX() + RADIUS, (double)this.worldPosition.getY() + RADIUS, (double)this.worldPosition.getZ() + RADIUS);
+        Set<BlockPos> logicalPosSet = Mods.collectGlobalBlockPos(level,getBlockPos());
+
         boolean dragonSelected = false;
 
         DragonBaseEntity backUpDragon = null;
+        BlockPos finalTargetPos = null;
 
-        for(DragonBaseEntity dragon : this.level.getEntitiesOfClass(DragonBaseEntity.class, searchArea)) {
-            boolean noTarget = dragon.burningTarget == null;
-            boolean isLastOne = dragon.getUUID().equals(this.lastDragonUUID);
-            boolean targetThis = !noTarget && dragon.burningTarget.equals(this.worldPosition);
-            if (canLungType && assembled() && dragon.dragonType.equals(dragonType) && canSeeInput(dragon,targetPosition) && (noTarget || isLastOne)){
-                if (backUpDragon == null){
-                    backUpDragon = dragon;
-                }
-
-                if (isLastOne){
-                    if (!noTarget && !targetThis) {
-                        lastDragonUUID = null;
-                    }else {
+        for(Map.Entry<BlockPos,Set<DragonBaseEntity>> entry : getDragonsInRange(logicalPosSet).entrySet()) {
+            Set<DragonBaseEntity> dragons = entry.getValue();
+            BlockPos logicPos = entry.getKey();
+            Vec3 targetPosition = new Vec3((float)logicPos.getX() + 0.5F, (float)logicPos.getY() + 0.5F, (float)logicPos.getZ() + 0.5F);
+            for (DragonBaseEntity dragon : dragons){
+                boolean noTarget = dragon.burningTarget == null;
+                boolean isLastOne = dragon.getUUID().equals(this.lastDragonUUID);
+                boolean targetThis = !noTarget && dragon.burningTarget.equals(logicPos);
+                if (canLungType && assembled() && dragon.dragonType.equals(dragonType) && canSeeInput(dragon, targetPosition) && (noTarget || isLastOne)) {
+                    if (backUpDragon == null) {
                         backUpDragon = dragon;
-                        dragonSelected = true;
+                        finalTargetPos = logicPos;
                     }
+
+                    if (isLastOne) {
+                        if (!noTarget && !targetThis) {
+                            lastDragonUUID = null;
+                        } else {
+                            backUpDragon = dragon;
+                            dragonSelected = true;
+                            finalTargetPos = logicPos;
+                        }
+                    }
+                } else if (targetThis) {
+                    dragon.burningTarget = null;
                 }
-            }else if (targetThis){
-                dragon.burningTarget = null;
             }
         }
 
         if (backUpDragon != null){
-            backUpDragon.burningTarget = this.worldPosition;
+            backUpDragon.burningTarget = finalTargetPos;
             if (!dragonSelected){
                 this.lastDragonUUID = backUpDragon.getUUID();
             }

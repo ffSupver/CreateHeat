@@ -1,26 +1,27 @@
 package com.ffsupver.createheat.compat;
 
-import com.ffsupver.createheat.compat.anvilCraft.AnvilCraft;
 import com.ffsupver.createheat.CreateHeat;
+import com.ffsupver.createheat.compat.anvilCraft.AnvilCraft;
 import com.ffsupver.createheat.compat.coldSweat.ColdSweat;
 import com.ffsupver.createheat.compat.iceAndFire.IceAndFire;
 import com.ffsupver.createheat.compat.pneumaticcraft.Pneumaticcraft;
+import com.ffsupver.createheat.compat.sable.SableCompat;
 import com.mojang.serialization.Codec;
 import com.tterrag.registrate.util.entry.ItemProviderEntry;
 import net.createmod.ponder.api.registration.PonderSceneRegistrationHelper;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -37,6 +38,7 @@ public class Mods {
             addMod(ModIds.PNEUMATICCRAFT, Pneumaticcraft.class);
             addMod(ModIds.COLD_SWEAT, ColdSweat.class);
             addMod(ModIds.ANVIL_CRAFT, AnvilCraft.class);
+            addMod(ModIds.SABLE, SableCompat.class);
 
             MOD_SUPPLIERS.forEach(Mods::intiMod);
 
@@ -116,11 +118,24 @@ public class Mods {
         }
     }
 
+    /**
+     * collect all result of CHModCompat {@link CHModCompat#getGlobalBlockPos(Level, BlockPos)}
+     * @param level
+     * @param worldPos
+     * @return
+     */
+    public static Set<BlockPos> collectGlobalBlockPos(Level level, BlockPos worldPos){
+        Set<BlockPos> blockPosSet = new HashSet<>();
+        executeIfLoad(chModCompat->blockPosSet.addAll(chModCompat.getGlobalBlockPos(level,worldPos)));
+        return blockPosSet.isEmpty() ? Set.of(worldPos) : blockPosSet;
+    }
+
     public enum ModIds{
         ICE_AND_FIRE("iceandfire"),
         PNEUMATICCRAFT("pneumaticcraft"),
         COLD_SWEAT("cold_sweat"),
-        ANVIL_CRAFT("anvilcraft");
+        ANVIL_CRAFT("anvilcraft"),
+        SABLE("sable");
         public final String ModId;
 
         ModIds(String modId) {
