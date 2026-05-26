@@ -26,6 +26,7 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 
@@ -87,6 +88,8 @@ public class CreateHeat {
     public void onServerStarting(ServerStartingEvent event) {
         LOGGER.info("Create Heat Loading");
     }
+    @SubscribeEvent
+    public void onServerStopping(ServerStoppingEvent event){HeatService.onServerStop(event);}
 
     public static CreateRegistrate registrate(){
         return REGISTRATE;
