@@ -1,18 +1,18 @@
 package com.ffsupver.createheat.block.thermalBlock;
 
+import com.ffsupver.createheat.util.BlockUtil;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class BaseThermalBlockEntity1 extends SmartBlockEntity {
-    private UUID heatNetworkId;
+
     public BaseThermalBlockEntity1(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
@@ -22,32 +22,38 @@ public class BaseThermalBlockEntity1 extends SmartBlockEntity {
         super.tick();
     }
 
+    public UUID getNeighborNetworkId(){
+        AtomicReference<UUID> networkId = new AtomicReference<>();
+        BlockUtil.AllDirectionOf(getBlockPos(), neighborPos->{
+            if (getLevel().getBlockEntity(neighborPos) instanceof BaseThermalBlockEntity1 neighborBE){
+                UUID neighborID = neighborBE.getHeatNetworkId();
+                if (neighborID != null){
+                    networkId.set(neighborID);
+                }
+            }
+        },p->networkId.get() != null);
+        return networkId.get();
+    }
+
     public void setHeatNetworkId(UUID heatNetworkId) {
-        this.heatNetworkId = heatNetworkId;
+        if (getBaseThermalBlockBehaviour() != null){
+            getBaseThermalBlockBehaviour().setHeatNetworkId(heatNetworkId);
+        }
     }
 
     public UUID getHeatNetworkId() {
-        return heatNetworkId;
+        if (getBaseThermalBlockBehaviour() != null){
+            return getBaseThermalBlockBehaviour().getHeatNetworkId();
+        }
+        return null;
     }
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
-
+        behaviours.add(new BaseThermalBlockBehaviour(this));
     }
 
-    @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(tag, registries, clientPacket);
-        if (tag.contains("network_id")){
-            this.heatNetworkId = tag.getUUID("network_id");
-        }
-    }
-
-    @Override
-    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(tag, registries, clientPacket);
-        if (this.heatNetworkId != null){
-            tag.putUUID("network_id", this.heatNetworkId);
-        }
+    public BaseThermalBlockBehaviour getBaseThermalBlockBehaviour() {
+        return getBehaviour(BaseThermalBlockBehaviour.TYPE);
     }
 }

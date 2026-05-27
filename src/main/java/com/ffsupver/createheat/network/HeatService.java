@@ -1,6 +1,9 @@
 package com.ffsupver.createheat.network;
 
+import com.ffsupver.createheat.block.thermalBlock.BaseThermalBlockBehaviour;
+import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.NbtUtil;
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
@@ -38,6 +41,20 @@ public class HeatService {
     }
 
     /**
+     * Get Network from level and networkID
+     * @param level should be server level
+     * @param networkID network id
+     * @return
+     */
+    public static HeatNetwork getNetwork(Level level, UUID networkID){
+        if (networkID == null || serviceData == null || !(level instanceof ServerLevel serverLevel)){
+            return null;
+        }
+
+        return serviceData.getNetwork(serverLevel.dimension(),networkID);
+    }
+
+    /**
      * Add Block to Network, call when block placed
      * @param pos pos to add
      * @param level should be server level
@@ -49,10 +66,7 @@ public class HeatService {
             return null;
         }
 
-        HeatNetwork heatNetwork = null;
-        if (networkID != null){
-            heatNetwork = serviceData.getNetwork(serverLevel.dimension(),networkID);
-        }
+        HeatNetwork heatNetwork = getNetwork(level,networkID);
 
         System.out.println("network:"+networkID+"n "+heatNetwork);
         if (heatNetwork == null){
@@ -76,12 +90,44 @@ public class HeatService {
             return;
         }
 
-        HeatNetwork heatNetwork = serviceData.getNetwork(serverLevel.dimension(),networkID);
+        HeatNetwork heatNetwork = getNetwork(serverLevel,networkID);
         System.out.println("removing block"+pos+" network:"+networkID+"n "+heatNetwork);
         if (heatNetwork != null){
             heatNetwork.removeBlock(pos);
             serviceData.setDirty();
         }
+    }
+
+    /**
+     * On Heat Network Split.
+     * try to create new network for disconnected blocks
+     * @param disconnectedBlocks disconnected blocks from original network
+     * @return new networks created from disconnected blocks
+     */
+    public static Set<HeatNetwork> onHeatNetworkSplit(Set<BlockPos> disconnectedBlocks,ServerLevel level){
+        if (disconnectedBlocks.isEmpty()){
+            return Set.of();
+        }
+
+        Set<HeatNetwork> newNetworks = new HashSet<>();
+        Set<BlockPos> remainingBlocks = new HashSet<>(disconnectedBlocks);
+        while (!remainingBlocks.isEmpty()){
+            Set<BlockPos> connectedBlocks = new HashSet<>();
+            BlockUtil.walkAllBlocks(remainingBlocks.iterator().next(),connectedBlocks,remainingBlocks::contains);
+            HeatNetwork newNetwork = new HeatNetwork(UUID.randomUUID(),connectedBlocks);
+            for (BlockPos pos : connectedBlocks){
+                BaseThermalBlockBehaviour baseThermalBlockBehaviour = BlockEntityBehaviour.get(level,pos,BaseThermalBlockBehaviour.TYPE);
+                if (baseThermalBlockBehaviour != null){
+                    baseThermalBlockBehaviour.setHeatNetworkId(newNetwork.getNetworkID());
+                }
+            }
+            newNetworks.add(newNetwork);
+            serviceData.addNetwork(level.dimension(),newNetwork); // will serviceData is null ?
+            remainingBlocks.removeAll(connectedBlocks);
+        }
+        System.out.println("disconnectedBlocks:"+disconnectedBlocks+"\nnew networks:"+newNetworks);
+
+        return newNetworks;
     }
 
     /**
@@ -95,6 +141,7 @@ public class HeatService {
 
     public static class HeatServiceData extends SavedData {
         private final Map<ResourceKey<Level>, Map<UUID,HeatNetwork>> NETWORKS;
+        private final Map<ResourceKey<Level>,Set<HeatNetwork>> networkMapToAddNextTick = new HashMap<>();
 
         public HeatServiceData(Map<ResourceKey<Level>, Map<UUID,HeatNetwork>> networks) {
             NETWORKS = networks;
@@ -105,10 +152,21 @@ public class HeatService {
             Map<UUID,HeatNetwork> networks = NETWORKS.getOrDefault(levelKey,Map.of());
 
             boolean needSave = false;
+
+            //add network in networkMapToAddNextTick
+            needSave = !networkMapToAddNextTick.isEmpty();
+            System.out.println("adding network:"+networkMapToAddNextTick+" levelKey:"+levelKey);
+            networkMapToAddNextTick.getOrDefault(levelKey,Set.of()).forEach(heatNetwork -> {
+                networks.put(heatNetwork.getNetworkID(),heatNetwork);
+            });
+            System.out.println("networks:"+networks+" levelKey:"+levelKey);
+            networkMapToAddNextTick.remove(levelKey);
+
+            // tick each network
             Set<UUID> networkNeedToRemove = new HashSet<>();
             System.out.println("ticking:"+serverLevel.dimension()+" level:"+serverLevel);
             for (HeatNetwork network : networks.values()){
-                System.out.println("levelKey:"+serverLevel.dimension()+"\nnetwork:"+network);
+                System.out.println("network T:"+network);
                 if(network.tick(serverLevel)){
                     needSave = true;
                 }
@@ -134,9 +192,9 @@ public class HeatService {
         }
 
         public void addNetwork(ResourceKey<Level> levelKey,HeatNetwork network){
-            Map<UUID,HeatNetwork> levelNetworks =NETWORKS.getOrDefault(levelKey,new HashMap<>());
-            levelNetworks.put(network.getNetworkID(),network);
-            NETWORKS.put(levelKey,levelNetworks);
+            Set<HeatNetwork> levelNetworks = networkMapToAddNextTick.getOrDefault(levelKey,new HashSet<>());
+            levelNetworks.add(network);
+            networkMapToAddNextTick.put(levelKey,levelNetworks);
         }
 
 

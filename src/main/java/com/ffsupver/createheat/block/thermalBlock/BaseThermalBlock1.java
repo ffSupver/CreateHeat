@@ -41,26 +41,25 @@ public class BaseThermalBlock1 extends Block implements IBE<BaseThermalBlockEnti
         };
     }
 
+    /**
+     * Will NOT be called when assembled by Sable
+     */
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        System.out.println("onPlace"+pos+" old:"+oldState+" new:"+state);
         super.onPlace(state, level, pos, oldState, movedByPiston);
         withBlockEntityDo(level,pos,baseThermalBlockEntity -> {
-            AtomicReference<UUID> networkId = new AtomicReference<>();
-            BlockUtil.AllDirectionOf(pos,neighborPos->{
-                if (level.getBlockEntity(neighborPos) instanceof BaseThermalBlockEntity1 neighborBE){
-                    UUID neighborID = neighborBE.getHeatNetworkId();
-                    if (neighborID != null){
-                        networkId.set(neighborID);
-                    }
-                }
-            },p->networkId.get() != null);
-            baseThermalBlockEntity.setHeatNetworkId(HeatService.addBlockToNetwork(pos,level,networkId.get()));
+            UUID networkId = baseThermalBlockEntity.getNeighborNetworkId();
+            baseThermalBlockEntity.setHeatNetworkId(HeatService.addBlockToNetwork(pos,level,networkId));
         });
     }
 
-
+    /**
+     * Will be called when assembled by Sable
+     */
     @Override
     protected void onRemove(BlockState oldState, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        System.out.println("onRemove"+pos+" old:"+oldState+" new:"+newState);
         if (!oldState.getBlock().equals(newState.getBlock())){ // destroy
             withBlockEntityDo(level,pos,baseThermalBlockEntity -> {
                 if (baseThermalBlockEntity.getHeatNetworkId() != null){
