@@ -22,31 +22,14 @@ public class HeatNetwork {
     public boolean shouldCheckConnection; // notify the network to check connection next tick
     private final Set<BlockPos> unloadedBlocks = new HashSet<>(); // blocks never loaded after added to network, unloadedBlocks will be checked each tick and removed from this set once they are loaded
 
-//    private final Set<BlockPos> lastTickPosSet = new HashSet<>();
 
     public HeatNetwork(UUID networkID,Set<BlockPos> connectedBlocks) {
         this.networkID = networkID;
         this.connectedBlocks = connectedBlocks;
-//        this.lastTickPosSet.addAll(connectedBlocks); // add all blocks to lastTickPosSet when creating. Prevent network from removing blocks at first tick.
     }
 
     public boolean tick(ServerLevel level){
         boolean shouldSave = false;
-
-        // check and remove lost blocks
-//        Set<BlockPos> lostBlocks = new HashSet<>();
-//        connectedBlocks.forEach(pos -> {
-//            System.out.println("checking block:"+pos+" isloaded:"+level.isLoaded(pos)+" lastTickPos:"+lastTickPosSet.contains(pos));
-//            if (level.isLoaded(pos) && !lastTickPosSet.contains(pos)) {
-//                lostBlocks.add(pos);
-//            }
-//        });
-//        if (!lostBlocks.isEmpty()){
-//            lostBlocks.forEach(connectedBlocks::remove);
-//            shouldSave = true;
-//        }
-//        lastTickPosSet.clear();
-//        System.out.println("remain blocks:" + connectedBlocks.size()+"/"+connectedBlocks);
 
         // check unloaded blocks
         if (!unloadedBlocks.isEmpty()){
@@ -100,12 +83,10 @@ public class HeatNetwork {
     }
 
     public void onBlockTick(BlockPos pos){
-//        lastTickPosSet.add(pos);
     }
 
     public void addBlock(BlockPos pos,boolean isLoaded){
             connectedBlocks.add(pos);
-//        lastTickPosSet.add(pos);
             needToSave = true;
         if (!isLoaded){
             unloadedBlocks.add(pos);
@@ -114,7 +95,6 @@ public class HeatNetwork {
 
     public void removeBlock(BlockPos pos){
         connectedBlocks.remove(pos);
-//        lastTickPosSet.remove(pos);
         needToSave = true;
         shouldCheckConnection = true;
     }

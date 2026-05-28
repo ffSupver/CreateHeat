@@ -211,18 +211,18 @@ public class HeatService {
 
             //add network in networkMapToAddNextTick
             needSave = !networkMapToAddNextTick.isEmpty();
-            System.out.println("adding network:"+networkMapToAddNextTick+" levelKey:"+levelKey);
+//            System.out.println("adding network:"+networkMapToAddNextTick+" levelKey:"+levelKey);
             networkMapToAddNextTick.getOrDefault(levelKey,Set.of()).forEach(heatNetwork -> {
                 networks.put(heatNetwork.getNetworkID(),heatNetwork);
             });
-            System.out.println("networks:"+networks+" levelKey:"+levelKey);
+//            System.out.println("networks:"+networks+" levelKey:"+levelKey);
             networkMapToAddNextTick.remove(levelKey);
 
             // tick each network
             Set<UUID> networkNeedToRemove = new HashSet<>();
-            System.out.println("ticking:"+serverLevel.dimension()+" level:"+serverLevel);
+//            System.out.println("ticking:"+serverLevel.dimension()+" level:"+serverLevel);
             for (HeatNetwork network : networks.values()){
-                System.out.println("network T:"+network);
+//                System.out.println("network T:"+network);
                 if(network.tick(serverLevel)){
                     needSave = true;
                 }
@@ -232,7 +232,7 @@ public class HeatService {
                 }
             }
 
-            System.out.println("to Remove:"+networkNeedToRemove);
+//            System.out.println("to Remove:"+networkNeedToRemove);
             networkNeedToRemove.forEach(networks::remove);
 
             if (needSave){
