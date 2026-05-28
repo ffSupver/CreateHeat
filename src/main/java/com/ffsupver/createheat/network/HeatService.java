@@ -55,11 +55,64 @@ public class HeatService {
     }
 
     /**
-     * Add Block to Network, call when block placed
+     * Add a Block to Network and try to merge with neighbor network
+     * @param pos pos to add
+     * @param level should be server level
+     * @param allNeighborNetworkIDs all neighbor network id from the pos
+     * @return network id the pos added to
+     */
+    public static UUID addBlockToNetwork(BlockPos pos,Level level,Set<UUID> allNeighborNetworkIDs){
+        if (serviceData == null || !(level instanceof ServerLevel serverLevel)){
+            return null;
+        }
+
+        System.out.println("AddAndMerge:"+pos+" ids:"+allNeighborNetworkIDs);
+        if (allNeighborNetworkIDs.isEmpty()){
+            return addBlockToNetwork(pos,level,(UUID)null);
+        }else if (allNeighborNetworkIDs.size() == 1){
+            return addBlockToNetwork(pos,level,allNeighborNetworkIDs.iterator().next());
+        }else {
+            Set<HeatNetwork> neighborNetworks = new HashSet<>();
+            for (UUID networkID : allNeighborNetworkIDs){
+                HeatNetwork network = getNetwork(serverLevel,networkID);
+                if (network != null){
+                    neighborNetworks.add(network);
+                }
+            }
+
+            UUID finalNetworkId = mergeNetwork(serverLevel,neighborNetworks);
+            return addBlockToNetwork(pos,level,finalNetworkId);
+        }
+    }
+
+    /**
+     * Merge multiple networks into one
+     * @param networks networks to merge
+     * @return network id of the final network
+     */
+    public static UUID mergeNetwork(ServerLevel serverLevel,Set<HeatNetwork> networks){
+        if (networks.isEmpty()){
+            return null;
+        }if(networks.size() == 1){
+            return networks.iterator().next().getNetworkID();
+        }
+
+        Iterator<HeatNetwork> iterator = networks.iterator();
+        HeatNetwork finalNetwork = iterator.next();
+        while (iterator.hasNext()){
+            HeatNetwork network = iterator.next();
+            network.mergeSelfTo(serverLevel,finalNetwork);
+        }
+
+        return finalNetwork.getNetworkID();
+    }
+
+    /**
+     * Add a single Block to Network
      * @param pos pos to add
      * @param level should be server level
      * @param networkID id find from neighbor network,or null if not found
-     * @return
+     * @return network id the pos added to
      */
     public static UUID addBlockToNetwork(BlockPos pos,Level level,UUID networkID){
         if (serviceData == null || !(level instanceof ServerLevel serverLevel)){
@@ -68,15 +121,15 @@ public class HeatService {
 
         HeatNetwork heatNetwork = getNetwork(level,networkID);
 
-        System.out.println("network:"+networkID+"n "+heatNetwork);
+        System.out.println("AddBlock network:"+networkID+"n "+heatNetwork);
         if (heatNetwork == null){
             networkID = UUID.randomUUID();
             heatNetwork = new HeatNetwork(networkID,new HashSet<>(Set.of(pos)));
             serviceData.addNetwork(serverLevel.dimension(),heatNetwork);
         }else {
-            heatNetwork.addBlock(pos);
+            heatNetwork.addBlock(pos,true);
         }
-        System.out.println("network:"+networkID);
+        System.out.println("AddBlock network:"+networkID);
         serviceData.setDirty();
 
         return networkID;
@@ -149,9 +202,12 @@ public class HeatService {
 
         public void tick(ServerLevel serverLevel){
             ResourceKey<Level> levelKey = serverLevel.dimension();
-            Map<UUID,HeatNetwork> networks = NETWORKS.getOrDefault(levelKey,Map.of());
-
             boolean needSave = false;
+            if (!NETWORKS.containsKey(levelKey)){
+                NETWORKS.put(levelKey,new HashMap<>());
+            }
+            Map<UUID,HeatNetwork> networks = NETWORKS.get(levelKey);
+
 
             //add network in networkMapToAddNextTick
             needSave = !networkMapToAddNextTick.isEmpty();

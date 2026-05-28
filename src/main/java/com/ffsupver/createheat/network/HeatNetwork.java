@@ -1,13 +1,16 @@
 package com.ffsupver.createheat.network;
 
+import com.ffsupver.createheat.block.thermalBlock.BaseThermalBlockBehaviour;
 import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.NbtUtil;
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
@@ -17,6 +20,7 @@ public class HeatNetwork {
     private boolean needToSave; // notify the network to save outside of ticking
     private boolean shouldRemove; // marked network as removed from service
     public boolean shouldCheckConnection; // notify the network to check connection next tick
+    private final Set<BlockPos> unloadedBlocks = new HashSet<>(); // blocks never loaded after added to network, unloadedBlocks will be checked each tick and removed from this set once they are loaded
 
 //    private final Set<BlockPos> lastTickPosSet = new HashSet<>();
 
@@ -43,6 +47,22 @@ public class HeatNetwork {
 //        }
 //        lastTickPosSet.clear();
 //        System.out.println("remain blocks:" + connectedBlocks.size()+"/"+connectedBlocks);
+
+        // check unloaded blocks
+        if (!unloadedBlocks.isEmpty()){
+            Iterator<BlockPos> unloadedBlockPosIterator = unloadedBlocks.iterator();
+            while (unloadedBlockPosIterator.hasNext()) {
+                BlockPos unloadedPos = unloadedBlockPosIterator.next();
+                if (level.isLoaded(unloadedPos)) {
+                    BaseThermalBlockBehaviour baseThermalBlockBehaviour = BlockEntityBehaviour.get(level, unloadedPos, BaseThermalBlockBehaviour.TYPE);
+                    if (baseThermalBlockBehaviour != null) {
+                        baseThermalBlockBehaviour.setHeatNetworkId(networkID);
+                    }
+                    unloadedBlockPosIterator.remove();
+                }
+            }
+        }
+
 
         // check if network is empty
         if (connectedBlocks.isEmpty()){
@@ -83,10 +103,13 @@ public class HeatNetwork {
 //        lastTickPosSet.add(pos);
     }
 
-    public void addBlock(BlockPos pos){
-        connectedBlocks.add(pos);
+    public void addBlock(BlockPos pos,boolean isLoaded){
+            connectedBlocks.add(pos);
 //        lastTickPosSet.add(pos);
-        needToSave = true;
+            needToSave = true;
+        if (!isLoaded){
+            unloadedBlocks.add(pos);
+        }
     }
 
     public void removeBlock(BlockPos pos){
@@ -96,21 +119,41 @@ public class HeatNetwork {
         shouldCheckConnection = true;
     }
 
+
+    public void mergeSelfTo(ServerLevel serverLevel, HeatNetwork finalNetwork) {
+        for (BlockPos pos : connectedBlocks) {
+            BaseThermalBlockBehaviour baseThermalBlockBehaviour = BlockEntityBehaviour.get(serverLevel, pos, BaseThermalBlockBehaviour.TYPE);
+            if (baseThermalBlockBehaviour != null) {
+                baseThermalBlockBehaviour.setHeatNetworkId(finalNetwork.getNetworkID());
+            }
+            finalNetwork.addBlock(pos, serverLevel.isLoaded(pos));
+        }
+        this.shouldRemove = true;
+    }
+
     public UUID getNetworkID() {
         return networkID;
     }
 
+    private void setUnloadedBlocks(Set<BlockPos> unloadedBlocks) {
+        this.unloadedBlocks.clear();
+        this.unloadedBlocks.addAll(unloadedBlocks);
+    }
     public static HeatNetwork fromNbt(Tag tag){
         CompoundTag nbt = (CompoundTag) tag;
         UUID networkID = nbt.getUUID("id");
         Set<BlockPos> connectedBlocks = new HashSet<>(NbtUtil.readBlockPosFromNbtList(nbt.getList("connected_blocks", Tag.TAG_COMPOUND)));
-        return new HeatNetwork(networkID,connectedBlocks);
+        Set<BlockPos> unloadedBlocks = new HashSet<>(NbtUtil.readBlockPosFromNbtList(nbt.getList("unloaded_blocks", Tag.TAG_COMPOUND)));
+        HeatNetwork heatNetwork = new HeatNetwork(networkID,connectedBlocks);
+        heatNetwork.setUnloadedBlocks(unloadedBlocks);
+        return heatNetwork;
     }
 
     public CompoundTag toNbt(){
         CompoundTag nbt = new CompoundTag();
         nbt.putUUID("id",networkID);
         nbt.put("connected_blocks",NbtUtil.writeBlockPosToNbtList(connectedBlocks));
+        nbt.put("unloaded_blocks",NbtUtil.writeBlockPosToNbtList(unloadedBlocks));
         return nbt;
     }
 

@@ -2,20 +2,18 @@ package com.ffsupver.createheat.block.thermalBlock;
 
 import com.ffsupver.createheat.network.HeatService;
 import com.ffsupver.createheat.registries.CHBlocks;
-import com.ffsupver.createheat.util.BlockUtil;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.NONE;
@@ -49,8 +47,8 @@ public class BaseThermalBlock1 extends Block implements IBE<BaseThermalBlockEnti
         System.out.println("onPlace"+pos+" old:"+oldState+" new:"+state);
         super.onPlace(state, level, pos, oldState, movedByPiston);
         withBlockEntityDo(level,pos,baseThermalBlockEntity -> {
-            UUID networkId = baseThermalBlockEntity.getNeighborNetworkId();
-            baseThermalBlockEntity.setHeatNetworkId(HeatService.addBlockToNetwork(pos,level,networkId));
+            Set<UUID> neighborNetworkId  = baseThermalBlockEntity.getNeighborNetworkId();
+            baseThermalBlockEntity.setHeatNetworkId(HeatService.addBlockToNetwork(pos,level,neighborNetworkId));
         });
     }
 

@@ -14,7 +14,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
 
     private UUID heatNetworkId;
     private HeatNetwork heatNetwork;
-    private BaseThermalBlockEntity1 thermalBlockEntity;
+    private final BaseThermalBlockEntity1 thermalBlockEntity;
 
     public BaseThermalBlockBehaviour(BaseThermalBlockEntity1 be) {
         super(be);
@@ -25,7 +25,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     public void tick() {
         super.tick();
         if (heatNetworkId == null){
-            if (thermalBlockEntity.getNeighborNetworkId() != null){
+            if (!thermalBlockEntity.getNeighborNetworkId().isEmpty()){
                 this.heatNetworkId = HeatService.addBlockToNetwork(getPos(),getWorld(),thermalBlockEntity.getNeighborNetworkId());
             }
         }

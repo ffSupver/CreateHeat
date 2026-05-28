@@ -7,9 +7,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class BaseThermalBlockEntity1 extends SmartBlockEntity {
 
@@ -22,17 +23,17 @@ public class BaseThermalBlockEntity1 extends SmartBlockEntity {
         super.tick();
     }
 
-    public UUID getNeighborNetworkId(){
-        AtomicReference<UUID> networkId = new AtomicReference<>();
+    public Set<UUID> getNeighborNetworkId(){
+        Set<UUID> neighborNetworkIds = new HashSet<>();
         BlockUtil.AllDirectionOf(getBlockPos(), neighborPos->{
             if (getLevel().getBlockEntity(neighborPos) instanceof BaseThermalBlockEntity1 neighborBE){
                 UUID neighborID = neighborBE.getHeatNetworkId();
                 if (neighborID != null){
-                    networkId.set(neighborID);
+                    neighborNetworkIds.add(neighborID);
                 }
             }
-        },p->networkId.get() != null);
-        return networkId.get();
+        });
+        return neighborNetworkIds;
     }
 
     public void setHeatNetworkId(UUID heatNetworkId) {
