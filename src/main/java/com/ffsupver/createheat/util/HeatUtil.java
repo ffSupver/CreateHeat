@@ -2,6 +2,7 @@ package com.ffsupver.createheat.util;
 
 import com.ffsupver.createheat.Config;
 import com.simibubi.create.api.boiler.BoilerHeater;
+import net.minecraft.nbt.CompoundTag;
 
 public final class HeatUtil {
     public static HeatData NO_HEAT_PROVIDE = new HeatData(0,0);
@@ -25,5 +26,19 @@ public final class HeatUtil {
         return new HeatData(heatProvide,superHeatCount);
     }
 
-    public record HeatData(int heat,int superHeatCount){}
+    public record HeatData(int heat,int superHeatCount){
+        public HeatData merge(HeatData other){
+            return new HeatData(this.heat + other.heat,this.superHeatCount + other.superHeatCount);
+        }
+        public CompoundTag toNbt(){
+            CompoundTag nbt = new CompoundTag();
+            nbt.putInt("heat",heat);
+            nbt.putInt("super_heat_count",superHeatCount);
+            return nbt;
+        }
+
+        public static HeatData fromNbt(CompoundTag nbt){
+            return new HeatData(nbt.getInt("heat"),nbt.getInt("super_heat_count"));
+        }
+    }
 }

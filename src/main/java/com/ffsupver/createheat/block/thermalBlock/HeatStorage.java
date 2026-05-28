@@ -65,8 +65,36 @@ public class HeatStorage{
         this.amount = amount;
     }
 
+    public Snapshot snapshot(){
+        return new Snapshot(capacity,amount);
+    }
+
     @Override
     public String toString() {
         return "{"+amount+"/"+capacity+"}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+
+        HeatStorage that = (HeatStorage) o;
+        return capacity == that.capacity && amount == that.amount;
+    }
+
+
+    /**
+     * Snapshot of HeatStorage. Only for display
+     */
+    public static record Snapshot(int capacity,int amount){
+        public CompoundTag toNbt(){
+            CompoundTag nbt = new CompoundTag();
+            nbt.putInt("capacity",capacity);
+            nbt.putInt("amount",amount);
+            return nbt;
+        }
+        public static Snapshot fromNbt(CompoundTag nbt){
+            return new Snapshot(nbt.getInt("capacity"),nbt.getInt("amount"));
+        }
     }
 }
