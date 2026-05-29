@@ -40,5 +40,40 @@ public final class HeatUtil {
         public static HeatData fromNbt(CompoundTag nbt){
             return new HeatData(nbt.getInt("heat"),nbt.getInt("super_heat_count"));
         }
+
+        public HeatData sub(HeatData heatData) {
+            return new HeatData(this.heat - heatData.heat,this.superHeatCount - heatData.superHeatCount);
+        }
+    }
+
+    public record HeatIOData(HeatData in,HeatData out) {
+        public CompoundTag toNbt(){
+            CompoundTag nbt = new CompoundTag();
+            nbt.put("in",in.toNbt());
+            nbt.put("out",out.toNbt());
+            return nbt;
+        }
+        public static HeatIOData fromNbt(CompoundTag nbt){
+            return new HeatIOData(HeatData.fromNbt(nbt.getCompound("in")),HeatData.fromNbt(nbt.getCompound("out")));
+        }
+
+        public int inHeat(){
+            return in.heat;
+        }
+        public int outHeat(){
+            return out.heat;
+        }
+        public int inSuperHeatCount(){
+            return in.superHeatCount;
+        }
+        public int outSuperHeatCount(){
+            return out.superHeatCount;
+        }
+        public int heatGen(){
+            return in.heat - out.heat;
+        }
+        public int superHeatCountGen(){
+            return in.superHeatCount - out.superHeatCount;
+        }
     }
 }

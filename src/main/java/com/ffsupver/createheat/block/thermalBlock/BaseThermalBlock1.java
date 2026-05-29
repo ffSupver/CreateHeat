@@ -40,20 +40,24 @@ public class BaseThermalBlock1 extends Block implements IBE<BaseThermalBlockEnti
     }
 
     /**
-     * Will NOT be called when assembled by Sable
+     * Will NOT be called when assembled by Sable.
+     * Will be called when state changed.
      */
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         System.out.println("onPlace"+pos+" old:"+oldState+" new:"+state);
         super.onPlace(state, level, pos, oldState, movedByPiston);
-        withBlockEntityDo(level,pos,baseThermalBlockEntity -> {
-            Set<UUID> neighborNetworkId  = baseThermalBlockEntity.getNeighborNetworkId();
-            baseThermalBlockEntity.setHeatNetworkId(HeatService.addBlockToNetwork(pos,level,neighborNetworkId));
-        });
+        if (!oldState.getBlock().equals(state.getBlock())){ // new block
+            withBlockEntityDo(level, pos, baseThermalBlockEntity -> {
+                Set<UUID> neighborNetworkId = baseThermalBlockEntity.getNeighborNetworkId();
+                baseThermalBlockEntity.setHeatNetworkId(HeatService.addBlockToNetwork(pos, level, neighborNetworkId));
+            });
+        }
     }
 
     /**
-     * Will be called when assembled by Sable
+     * Will be called when assembled by Sable.
+     * Will be called when state changed.
      */
     @Override
     protected void onRemove(BlockState oldState, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {

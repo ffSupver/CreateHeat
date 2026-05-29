@@ -28,8 +28,10 @@ public class HeatNetwork {
 
     public static final Supplier<Integer> MAX_HEAT = () -> 50 * Config.HEAT_PER_FADING_BLAZE.get();
     private final HeatStorage heatStorage;
-    private HeatUtil.HeatData heatDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
-    private HeatUtil.HeatData displayHeatData;
+    private HeatUtil.HeatData heatGenDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
+    private HeatUtil.HeatData heatDataLastTickRemain = HeatUtil.NO_HEAT_PROVIDE;
+    private HeatUtil.HeatData heatCostDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
+    private HeatUtil.HeatIOData displayHeatData;
 
     public HeatNetwork(UUID networkID,Set<BlockPos> connectedBlocks) {
         this.networkID = networkID;
@@ -82,11 +84,16 @@ public class HeatNetwork {
         }
 
         // process heat
-        heatStorage.insert(heatDataLastTick.heat());
-        displayHeatData = heatDataLastTick;
-        heatDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
+        heatStorage.insert(heatGenDataLastTick.heat());
+        heatStorage.extract(heatCostDataLastTick.heat(),false);
 
-        System.out.println("ticking "+level.dimension()+" heat:"+heatStorage+" lastHeat:"+heatDataLastTick+" blocks:"+connectedBlocks.size()+" / "+connectedBlocks);
+        displayHeatData = new HeatUtil.HeatIOData(heatGenDataLastTick,heatCostDataLastTick);
+        heatDataLastTickRemain = calculateHeatCanProvideThisTick(heatGenDataLastTick);
+
+        heatGenDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
+        heatCostDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
+
+        System.out.println("ticking "+level.dimension()+" heat:"+heatStorage+" lastHeat:"+ heatGenDataLastTick +" blocks:"+connectedBlocks.size()+" / "+connectedBlocks);
 
         if (needToSave){
             shouldSave = true;
@@ -95,12 +102,19 @@ public class HeatNetwork {
         return shouldSave;
     }
 
+    private HeatUtil.HeatData calculateHeatCanProvideThisTick(HeatUtil.HeatData heatGenDataLastTick) {
+        HeatUtil.HeatData heatProvideFromStorage = new HeatUtil.HeatData(heatStorage.getAmount(),0);
+        return heatGenDataLastTick.merge(heatProvideFromStorage);
+    }
+
     public boolean shouldRemove() {
         return shouldRemove;
     }
 
-    public void onBlockTick(BlockPos pos, HeatUtil.HeatData heatData){
-        this.heatDataLastTick = this.heatDataLastTick.merge(heatData);
+    public void onBlockTick(BlockPos pos, HeatUtil.HeatData heatGenData, HeatUtil.HeatData heatCostData){
+        this.heatGenDataLastTick = this.heatGenDataLastTick.merge(heatGenData);
+        this.heatCostDataLastTick = this.heatCostDataLastTick.merge(heatCostData);
+        this.heatDataLastTickRemain = this.heatDataLastTickRemain.sub(heatCostData);
     }
 
     public void addBlock(BlockPos pos,boolean isLoaded) {
@@ -137,10 +151,14 @@ public class HeatNetwork {
         heatStorage.setCapacity(connectedBlocks.size() * MAX_HEAT.get());
     }
 
+    public HeatUtil.HeatData getHeatDataLastTickRemain() {
+        return heatDataLastTickRemain;
+    }
+
     public HeatStorage.Snapshot getDisplayHeatStorage() {
         return heatStorage.snapshot();
     }
-    public HeatUtil.HeatData getDisplayHeatData() {
+    public HeatUtil.HeatIOData getDisplayHeatData() {
         return displayHeatData;
     }
 
