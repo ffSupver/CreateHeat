@@ -22,6 +22,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static com.ffsupver.createheat.api.BoilerUpdater.getBoilerControllerBE;
@@ -36,9 +37,17 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     private HeatNetwork heatNetwork;
     private final BaseThermalBlockEntity1 thermalBlockEntity;
 
+    // api
+    private Predicate<BaseThermalBlockBehaviour> canSuperHeat;
+    private Predicate<BaseThermalBlockBehaviour> canHeat;
+    private Predicate<BaseThermalBlockBehaviour> canGenerateHeatIgnoreHTP;
+    private Predicate<BaseThermalBlockBehaviour> shouldHeatUp;
+    private Consumer<HeatLevel> onSetHeatLevel;
+
     // display
     private HeatStorage.Snapshot displayHeatStorage;
     private HeatUtil.HeatIOData displayHeatRemain;
+
 
     public BaseThermalBlockBehaviour(BaseThermalBlockEntity1 be) {
         super(be);
@@ -64,7 +73,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         if (heatNetwork != null){
             HeatUtil.HeatData networkRemainHeat = heatNetwork.getHeatDataLastTickRemain();
 
-            // find transfer processer
+            // find transfer processor
             Set<HeatTransferProcesser> neighborTransferProcesser = new HashSet<>();
             BlockUtil.AllDirectionOf(getPos(),(checkPos,face)->{
                 if (heatNetwork.getTransferProcesser(checkPos) == null){
@@ -131,7 +140,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         HeatLevel newHeatLevel = heatLevel;
         if (haeEnoughHeat) {
             if (needToHeat(hasHTPNeighbor)) {
-                boolean canSuperHeat = networkRemainHeat.heat() >= getHeatPerTick(SEETHING) && networkRemainHeat.superHeatCount() >= 1;
+                boolean canSuperHeat = onCanSuperHeatTest() && networkRemainHeat.heat() >= getHeatPerTick(SEETHING) && networkRemainHeat.superHeatCount() >= 1;
 
                 if (canSuperHeat && needToHeatUp(SEETHING,hasHTPNeighbor)){
                     newHeatLevel = SEETHING;
@@ -186,17 +195,12 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         return needToHeatAbove || needToHeatBoiler;
     }
 
-    private boolean onShouldHeatUp(){
-//        return onTest(shouldHeatUp,this,false);
-        return false;
-    }
-
     public void setBlockHeat(HeatLevel heatLevel){
         getWorld().setBlock(getPos(),getBlockState().setValue(HEAT_LEVEL, heatLevel), 3);
         System.out.println("setBlockHeat:"+heatLevel+" pos:"+getPos());
-//        if (onSetHeatLevel != null){
-//            onSetHeatLevel.accept(heatLevel);
-//        }
+        if (onSetHeatLevel != null){
+            onSetHeatLevel.accept(heatLevel);
+        }
         notifyUpdate();
     }
 
@@ -221,11 +225,38 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         return Optional.empty();
     }
 
+    private boolean onShouldHeatUp(){
+        return onTest(shouldHeatUp,this,false);
+    }
+
     private boolean onCanGenerateHeatIgnoreHTPTest() {
-        return true;
+        return onTest(canGenerateHeatIgnoreHTP,this,false);
     }
     private boolean onCanHeatTest() {
-        return true;
+        return onTest(canHeat,this);
+    }
+    private boolean onCanSuperHeatTest() {
+        return onTest(canSuperHeat,this);
+    }
+
+    public void setShouldHeatUp(Predicate<BaseThermalBlockBehaviour> shouldHeatUp) {
+        this.shouldHeatUp = shouldHeatUp;
+    }
+
+    public void setCanGenerateHeatIgnoreHTP(Predicate<BaseThermalBlockBehaviour> canGenerateHeatIgnoreHTP) {
+        this.canGenerateHeatIgnoreHTP = canGenerateHeatIgnoreHTP;
+    }
+
+    public void setCanHeat(Predicate<BaseThermalBlockBehaviour> canHeat) {
+        this.canHeat = canHeat;
+    }
+
+    public void setCanSuperHeat(Predicate<BaseThermalBlockBehaviour> canSuperHeat) {
+        this.canSuperHeat = canSuperHeat;
+    }
+
+    public void setOnSetHeatLevel(Consumer<HeatLevel> onSetHeatLevel) {
+        this.onSetHeatLevel = onSetHeatLevel;
     }
 
     public BlockState getBlockState(){
@@ -304,15 +335,27 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         return heatNetworkId != null;
     }
 
-    private static boolean onTest(Predicate<ThermalBlockEntityBehaviour> test, ThermalBlockEntityBehaviour behaviour, boolean defaultResult){
+    /**
+     * test a predicate
+     * @param test the predicate
+     * @param behaviour the behaviour
+     * @param defaultResult the default result
+     * @return the result of the predicate
+     */
+    private static boolean onTest(Predicate<BaseThermalBlockBehaviour> test, BaseThermalBlockBehaviour behaviour, boolean defaultResult){
         if (test == null){
             return defaultResult;
         }else {
             return test.test(behaviour);
         }
     }
-
-    private static boolean onTest(Predicate<ThermalBlockEntityBehaviour> test,ThermalBlockEntityBehaviour behaviour){
+    /**
+     * test a predicate, default true
+     * @param test the predicate
+     * @param behaviour the behaviour
+     * @return the result of the predicate
+     */
+    private static boolean onTest(Predicate<BaseThermalBlockBehaviour> test,BaseThermalBlockBehaviour behaviour){
         return onTest(test,behaviour,true);
     }
 
