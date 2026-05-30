@@ -1,8 +1,10 @@
 package com.ffsupver.createheat.network;
 
 import com.ffsupver.createheat.Config;
+import com.ffsupver.createheat.block.HeatTransferProcesser;
 import com.ffsupver.createheat.block.thermalBlock.BaseThermalBlockBehaviour;
 import com.ffsupver.createheat.block.thermalBlock.HeatStorage;
+import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
 import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.HeatUtil;
 import com.ffsupver.createheat.util.NbtUtil;
@@ -12,10 +14,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 public class HeatNetwork {
@@ -26,12 +26,16 @@ public class HeatNetwork {
     public boolean shouldCheckConnection; // notify the network to check connection next tick
     private final Set<BlockPos> unloadedBlocks = new HashSet<>(); // blocks never loaded after added to network, unloadedBlocks will be checked each tick and removed from this set once they are loaded
 
+    // heat storage
     public static final Supplier<Integer> MAX_HEAT = () -> 50 * Config.HEAT_PER_FADING_BLAZE.get();
     private final HeatStorage heatStorage;
     private HeatUtil.HeatData heatGenDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
     private HeatUtil.HeatData heatDataLastTickRemain = HeatUtil.NO_HEAT_PROVIDE;
     private HeatUtil.HeatData heatCostDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
     private HeatUtil.HeatIOData displayHeatData;
+
+    // heat transfer processor
+    private final Map<BlockPos, HeatTransferProcesser> transferProcesserMap = new HashMap<>();
 
     public HeatNetwork(UUID networkID,Set<BlockPos> connectedBlocks) {
         this.networkID = networkID;
@@ -41,6 +45,7 @@ public class HeatNetwork {
 
     public boolean tick(ServerLevel level){
         boolean shouldSave = false;
+        HeatStorage.Snapshot lastHeatStorage = heatStorage.snapshot();
 
         // check unloaded blocks
         if (!unloadedBlocks.isEmpty()){
@@ -48,10 +53,9 @@ public class HeatNetwork {
             while (unloadedBlockPosIterator.hasNext()) {
                 BlockPos unloadedPos = unloadedBlockPosIterator.next();
                 if (level.isLoaded(unloadedPos)) {
-                    BaseThermalBlockBehaviour baseThermalBlockBehaviour = BlockEntityBehaviour.get(level, unloadedPos, BaseThermalBlockBehaviour.TYPE);
-                    if (baseThermalBlockBehaviour != null) {
-                        baseThermalBlockBehaviour.setHeatNetworkId(networkID);
-                    }
+                    getThermalBlockBehaviour(level, unloadedPos).ifPresent(
+                            baseThermalBlockBehaviour->baseThermalBlockBehaviour.setHeatNetworkId(networkID)
+                    );
                     unloadedBlockPosIterator.remove();
                 }
             }
@@ -93,7 +97,54 @@ public class HeatNetwork {
         heatGenDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
         heatCostDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
 
-        System.out.println("ticking "+level.dimension()+" heat:"+heatStorage+" lastHeat:"+ heatGenDataLastTick +" blocks:"+connectedBlocks.size()+" / "+connectedBlocks);
+        shouldSave = shouldSave || !lastHeatStorage.equals(heatStorage.snapshot());
+
+        // process heat transfer processor
+        int tickSkip = 1; // no cooldown yet
+        Set<BlockPos> heatTransferProcesserToRemovePosSet = new HashSet<>();
+        for (Map.Entry<BlockPos,HeatTransferProcesser> entry : transferProcesserMap.entrySet()){
+            BlockPos hTPPos = entry.getKey();
+            if (!level.isLoaded(hTPPos)){
+                break;
+            }
+
+            HeatTransferProcesser heatTransferProcesser = entry.getValue();
+
+            // get heat provide to hTP, and check connection with hTP
+            List<HeatUtil.HeatData> heatSetProvideToHTP = new ArrayList<>();
+            AtomicBoolean isConnected = new AtomicBoolean(false);
+            BlockUtil.AllDirectionOf(hTPPos,thermalBlockPos->{
+                Optional<BaseThermalBlockBehaviour> thermalBlockBehaviourOp = getThermalBlockBehaviour(level,thermalBlockPos);
+                if (thermalBlockBehaviourOp.isPresent()){
+                    BaseThermalBlockBehaviour thermalBlockBehaviour = thermalBlockBehaviourOp.get();
+                    if (thermalBlockBehaviour.getHeatNetworkId().equals(networkID)){
+                        heatSetProvideToHTP.add(thermalBlockBehaviour.getCurrentHeatCostData());
+                        isConnected.set(true);
+                    }
+                }
+            });
+
+            // remove hTP if not connected without ticking it
+            if (!isConnected.get()){
+                heatTransferProcesserToRemovePosSet.add(hTPPos);
+                break;
+            }
+
+            // tick hTP
+            HeatUtil.HeatData heatProvideToHTP = HeatUtil.NO_HEAT_PROVIDE;
+            for (HeatUtil.HeatData heatData : heatSetProvideToHTP){
+                heatProvideToHTP = heatProvideToHTP.merge(heatData);
+            }
+            if (heatTransferProcesser.needHeat(level,hTPPos,null,heatProvideToHTP.heat(),tickSkip,heatProvideToHTP.superHeatCount())){
+                heatTransferProcesser.acceptHeat(level,hTPPos,new HeatTransferProcesser.HeatAcceptData(heatProvideToHTP.heat(),tickSkip,heatProvideToHTP.superHeatCount()));
+            }else {
+                heatTransferProcesserToRemovePosSet.add(hTPPos);
+            }
+        }
+        heatTransferProcesserToRemovePosSet.stream().map(pos -> Map.entry(pos,transferProcesserMap.get(pos))).toList().forEach(transferProcesserMap.entrySet()::remove);
+        shouldSave = shouldSave || !heatTransferProcesserToRemovePosSet.isEmpty();
+
+        System.out.println("ticking "+level.dimension()+"   heat:"+heatStorage+"   lastHeat:"+ heatGenDataLastTick +"   hTPs:"+transferProcesserMap+"   blocks:"+connectedBlocks.size()+" / "+connectedBlocks);
 
         if (needToSave){
             shouldSave = true;
@@ -138,10 +189,10 @@ public class HeatNetwork {
 
     public void mergeSelfTo(ServerLevel serverLevel, HeatNetwork finalNetwork) {
         for (BlockPos pos : connectedBlocks) {
-            BaseThermalBlockBehaviour baseThermalBlockBehaviour = BlockEntityBehaviour.get(serverLevel, pos, BaseThermalBlockBehaviour.TYPE);
-            if (baseThermalBlockBehaviour != null) {
-                baseThermalBlockBehaviour.setHeatNetworkId(finalNetwork.getNetworkID());
-            }
+            getThermalBlockBehaviour(serverLevel, pos).ifPresent(
+                    baseThermalBlockBehaviour ->
+                            baseThermalBlockBehaviour.setHeatNetworkId(finalNetwork.getNetworkID())
+            );
             finalNetwork.addBlock(pos, serverLevel.isLoaded(pos));
         }
         this.shouldRemove = true;
@@ -153,6 +204,14 @@ public class HeatNetwork {
 
     public HeatUtil.HeatData getHeatDataLastTickRemain() {
         return heatDataLastTickRemain;
+    }
+    public HeatTransferProcesser getTransferProcesser(BlockPos pos) {
+        return transferProcesserMap.get(pos);
+    }
+
+    public void addTransferProcesser(BlockPos pos,HeatTransferProcesser transferProcesser) {
+        transferProcesserMap.putIfAbsent(pos,transferProcesser);
+        needToSave = true;
     }
 
     public HeatStorage.Snapshot getDisplayHeatStorage() {
@@ -170,16 +229,31 @@ public class HeatNetwork {
         this.unloadedBlocks.clear();
         this.unloadedBlocks.addAll(unloadedBlocks);
     }
+    private void setTransferProcesserMap(Map<BlockPos, HeatTransferProcesser> transferProcesserMap) {
+        this.transferProcesserMap.clear();
+        this.transferProcesserMap.putAll(transferProcesserMap);
+    }
+
+    private Optional<BaseThermalBlockBehaviour> getThermalBlockBehaviour(ServerLevel level, BlockPos pos) {
+        return Optional.ofNullable(BlockEntityBehaviour.get(level, pos, BaseThermalBlockBehaviour.TYPE));
+    }
+
     public static HeatNetwork fromNbt(Tag tag){
         CompoundTag nbt = (CompoundTag) tag;
+        System.out.println("loadingHeatNetworkNbt:"+nbt);
         UUID networkID = nbt.getUUID("id");
         Set<BlockPos> connectedBlocks = new HashSet<>(NbtUtil.readBlockPosFromNbtList(nbt.getList("connected_blocks", Tag.TAG_COMPOUND)));
         Set<BlockPos> unloadedBlocks = new HashSet<>(NbtUtil.readBlockPosFromNbtList(nbt.getList("unloaded_blocks", Tag.TAG_COMPOUND)));
-
+        Map<BlockPos, HeatTransferProcesser> transferProcesserMap = new HashMap<>(NbtUtil.readMapFromNbtList(
+                nbt.getList("transfer_processers", Tag.TAG_COMPOUND),
+                NbtUtil::blockPosFromNbt,
+                CHHeatTransferProcessers::fromNbt
+        ));
 
         HeatNetwork heatNetwork = new HeatNetwork(networkID,connectedBlocks);
         heatNetwork.setUnloadedBlocks(unloadedBlocks);
         heatNetwork.heatStorage.fromNbt(nbt.getCompound("heat_storage"));
+        heatNetwork.setTransferProcesserMap(transferProcesserMap);
         return heatNetwork;
     }
 
@@ -189,6 +263,12 @@ public class HeatNetwork {
         nbt.put("connected_blocks",NbtUtil.writeBlockPosToNbtList(connectedBlocks));
         nbt.put("unloaded_blocks",NbtUtil.writeBlockPosToNbtList(unloadedBlocks));
         nbt.put("heat_storage",heatStorage.toNbt());
+        nbt.put("transfer_processers",NbtUtil.writeMapToNbtList(
+                transferProcesserMap,
+                NbtUtil::blockPosToNbt,
+                CHHeatTransferProcessers::toNbt
+        ));
+        System.out.println("savingHeatNetworkNbt:"+nbt);
         return nbt;
     }
 

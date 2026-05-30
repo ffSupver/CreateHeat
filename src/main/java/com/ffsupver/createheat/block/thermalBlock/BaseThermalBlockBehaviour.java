@@ -3,9 +3,12 @@ package com.ffsupver.createheat.block.thermalBlock;
 import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.Config;
 import com.ffsupver.createheat.block.HeatProvider;
+import com.ffsupver.createheat.block.HeatTransferProcesser;
 import com.ffsupver.createheat.network.HeatNetwork;
 import com.ffsupver.createheat.network.HeatService;
 import com.ffsupver.createheat.registries.CHHeatProviders;
+import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
+import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.HeatUtil;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
@@ -18,10 +21,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static com.ffsupver.createheat.api.BoilerUpdater.getBoilerControllerBE;
@@ -48,24 +48,45 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     @Override
     public void tick() {
         super.tick();
+        // try to create network or find neighbor network
         if (heatNetworkId == null){
             if (!thermalBlockEntity.getNeighborNetworkId().isEmpty()){
                 this.heatNetworkId = HeatService.addBlockToNetwork(getPos(),getWorld(),thermalBlockEntity.getNeighborNetworkId());
             }
         }
 
+        // try to get network
         if (heatNetwork == null) {
             heatNetwork = HeatService.getNetwork(getWorld(), heatNetworkId);
         }
 
+        // tick with network
         if (heatNetwork != null){
             HeatUtil.HeatData networkRemainHeat = heatNetwork.getHeatDataLastTickRemain();
+
+            // find transfer processer
+            Set<HeatTransferProcesser> neighborTransferProcesser = new HashSet<>();
+            BlockUtil.AllDirectionOf(getPos(),(checkPos,face)->{
+                if (heatNetwork.getTransferProcesser(checkPos) == null){
+                    Optional<HeatTransferProcesser> transferProcesserOp = CHHeatTransferProcessers.findProcesser(getWorld(),checkPos,face,networkRemainHeat.heat(),1,networkRemainHeat.superHeatCount());
+                    transferProcesserOp.ifPresent(
+                            heatTransferProcesser -> {
+                                heatNetwork.addTransferProcesser(checkPos, heatTransferProcesser);
+                                neighborTransferProcesser.add(heatNetwork.getTransferProcesser(checkPos));
+                            }
+                    );
+                }else {
+                    neighborTransferProcesser.add(heatNetwork.getTransferProcesser(checkPos));
+                }
+            });
+
             HeatUtil.HeatData heatGenData = genHeat();
-            checkHeatLevel(networkRemainHeat);
-            HeatUtil.HeatData heatCostData = new HeatUtil.HeatData(getHeatPerTick(getHeatLevel()),getHeatLevel().isAtLeast(SEETHING)? 1:0);
+            checkHeatLevel(networkRemainHeat,neighborTransferProcesser);
+            HeatUtil.HeatData heatCostData = getCurrentHeatCostData();
 
             heatNetwork.onBlockTick(getPos(),heatGenData,heatCostData);
 
+            // send display data
             if (!getWorld().isClientSide()){
                 HeatStorage.Snapshot newDisplayHeatStorage = heatNetwork.getDisplayHeatStorage();
                 HeatUtil.HeatIOData newDisplayHeatRemain = heatNetwork.getDisplayHeatData();
@@ -79,6 +100,12 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
                 }
             }
         }
+    }
+
+    /** calculate heat cost by BlockState
+     */
+    public HeatUtil.HeatData getCurrentHeatCostData() {
+       return new HeatUtil.HeatData(getHeatPerTick(getHeatLevel()),getHeatLevel().isAtLeast(SEETHING)? 1:0);
     }
 
     private HeatUtil.HeatData genHeat(){
@@ -97,31 +124,35 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         }
     }
 
-    private void checkHeatLevel(HeatUtil.HeatData networkRemainHeat){
+    private void checkHeatLevel(HeatUtil.HeatData networkRemainHeat,Set<HeatTransferProcesser> neighborTransferProcesser){
         HeatLevel heatLevel = getHeatLevel();
         boolean haeEnoughHeat = getHeatPerTick(heatLevel) <= networkRemainHeat.heat() && (!heatLevel.isAtLeast(SEETHING) || networkRemainHeat.superHeatCount() >= 1);
+        boolean hasHTPNeighbor = !neighborTransferProcesser.isEmpty();
+        HeatLevel newHeatLevel = heatLevel;
         if (haeEnoughHeat) {
-            if (needToHeat()) {
+            if (needToHeat(hasHTPNeighbor)) {
                 boolean canSuperHeat = networkRemainHeat.heat() >= getHeatPerTick(SEETHING) && networkRemainHeat.superHeatCount() >= 1;
-                HeatLevel newHeatLevel = heatLevel;
-                if (canSuperHeat && needToHeatUp(SEETHING)){
+
+                if (canSuperHeat && needToHeatUp(SEETHING,hasHTPNeighbor)){
                     newHeatLevel = SEETHING;
-                }else if (networkRemainHeat.heat() >= getHeatPerTick(KINDLED) && needToHeatUp(KINDLED)){
+                }else if (networkRemainHeat.heat() >= getHeatPerTick(KINDLED) && needToHeatUp(KINDLED,hasHTPNeighbor)){
                     newHeatLevel = KINDLED;
                 }
 
-                if (!heatLevel.equals(newHeatLevel)){
-                    setBlockHeat(newHeatLevel);
-                }
+
             }else{
-                setBlockHeat(NONE);
+                newHeatLevel = NONE;
             }
         }else {
             if (heatLevel.isAtLeast(SEETHING) && networkRemainHeat.heat() >= getHeatPerTick(KINDLED)){
-                setBlockHeat(KINDLED);
+                newHeatLevel = KINDLED;
             }else {
-                setBlockHeat(NONE);
+                newHeatLevel = NONE;
             }
+        }
+
+        if (!heatLevel.equals(newHeatLevel)){
+            setBlockHeat(newHeatLevel);
         }
     }
 
@@ -129,32 +160,20 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
      * if this ThermalBlock need a higher HeatLevel
      * @param heatLevel the highest HeatLevel this ThermalBlock can reach
      */
-    private boolean needToHeatUp(HeatLevel heatLevel){
-        return needToHeat() && (getHeatLevel().equals(NONE) ||
+    private boolean needToHeatUp(HeatLevel heatLevel,boolean hasHTPNeighbor){
+        return needToHeat(hasHTPNeighbor) && (getHeatLevel().equals(NONE) ||
                 heatLevel.equals(SEETHING) && !getHeatLevel().equals(SEETHING));
     }
 
     /**
      * if this ThermalBlock need to turn into heating state
      */
-    private boolean needToHeat(){
+    private boolean needToHeat(boolean hasHTPNeighbor){
         if (!onCanHeatTest()){
             return false;
         }
 
-        AtomicBoolean findProcesser = new AtomicBoolean(false);
-//        Map<BlockPos, HeatTransferProcesser> tPM = getControllerEntity().transferProcesserMap;
-//        AllDirectionOf(getPos(),(blockPos,f)->{
-//            if (!findProcesser.get()){
-//                boolean find = false;
-//                if (tPM.containsKey(blockPos)){
-//                    HeatTransferProcesser htp = tPM.get(blockPos);
-//                    find = htp.shouldHeatAt(f);
-//                }
-//                findProcesser.set(find);
-//            }
-//        });
-        return needToHeatAbove() || findProcesser.get() || onShouldHeatUp();
+        return needToHeatAbove() || hasHTPNeighbor || onShouldHeatUp();
     }
 
     /**
@@ -174,6 +193,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
 
     public void setBlockHeat(HeatLevel heatLevel){
         getWorld().setBlock(getPos(),getBlockState().setValue(HEAT_LEVEL, heatLevel), 3);
+        System.out.println("setBlockHeat:"+heatLevel+" pos:"+getPos());
 //        if (onSetHeatLevel != null){
 //            onSetHeatLevel.accept(heatLevel);
 //        }

@@ -1,6 +1,8 @@
 package com.ffsupver.createheat.block;
 
-import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour;
+import com.ffsupver.createheat.block.thermalBlock.BaseThermalBlockBehaviour;
+import com.ffsupver.createheat.network.HeatNetwork;
+import com.ffsupver.createheat.network.HeatService;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -9,9 +11,11 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.ffsupver.createheat.util.BlockUtil.AllDirectionOf;
+
 /** 同一位置多个控制器不同的热处理器自动合并成一个来处理
  * */
 
@@ -36,19 +40,26 @@ public abstract class MainHeatTransferProcesser extends HeatTransferProcesser{
         return getTypeId().equals(testHTP.getTypeId());
     }
     protected Optional<MainHeatTransferProcesser> findMainProcesser(Level level,BlockPos pos,Direction face){
-        ConnectableBlockEntity<?> thBlockAttach = getAttachThermalBlock(level,pos,face);
+        BlockPos thBlockPos = pos.relative(face.getOpposite());
+        BaseThermalBlockBehaviour attachTE = BlockEntityBehaviour.get(level,thBlockPos,BaseThermalBlockBehaviour.TYPE);
+        UUID attachNetworkId;
+        if (attachTE != null && attachTE.getHeatNetworkId() != null) {
+            attachNetworkId = attachTE.getHeatNetworkId();
+        } else {
+            attachNetworkId = null;
+        }
 
         AtomicReference<Optional<MainHeatTransferProcesser>> oHRP = new AtomicReference<>(Optional.empty());
         AllDirectionOf(pos,
                 (checkControllerPos,f)-> {
-                    if (!f.equals(face.getOpposite()) && level.getBlockEntity(checkControllerPos) instanceof ConnectableBlockEntity<?> connectableBlockEntity) {
-                        ThermalBlockEntityBehaviour otherTE = BlockEntityBehaviour.get(connectableBlockEntity,ThermalBlockEntityBehaviour.TYPE);
-                        if (otherTE != null && !connectableBlockEntity.getControllerPos().equals(thBlockAttach.getControllerPos())) {
-                            Optional<HeatTransferProcesser> otherHTP = otherTE.getHeatTransferProcesserByOther(pos);
-                            if (otherHTP.isPresent() && otherHTP.get() instanceof MainHeatTransferProcesser hRTP
-                                    && hRTP.isSameMHTP(this) && hRTP.isMainProcesser
-                            ){
-                                oHRP.set(Optional.of(hRTP));
+                    if (!f.equals(face.getOpposite()) && BlockEntityBehaviour.get(level,checkControllerPos, BaseThermalBlockBehaviour.TYPE) instanceof BaseThermalBlockBehaviour baseThermalBlockBehaviour) {
+                        if (baseThermalBlockBehaviour.getHeatNetworkId() != null && !baseThermalBlockBehaviour.getHeatNetworkId().equals(attachNetworkId)){
+                            HeatNetwork heatNetwork = HeatService.getNetwork(level,baseThermalBlockBehaviour.getHeatNetworkId());
+                            if (heatNetwork != null){
+                                HeatTransferProcesser otherHTP = heatNetwork.getTransferProcesser(pos);
+                                if (otherHTP instanceof MainHeatTransferProcesser hRTP && hRTP.isSameMHTP(this) && hRTP.isMainProcesser){
+                                    oHRP.set(Optional.of(hRTP));
+                                }
                             }
                         }
                     }
@@ -80,6 +91,7 @@ public abstract class MainHeatTransferProcesser extends HeatTransferProcesser{
 
     @Override
     public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide, int tickSkip,int superHeatCount) {
+        System.out.println("acceptHeat main:"+isMainProcesser+" heatProvide:"+heatProvide+" pos:"+hTPPos);
             if (isMainProcesser){
                 acceptHeatAsMain(level,hTPPos,heatProvide,tickSkip,acceptedHeat);
                 acceptedHeat = 0;
@@ -115,15 +127,5 @@ public abstract class MainHeatTransferProcesser extends HeatTransferProcesser{
         mHTP.mainProcesser = null;
         mHTP.isMainProcesser = true;
         this.mainProcesser = mHTP;
-    }
-
-
-    private static ConnectableBlockEntity<?> getAttachThermalBlock(Level level, BlockPos transferProcesserPos, Direction face){
-        BlockPos thBlockPos = transferProcesserPos.relative(face.getOpposite());
-        if (level.getBlockEntity(thBlockPos) instanceof ConnectableBlockEntity<?> connectableBlockEntity &&
-                BlockEntityBehaviour.get(connectableBlockEntity, ThermalBlockEntityBehaviour.TYPE) != null){
-            return connectableBlockEntity;
-        }
-        return null;
     }
 }

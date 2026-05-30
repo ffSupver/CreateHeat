@@ -96,5 +96,13 @@ public class HeatStorage{
         public static Snapshot fromNbt(CompoundTag nbt){
             return new Snapshot(nbt.getInt("capacity"),nbt.getInt("amount"));
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Snapshot snapshot = (Snapshot) o;
+            return amount == snapshot.amount && capacity == snapshot.capacity;
+        }
     }
 }
