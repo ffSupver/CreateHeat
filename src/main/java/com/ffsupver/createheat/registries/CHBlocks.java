@@ -26,18 +26,18 @@ public class CHBlocks {
         REGISTRATE.setCreativeTab(CHCreativeTab.MAIN_TAB);
     }
 
-    public static final BlockEntry<BaseThermalBlock1> THERMAL_BLOCK1 = REGISTRATE
-            .block("thermal_block1", BaseThermalBlock1::new)
-            .properties(p-> BlockBehaviour.Properties.ofFullCopy(Blocks.COPPER_BLOCK))
-            .onRegister(CreateRegistrate.connectedTextures(()->new ThermalBlockCTBehaviour(0)))
-            .onRegister(CreateRegistrate.casingConnectivity((b, cc) -> cc.makeCasing(b, CHSpriteShifts.THERMAL_BLOCK_NONE)))
-            .item(BlockItem::new)
-            .build()
-            .register();
-    public static final BlockEntityEntry<BaseThermalBlockEntity1> THERMAL_BLOCK_ENTITY1 = REGISTRATE
-            .blockEntity("thermal_block1",BaseThermalBlockEntity1::new)
-            .validBlock(THERMAL_BLOCK1)
-            .register();
+//    public static final BlockEntry<BaseThermalBlock1> THERMAL_BLOCK1 = REGISTRATE
+//            .block("thermal_block1", )
+//            .properties(p-> BlockBehaviour.Properties.ofFullCopy(Blocks.COPPER_BLOCK))
+//            .onRegister(CreateRegistrate.connectedTextures(()->new ThermalBlockCTBehaviour(0)))
+//            .onRegister(CreateRegistrate.casingConnectivity((b, cc) -> cc.makeCasing(b, CHSpriteShifts.THERMAL_BLOCK_NONE)))
+//            .item(BlockItem::new)
+//            .build()
+//            .register();
+//    public static final BlockEntityEntry<BaseThermalBlockEntity1> THERMAL_BLOCK_ENTITY1 = REGISTRATE
+//            .blockEntity("thermal_block1",BaseThermalBlockEntity1::new)
+//            .validBlock(THERMAL_BLOCK1)
+//            .register();
 
     public static final BlockEntry<ThermalBlock> THERMAL_BLOCK = REGISTRATE
             .block("thermal_block", ThermalBlock::new)
@@ -73,8 +73,8 @@ public class CHBlocks {
             .item()
             .build()
             .register();
-    public static final BlockEntityEntry<BaseThermalBlockEntity> THERMAL_BLOCK_ENTITY = REGISTRATE
-            .blockEntity("thermal_block",BaseThermalBlockEntity::new)
+    public static final BlockEntityEntry<BaseThermalBlockEntity1> THERMAL_BLOCK_ENTITY = REGISTRATE
+            .blockEntity("thermal_block",BaseThermalBlockEntity1::new)
             .validBlock(THERMAL_BLOCK)
             .register();
     public static final BlockEntityEntry<TightCompressStoneEntity> TIGHT_COMPRESSED_STONE_ENTITY = REGISTRATE
@@ -96,7 +96,7 @@ public class CHBlocks {
 
     public static void registerBoilHeater(){
         BoilerHeater.REGISTRY.registerProvider(SimpleRegistry.Provider.forBlockTag(CHTags.BlockTag.THERMAL_BLOCKS,BoilerHeater.BLAZE_BURNER));
-        BoilerHeater.REGISTRY.register(THERMAL_BLOCK1.get(),BoilerHeater.BLAZE_BURNER);
+//        BoilerHeater.REGISTRY.register(THERMAL_BLOCK1.get(),BoilerHeater.BLAZE_BURNER);
     }
 
     public static void registerCapacity(RegisterCapabilitiesEvent capabilitiesEvent){

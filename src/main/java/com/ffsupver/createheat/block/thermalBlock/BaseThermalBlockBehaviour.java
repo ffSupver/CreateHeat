@@ -264,6 +264,10 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     }
 
 
+    public boolean isBurning() {
+       return getHeatLevel().isAtLeast(KINDLED);
+    }
+
     @Override
     public void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);

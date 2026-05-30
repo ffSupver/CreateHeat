@@ -6,6 +6,8 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -63,7 +65,26 @@ public class BaseThermalBlockEntity1 extends SmartBlockEntity implements IHaveGo
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
-        behaviours.add(new BaseThermalBlockBehaviour(this));
+        BaseThermalBlockBehaviour baseThermalBlockBehaviour = new BaseThermalBlockBehaviour(this);
+        setUpBaseThermalBlockBehaviour(baseThermalBlockBehaviour);
+        behaviours.add(baseThermalBlockBehaviour);
+    }
+
+    protected void setUpBaseThermalBlockBehaviour(BaseThermalBlockBehaviour baseThermalBlockBehaviour){}
+
+    public void stepOn(Entity entity){
+        if (isBurning() && !entity.isSteppingCarefully() && entity instanceof LivingEntity){
+            entity.hurt(getLevel().damageSources().hotFloor(),1);
+        }
+    }
+
+
+    /**
+     * @return true if the block is marked as isBurning
+     */
+    public boolean isBurning(){
+        BaseThermalBlockBehaviour baseThermalBlockBehaviour = getBaseThermalBlockBehaviour();
+        return baseThermalBlockBehaviour != null && baseThermalBlockBehaviour.isBurning();
     }
 
     public BaseThermalBlockBehaviour getBaseThermalBlockBehaviour() {

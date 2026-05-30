@@ -144,7 +144,7 @@ public class HeatNetwork {
         heatTransferProcesserToRemovePosSet.stream().map(pos -> Map.entry(pos,transferProcesserMap.get(pos))).toList().forEach(transferProcesserMap.entrySet()::remove);
         shouldSave = shouldSave || !heatTransferProcesserToRemovePosSet.isEmpty();
 
-        System.out.println("ticking "+level.dimension()+"   heat:"+heatStorage+"   lastHeat:"+ heatGenDataLastTick +"   hTPs:"+transferProcesserMap+"   blocks:"+connectedBlocks.size()+" / "+connectedBlocks);
+        System.out.println("ticking "+level.dimension()+"   heat:"+heatStorage+"   lastHeat:"+ heatDataLastTickRemain +"   hTPs:"+transferProcesserMap+"   blocks:"+connectedBlocks.size()+" / "+connectedBlocks);
 
         if (needToSave){
             shouldSave = true;

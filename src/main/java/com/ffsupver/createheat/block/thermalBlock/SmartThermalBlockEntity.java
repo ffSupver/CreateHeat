@@ -17,7 +17,7 @@ import java.util.List;
 
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.*;
 
-public class SmartThermalBlockEntity extends BaseThermalBlockEntity implements IHaveGoggleInformation {
+public class SmartThermalBlockEntity extends BaseThermalBlockEntity1 implements IHaveGoggleInformation {
     private ScrollOptionBehaviour<MaxHeatSelections> maxHeatLevelSelections;
     public SmartThermalBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -35,10 +35,10 @@ public class SmartThermalBlockEntity extends BaseThermalBlockEntity implements I
     }
 
     @Override
-    protected void setUpThermalBlockEntityBehaviour(ThermalBlockEntityBehaviour thermalBlockEntityBehaviour) {
-        thermalBlockEntityBehaviour.setCanHeat(tBEB->canHeat(KINDLED));
-        thermalBlockEntityBehaviour.setCanSuperHeat(tBEB->canHeat(SEETHING));
-        thermalBlockEntityBehaviour.setCanGenerateHeatIgnoreHTP(tBEB->canGenerateHeatIgnoreHTP());
+    protected void setUpBaseThermalBlockBehaviour(BaseThermalBlockBehaviour baseThermalBlockBehaviour) {
+        baseThermalBlockBehaviour.setCanHeat(tBEB->canHeat(KINDLED));
+        baseThermalBlockBehaviour.setCanSuperHeat(tBEB->canHeat(SEETHING));
+        baseThermalBlockBehaviour.setCanGenerateHeatIgnoreHTP(tBEB->canGenerateHeatIgnoreHTP());
     }
 
     private boolean canHeat(BlazeBurnerBlock.HeatLevel heatLevel){

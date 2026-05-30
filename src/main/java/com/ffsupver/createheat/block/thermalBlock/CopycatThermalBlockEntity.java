@@ -31,7 +31,7 @@ import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.Hea
 import static net.minecraft.world.level.block.Blocks.*;
 import static net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT;
 
-public class CopycatThermalBlockEntity extends BaseThermalBlockEntity {
+public class CopycatThermalBlockEntity extends BaseThermalBlockEntity1 {
     private BlockState cashedState;
     private BlockState cashedMaterial;
     private BlockState material;
@@ -125,7 +125,7 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity {
                     outputInventory.insertItem(0,resultItem,false);
                 }
             }else {
-                BlazeBurnerBlock.HeatLevel heatLevel = getThBehaviour().getHeatLevel();
+                BlazeBurnerBlock.HeatLevel heatLevel = getBaseThermalBlockBehaviour().getHeatLevel();
                 if (heatLevel.equals(KINDLED)){
                     processTime++;
                 }else if (heatLevel.equals(SEETHING)){
@@ -273,9 +273,9 @@ public class CopycatThermalBlockEntity extends BaseThermalBlockEntity {
     }
 
     @Override
-    protected void setUpThermalBlockEntityBehaviour(ThermalBlockEntityBehaviour thermalBlockEntityBehaviour) {
-        thermalBlockEntityBehaviour.setShouldHeatUp(b->needProcess());
-        thermalBlockEntityBehaviour.setOnSetHeatLevel(heatLevel -> {
+    protected void setUpBaseThermalBlockBehaviour(BaseThermalBlockBehaviour baseThermalBlockBehaviour) {
+        baseThermalBlockBehaviour.setShouldHeatUp(b->needProcess());
+        baseThermalBlockBehaviour.setOnSetHeatLevel(heatLevel -> {
             if (isFurnace()){
                 boolean lit = !heatLevel.equals(NONE);
                 forceSetMaterial(this.material.setValue(LIT,lit));
