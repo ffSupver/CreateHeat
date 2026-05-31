@@ -47,6 +47,7 @@ public final class HeatUtil {
     }
 
     public record HeatIOData(HeatData in,HeatData out) {
+        public static HeatIOData NO_HEAT_IO = new HeatIOData(NO_HEAT_PROVIDE,NO_HEAT_PROVIDE);
         public CompoundTag toNbt(){
             CompoundTag nbt = new CompoundTag();
             nbt.put("in",in.toNbt());

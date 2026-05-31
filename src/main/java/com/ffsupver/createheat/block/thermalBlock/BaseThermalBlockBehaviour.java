@@ -36,6 +36,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     private UUID heatNetworkId;
     private HeatNetwork heatNetwork;
     private final BaseThermalBlockEntity1 thermalBlockEntity;
+    private int litUpCooldown;
 
     // api
     private Predicate<BaseThermalBlockBehaviour> canSuperHeat;
@@ -88,6 +89,10 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
                     neighborTransferProcesser.add(heatNetwork.getTransferProcesser(checkPos));
                 }
             });
+
+            if (litUpCooldown > 0){
+                litUpCooldown--;
+            }
 
             HeatUtil.HeatData heatGenData = genHeat();
             checkHeatLevel(networkRemainHeat,neighborTransferProcesser);
@@ -144,11 +149,12 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
 
                 if (canSuperHeat && needToHeatUp(SEETHING,hasHTPNeighbor)){
                     newHeatLevel = SEETHING;
-                }else if (networkRemainHeat.heat() >= getHeatPerTick(KINDLED) && needToHeatUp(KINDLED,hasHTPNeighbor)){
+                }else if (
+                        networkRemainHeat.heat() >= getHeatPerTick(KINDLED) && // has enough heat for KINDLED
+                                (needToHeatUp(KINDLED,hasHTPNeighbor) || heatLevel.isAtLeast(SEETHING) && !canSuperHeat) // NONE->KINDLED or SEETHING->KINDLED
+                ){
                     newHeatLevel = KINDLED;
                 }
-
-
             }else{
                 newHeatLevel = NONE;
             }
@@ -166,7 +172,8 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     }
 
     /**
-     * if this ThermalBlock need a higher HeatLevel
+     * if this ThermalBlock need a higher HeatLevel.
+     * e.g BlockState is KINDLED it returns true if input heatLevel is SEETHING, and it returns false if input heatLevel is KINDLED or lower.
      * @param heatLevel the highest HeatLevel this ThermalBlock can reach
      */
     private boolean needToHeatUp(HeatLevel heatLevel,boolean hasHTPNeighbor){
@@ -196,9 +203,20 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     }
 
     public void setBlockHeat(HeatLevel heatLevel){
-        getWorld().setBlock(getPos(),getBlockState().setValue(HEAT_LEVEL, heatLevel), 3);
-        System.out.println("setBlockHeat:"+heatLevel+" pos:"+getPos());
-        if (onSetHeatLevel != null){
+        boolean canLitUp = litUpCooldown <= 0;
+        boolean setSuccess = false;
+        if (heatLevel.isAtLeast(KINDLED)){
+            if (canLitUp){
+                getWorld().setBlock(getPos(), getBlockState().setValue(HEAT_LEVEL, heatLevel), 3);
+                litUpCooldown = 5;
+                setSuccess = true;
+            }
+        }else {
+            getWorld().setBlock(getPos(), getBlockState().setValue(HEAT_LEVEL, heatLevel), 3);
+            setSuccess = true;
+        }
+        System.out.println("setBlockHeat:"+heatLevel+" pos:"+getPos()+" success:"+setSuccess);
+        if (setSuccess && onSetHeatLevel != null){
             onSetHeatLevel.accept(heatLevel);
         }
         notifyUpdate();
