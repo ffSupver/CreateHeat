@@ -1,6 +1,7 @@
 package com.ffsupver.createheat.network;
 
 import com.ffsupver.createheat.Config;
+import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
 import com.ffsupver.createheat.block.thermalBlock.BaseThermalBlockBehaviour;
 import com.ffsupver.createheat.block.thermalBlock.HeatStorage;
@@ -270,6 +271,15 @@ public class HeatNetwork {
         ));
         System.out.println("savingHeatNetworkNbt:"+nbt);
         return nbt;
+    }
+
+    /** print all info to console for debug
+     */
+    public void printInfo(){
+        CreateHeat.LOGGER.info(
+                "[HeatNetwork Info]:\n==============\nid={}  blockCount={}\nheatStorage={}   heatData={}\ntransferProcessers:{}\nblocks:{}\n==============",
+                networkID,connectedBlocks.size(), heatStorage,displayHeatData,transferProcesserMap,connectedBlocks
+        );
     }
 
     @Override

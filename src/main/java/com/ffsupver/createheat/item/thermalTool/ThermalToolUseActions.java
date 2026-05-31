@@ -1,11 +1,14 @@
 package com.ffsupver.createheat.item.thermalTool;
 
 import com.ffsupver.createheat.block.ConnectableBlockEntity;
-import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour;
+import com.ffsupver.createheat.block.thermalBlock.BaseThermalBlockBehaviour;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
+import com.ffsupver.createheat.network.HeatNetwork;
+import com.ffsupver.createheat.network.HeatService;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -29,6 +32,16 @@ public class ThermalToolUseActions {
     private static Map<LevelBlockPosTester, LevelBlockPosConsumer> ACTIONS = new HashMap<>();
 
     public static void bootSetup(){
+        registerAction((
+                        level, pos, state, player,isShift) -> BlockEntityBehaviour.get(level,pos, BaseThermalBlockBehaviour.TYPE) != null,
+                (level, pos, state, player,isShift) -> {
+                    BaseThermalBlockBehaviour baseThermalBlockBehaviour = BlockEntityBehaviour.get(level,pos, BaseThermalBlockBehaviour.TYPE);
+                    if (baseThermalBlockBehaviour != null){
+                        return useOnThermalBlock(isShift,level,pos,baseThermalBlockBehaviour,player);
+                    }
+                    return false;
+                }
+        );
         registerAction((
                 level, pos, state, player,isShift) -> level.getBlockEntity(pos) instanceof ConnectableBlockEntity<?>,
                 (level, pos, state, player,isShift) -> {
@@ -111,16 +124,17 @@ public class ThermalToolUseActions {
 
     private static boolean useOnConnectableBlock(boolean shiftDown, Level level, BlockPos pos, ConnectableBlockEntity<?> connectableBlockEntity, Player player){
         BlockPos controllerPos = connectableBlockEntity.getControllerPos();
-        ThermalBlockEntityBehaviour controllerEntity = connectableBlockEntity.getBehaviour(ThermalBlockEntityBehaviour.TYPE);
+//        ThermalBlockEntityBehaviour controllerEntity = connectableBlockEntity.getBehaviour(ThermalBlockEntityBehaviour.TYPE);
         if (player != null && !level.isClientSide()) {
             if (shiftDown){
-                if (controllerEntity != null){
-                    player.displayClientMessage(Component.literal(
-                                    "Thermal Block:  Connect count :" + controllerEntity.getBlockSize() + " heat:" + controllerEntity.getHeat() +
-                                            " Controller x:" + controllerPos.getX() + " y:" + controllerPos.getY() + " z:" + controllerPos.getZ() + " heatStorage:" + controllerEntity.getHeatStorage()
-                            ).withStyle(ChatFormatting.RED), true
-                    );
-                }else if (connectableBlockEntity.getControllerEntity() instanceof TightCompressStoneEntity tightCompressStoneEntity){
+//                if (controllerEntity != null){
+//                    player.displayClientMessage(Component.literal(
+//                                    "Thermal Block:  Connect count :" + controllerEntity.getBlockSize() + " heat:" + controllerEntity.getHeat() +
+//                                            " Controller x:" + controllerPos.getX() + " y:" + controllerPos.getY() + " z:" + controllerPos.getZ() + " heatStorage:" + controllerEntity.getHeatStorage()
+//                            ).withStyle(ChatFormatting.RED), true
+//                    );
+//                }else
+                    if (connectableBlockEntity.getControllerEntity() instanceof TightCompressStoneEntity tightCompressStoneEntity){
                     player.displayClientMessage(Component.literal(
                                     "Tight Compress Stone:  Connect count :"+tightCompressStoneEntity.getConnectedBlocks().size()+" x:" + tightCompressStoneEntity.getBlockPos().getX() + " y:" + tightCompressStoneEntity.getBlockPos().getY() + " z:" + tightCompressStoneEntity.getBlockPos().getZ() +
                                             " heatStorage:" + tightCompressStoneEntity.getStoneHeatStorage()
@@ -128,7 +142,28 @@ public class ThermalToolUseActions {
                     );
                 }
             }else {
-                if (controllerEntity != null && level instanceof ServerLevel serverLevel) {
+//                if (controllerEntity != null && level instanceof ServerLevel serverLevel) {
+//                    ThermalToolPointServer.tiggerPoint(serverLevel,pos,ThermalToolPointLogic.HEAT_SOURCE);
+//                }
+            }
+        }
+        return true;
+    }
+    private static boolean useOnThermalBlock(boolean isShift, Level level, BlockPos pos, BaseThermalBlockBehaviour baseThermalBlockBehaviour, Player player) {
+        if (baseThermalBlockBehaviour.getHeatNetworkId() != null){
+            if (isShift){
+                if (level instanceof ServerLevel serverLevel) {
+                    HeatNetwork heatNetwork = HeatService.getNetwork(serverLevel, baseThermalBlockBehaviour.getHeatNetworkId());
+                    if (heatNetwork != null){
+                        player.displayClientMessage(Component.literal(
+                                "Heat Network:  heat:"+heatNetwork.getDisplayHeatData()+
+                                    " heatStorage:" + heatNetwork.getDisplayHeatStorage()
+                        ),true);
+                        heatNetwork.printInfo();
+                    }
+                }
+            }else {
+                if (level instanceof ServerLevel serverLevel){
                     ThermalToolPointServer.tiggerPoint(serverLevel,pos,ThermalToolPointLogic.HEAT_SOURCE);
                 }
             }

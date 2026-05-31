@@ -1,10 +1,10 @@
 package com.ffsupver.createheat.compat.anvilCraft;
 
 import com.ffsupver.createheat.CHTags;
-import com.ffsupver.createheat.block.ConnectableBlockEntity;
-import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour;
+import com.ffsupver.createheat.block.thermalBlock.BaseThermalBlockBehaviour;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.api.boiler.BoilerHeater;
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import dev.dubhe.anvilcraft.api.heat.HeatTierLine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -46,7 +46,8 @@ public class HeatProducerBoilHeater implements BoilerHeater {
     public static boolean canHeatBlock(Level level,BlockPos pos){
         BlockState state = level.getBlockState(pos);
         boolean isFluidTank = state.is(AllBlocks.FLUID_TANK.get());
-        boolean isThermalBlock = (level.getBlockEntity(pos) instanceof ConnectableBlockEntity<?> c && ThermalBlockEntityBehaviour.getFromCBE(c) != null);
+        boolean isThermalBlock = BlockEntityBehaviour.get(level, pos, BaseThermalBlockBehaviour.TYPE) != null;
+//        boolean isThermalBlock = (level.getBlockEntity(pos) instanceof ConnectableBlockEntity<?> c && ThermalBlockEntityBehaviour.getFromCBE(c) != null);
         return isFluidTank || isThermalBlock;
     }
 

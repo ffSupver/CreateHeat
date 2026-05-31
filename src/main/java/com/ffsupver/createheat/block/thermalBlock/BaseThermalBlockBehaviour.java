@@ -221,7 +221,10 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         return checkBehaviour != null && checkBehaviour.getHeatNetworkId() == heatNetworkId;
     }
 
-    private Optional<Object> getHeatTransferProcesserByOther(BlockPos belowPos) {
+    public Optional<HeatTransferProcesser> getHeatTransferProcesserByOther(BlockPos belowPos) {
+        if (heatNetwork != null){
+            return Optional.ofNullable(heatNetwork.getTransferProcesser(belowPos));
+        }
         return Optional.empty();
     }
 

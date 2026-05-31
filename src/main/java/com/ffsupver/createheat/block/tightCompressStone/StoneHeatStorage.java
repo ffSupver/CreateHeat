@@ -15,9 +15,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour.MAX_HEAT;
+
 import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.HEAT;
 import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.Heat.*;
+import static com.ffsupver.createheat.network.HeatNetwork.MAX_HEAT;
 
 public class StoneHeatStorage extends HeatStorage {
     private static final Supplier<Integer> HEAT_PER_LAVA = ()->MAX_HEAT.get() * 50;

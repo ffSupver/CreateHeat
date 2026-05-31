@@ -1,7 +1,6 @@
 package com.ffsupver.createheat.block.tightCompressStone;
 
 import com.ffsupver.createheat.block.ConnectableBlockEntity;
-import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour;
 import com.ffsupver.createheat.util.NbtUtil;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
@@ -14,9 +13,9 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
 
-import static com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour.MAX_COOLDOWN;
-
 public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompressStoneEntity> {
+    public static final int MAX_COOLDOWN = 10;
+
     private final StoneHeatStorage stoneHeatStorage = new StoneHeatStorage(new HashSet<>(Set.of(getBlockPos())));
     private final Map<BlockPos,Integer> superHeatTakenByTh = new HashMap<>();//存储:没有加热的->使用的超级加热数
     private final Map<BlockPos,Integer> superHeatProvideByTh = new HashMap<>();//存储:有加热的->所有超级加热数
@@ -215,14 +214,14 @@ public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompre
         connectThBlockPos.addAll(superHeatTakenByTh.keySet());
         connectThBlockPos.addAll(superHeatProvideByTh.keySet());
         connectThBlockPos.addAll(superHeatActuallyProvideByTh.keySet());
-        for (BlockPos thPos : connectThBlockPos){
-            if (getLevel().getBlockEntity(thPos) instanceof ConnectableBlockEntity<?> connectableBlockEntity){
-                ThermalBlockEntityBehaviour thermalBlockEntityBehaviour = ThermalBlockEntityBehaviour.getFromCBE(connectableBlockEntity);
-                if (thermalBlockEntityBehaviour != null){
-                    thermalBlockEntityBehaviour.sendData();
-                }
-            }
-        }
+//        for (BlockPos thPos : connectThBlockPos){
+//            if (getLevel().getBlockEntity(thPos) instanceof ConnectableBlockEntity<?> connectableBlockEntity){
+//                ThermalBlockEntityBehaviour thermalBlockEntityBehaviour = ThermalBlockEntityBehaviour.getFromCBE(connectableBlockEntity);
+//                if (thermalBlockEntityBehaviour != null){
+//                    thermalBlockEntityBehaviour.sendData();
+//                }
+//            }
+//        }
     }
 
     private static void updateCountMap(Map<BlockPos,Integer> toUpdate, BlockPos pos, int count){
@@ -264,12 +263,12 @@ public class TightCompressStoneEntity extends ConnectableBlockEntity<TightCompre
         List<BlockPos> toRemoveList = new ArrayList<>();
         for (BlockPos key : toRemove.keySet()){
             boolean shouldNotRemove = false;
-            if (level.getBlockEntity(key) instanceof ConnectableBlockEntity<?> connectableBlockEntity && connectableBlockEntity.isController()){
-                ThermalBlockEntityBehaviour tBEB = ThermalBlockEntityBehaviour.getFromCBE(connectableBlockEntity);
-                if (tBEB != null && tBEB.isConnectTo(stoneHeatStorage)){
-                    shouldNotRemove = true;
-                }
-            }
+//            if (level.getBlockEntity(key) instanceof ConnectableBlockEntity<?> connectableBlockEntity && connectableBlockEntity.isController()){
+//                ThermalBlockEntityBehaviour tBEB = ThermalBlockEntityBehaviour.getFromCBE(connectableBlockEntity);
+//                if (tBEB != null && tBEB.isConnectTo(stoneHeatStorage)){
+//                    shouldNotRemove = true;
+//                }
+//            }
             if (!shouldNotRemove){
                 toRemoveList.add(key);
             }

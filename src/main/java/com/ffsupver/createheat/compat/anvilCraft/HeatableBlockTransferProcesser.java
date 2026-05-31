@@ -2,11 +2,11 @@ package com.ffsupver.createheat.compat.anvilCraft;
 
 import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.api.anvilCraft.HeatableBlockHeatTransferProcesserData;
-import com.ffsupver.createheat.block.ConnectableBlockEntity;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
 import com.ffsupver.createheat.block.MainHeatTransferProcesser;
-import com.ffsupver.createheat.block.thermalBlock.ThermalBlockEntityBehaviour;
+import com.ffsupver.createheat.block.thermalBlock.BaseThermalBlockBehaviour;
 import com.ffsupver.createheat.util.BlockUtil;
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import dev.dubhe.anvilcraft.api.heat.HeatTierLine;
 import dev.dubhe.anvilcraft.api.heat.HeaterInfo;
 import dev.dubhe.anvilcraft.api.heat.HeaterManager;
@@ -74,13 +74,11 @@ public class HeatableBlockTransferProcesser extends MainHeatTransferProcesser {
     public static Optional<HeatableBlockTransferProcesser> getByLevelPos(Level level, BlockPos pos){
         AtomicReference<Optional<HeatableBlockTransferProcesser>> result = new AtomicReference<>(Optional.empty());
         BlockUtil.AllDirectionOf(pos,cPos->{
-            if (level.getBlockEntity(cPos) instanceof ConnectableBlockEntity<?> cbe){
-                ThermalBlockEntityBehaviour tBEB = ThermalBlockEntityBehaviour.getFromCBE(cbe);
-                if (tBEB != null){
-                    Optional<HeatTransferProcesser> hTPOp = tBEB.getHeatTransferProcesserByOther(pos);
-                    if (hTPOp.isPresent() && hTPOp.get() instanceof HeatableBlockTransferProcesser hBTP && hBTP.isMainProcesser){
-                        result.set(Optional.of(hBTP));
-                    }
+            BaseThermalBlockBehaviour baseThermalBlockBehaviour = BlockEntityBehaviour.get(level,cPos,BaseThermalBlockBehaviour.TYPE);
+            if (baseThermalBlockBehaviour != null){
+                Optional<HeatTransferProcesser> hTPOp = baseThermalBlockBehaviour.getHeatTransferProcesserByOther(pos);
+                if (hTPOp.isPresent() && hTPOp.get() instanceof HeatableBlockTransferProcesser hBTP && hBTP.isMainProcesser){
+                    result.set(Optional.of(hBTP));
                 }
             }
         },p->result.get().isPresent());
