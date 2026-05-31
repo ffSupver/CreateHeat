@@ -1,6 +1,7 @@
 package com.ffsupver.createheat.compat.jei;
 
 import com.ffsupver.createheat.CreateHeat;
+import com.ffsupver.createheat.compat.Mods;
 import com.ffsupver.createheat.compat.jei.category.HeatCategory;
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.ffsupver.createheat.registries.CHItems;
@@ -49,9 +50,11 @@ public class CreateHeatJEI implements IModPlugin {
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         registerWithThermalBlocks(b->registration.addRecipeCatalyst(b,HeatCategory.TYPE));
-       registerWithThermalBlocks(b->registration.addRecipeCatalyst(b, AnvilCraftJeiPlugin.SUPER_HEATING));
-        registration.addRecipeCatalyst(AllBlocks.BLAZE_BURNER,AnvilCraftJeiPlugin.SUPER_HEATING);
-       registration.addRecipeCatalyst(AllItems.BLAZE_CAKE,AnvilCraftJeiPlugin.SUPER_HEATING);
+        if (Mods.isModLoad(Mods.ModIds.ANVIL_CRAFT.ModId)){
+            registerWithThermalBlocks(b -> registration.addRecipeCatalyst(b, AnvilCraftJeiPlugin.SUPER_HEATING));
+            registration.addRecipeCatalyst(AllBlocks.BLAZE_BURNER, AnvilCraftJeiPlugin.SUPER_HEATING);
+            registration.addRecipeCatalyst(AllItems.BLAZE_CAKE, AnvilCraftJeiPlugin.SUPER_HEATING);
+        }
     }
 
     public static <T> mezz.jei.api.recipe.RecipeType<T> recipeType(String path, Class<T> recipeClass){
