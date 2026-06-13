@@ -4,6 +4,7 @@ import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.Config;
 import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
+import com.ffsupver.createheat.block.tightCompressStone.HeatStorageBehaviour;
 import com.ffsupver.createheat.network.HeatNetwork;
 import com.ffsupver.createheat.network.HeatService;
 import com.ffsupver.createheat.registries.CHHeatProviders;
@@ -74,9 +75,11 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         if (heatNetwork != null){
             HeatUtil.HeatData networkRemainHeat = heatNetwork.getHeatDataLastTickRemain();
 
-            // find transfer processor
+            // find transfer processor & heat storage
             Set<HeatTransferProcesser> neighborTransferProcesser = new HashSet<>();
+            Set<UUID> neighborHeatStorageNetworkIds = new HashSet<>();
             BlockUtil.AllDirectionOf(getPos(),(checkPos,face)->{
+                // find transfer processor
                 if (heatNetwork.getTransferProcesser(checkPos) == null){
                     Optional<HeatTransferProcesser> transferProcesserOp = CHHeatTransferProcessers.findProcesser(getWorld(),checkPos,face,networkRemainHeat.heat(),1,networkRemainHeat.superHeatCount());
                     transferProcesserOp.ifPresent(
@@ -88,6 +91,12 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
                 }else {
                     neighborTransferProcesser.add(heatNetwork.getTransferProcesser(checkPos));
                 }
+
+                // find heat storage
+                HeatStorageBehaviour heatStorageBehaviour = BlockEntityBehaviour.get(getWorld(),checkPos,HeatStorageBehaviour.TYPE);
+                if (heatStorageBehaviour != null){
+                    neighborHeatStorageNetworkIds.add(heatStorageBehaviour.getNetworkId());
+                }
             });
 
             if (litUpCooldown > 0){
@@ -98,7 +107,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
             checkHeatLevel(networkRemainHeat,neighborTransferProcesser);
             HeatUtil.HeatData heatCostData = getCurrentHeatCostData();
 
-            heatNetwork.onBlockTick(getPos(),heatGenData,heatCostData);
+            heatNetwork.onBlockTick(getPos(),heatGenData,heatCostData,neighborHeatStorageNetworkIds);
 
             // send display data
             if (!getWorld().isClientSide()){

@@ -27,6 +27,8 @@ public class HeatNetwork extends TickingBlockNetwork{
     // heat storage
     public static final Supplier<Integer> MAX_HEAT = () -> 50 * Config.HEAT_PER_FADING_BLAZE.get();
     private final HeatStorage heatStorage;
+    private final Set<UUID> connectedHeatStorageNetworks = new HashSet<>();
+    private final Set<UUID> lastConnectedHeatStorageNetworks = new HashSet<>();
     private HeatUtil.HeatData heatGenDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
     private HeatUtil.HeatData heatDataLastTickRemain = HeatUtil.NO_HEAT_PROVIDE;
     private HeatUtil.HeatData heatCostDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
@@ -55,6 +57,34 @@ public class HeatNetwork extends TickingBlockNetwork{
         hasBlockTicking = 0;
 
         // process heat
+        // check heat storage connection
+        Set<UUID> heatStorageNetworkNeedToCheck = new HashSet<>();
+        Set<UUID> heatStorageNetworkNeedToAdd = new HashSet<>();
+        for (UUID heatStorageNetworkId : lastConnectedHeatStorageNetworks){
+            if (!connectedHeatStorageNetworks.contains(heatStorageNetworkId)){
+                heatStorageNetworkNeedToAdd.add(heatStorageNetworkId);
+            }
+        }
+        for (UUID heatStorageNetworkId : connectedHeatStorageNetworks){
+            if (!lastConnectedHeatStorageNetworks.contains(heatStorageNetworkId)){
+                heatStorageNetworkNeedToCheck.add(heatStorageNetworkId);
+            }
+        }
+        lastConnectedHeatStorageNetworks.clear();
+        connectedHeatStorageNetworks.addAll(heatStorageNetworkNeedToAdd);
+        boolean removedHeatStorageNetwork = false;
+        if(NetworkService.isLoad(NetworkService.Services.HEAT_STORAGE)){
+            for (UUID heatStorageNetworkId : heatStorageNetworkNeedToCheck) {
+                TickingBlockNetwork heatStorageNetwork = NetworkService.getNetwork(level, heatStorageNetworkId, NetworkService.Services.HEAT_STORAGE);
+                boolean isConnected = heatStorageNetwork != null && BlockUtil.isConnect(connectedBlocks, heatStorageNetwork.connectedBlocks);
+                if (!isConnected) {
+                    connectedHeatStorageNetworks.remove(heatStorageNetworkId);
+                    removedHeatStorageNetwork = true;
+                }
+            }
+        }
+        shouldSave = shouldSave || removedHeatStorageNetwork || !heatStorageNetworkNeedToAdd.isEmpty();
+
         HeatStorage.Snapshot lastHeatStorage = heatStorage.snapshot();
 
         heatStorage.insert(heatGenDataLastTick.heat());
@@ -113,7 +143,7 @@ public class HeatNetwork extends TickingBlockNetwork{
         heatTransferProcesserToRemovePosSet.stream().map(pos -> Map.entry(pos,transferProcesserMap.get(pos))).toList().forEach(transferProcesserMap.entrySet()::remove);
         shouldSave = shouldSave || !heatTransferProcesserToRemovePosSet.isEmpty();
 
-        System.out.println("ticking "+level.dimension()+"   heat:"+heatStorage+"   lastHeat:"+ heatDataLastTickRemain +"   hTPs:"+transferProcesserMap+"   blocks:"+connectedBlocks.size()+" / "+connectedBlocks);
+        System.out.println("tickingHeatNetwork "+level.dimension()+"   heat:"+heatStorage+"   lastHeat:"+ heatDataLastTickRemain +"   hTPs:"+transferProcesserMap+"   blocks:"+connectedBlocks.size()+" / "+connectedBlocks+" storage="+connectedHeatStorageNetworks);
 
         return shouldSave;
     }
@@ -124,12 +154,14 @@ public class HeatNetwork extends TickingBlockNetwork{
     }
 
 
-    public void onBlockTick(BlockPos pos, HeatUtil.HeatData heatGenData, HeatUtil.HeatData heatCostData){
+    public void onBlockTick(BlockPos pos, HeatUtil.HeatData heatGenData, HeatUtil.HeatData heatCostData,Set<UUID> neighborHeatStorageNetworkIds){
         hasBlockTicking += 1;
 
         this.heatGenDataLastTick = this.heatGenDataLastTick.merge(heatGenData);
         this.heatCostDataLastTick = this.heatCostDataLastTick.merge(heatCostData);
         this.heatDataLastTickRemain = this.heatDataLastTickRemain.sub(heatCostData);
+
+        lastConnectedHeatStorageNetworks.addAll(neighborHeatStorageNetworkIds);
     }
 
     @Override
@@ -183,6 +215,10 @@ public class HeatNetwork extends TickingBlockNetwork{
     private void setHeatDataLastTickRemain(HeatUtil.HeatData heatDataLastTickRemain) {
         this.heatDataLastTickRemain = heatDataLastTickRemain;
     }
+    private void setConnectedHeatStorageNetworks(Collection<UUID> connectedHeatStorageNetworks){
+        this.connectedHeatStorageNetworks.clear();
+        this.connectedHeatStorageNetworks.addAll(connectedHeatStorageNetworks);
+    }
 
     private Optional<BaseThermalBlockBehaviour> getThermalBlockBehaviour(ServerLevel level, BlockPos pos) {
         return Optional.ofNullable(BlockEntityBehaviour.get(level, pos, BaseThermalBlockBehaviour.TYPE));
@@ -199,6 +235,7 @@ public class HeatNetwork extends TickingBlockNetwork{
 
         HeatNetwork heatNetwork = fromNbt(nbt, HeatNetwork::new);
         heatNetwork.heatStorage.fromNbt(nbt.getCompound("heat_storage"));
+        heatNetwork.setConnectedHeatStorageNetworks(NbtUtil.readListFromNbt(nbt.getList("connected_heat_storage",Tag.TAG_COMPOUND),uuidNbt-> ((CompoundTag)uuidNbt).getUUID("uuid")));
         heatNetwork.setTransferProcesserMap(transferProcesserMap);
         heatNetwork.setHeatDataLastTickRemain(HeatUtil.HeatData.fromNbt(nbt.getCompound("heat_data_last_tick_remain")));
         return heatNetwork;
@@ -207,6 +244,11 @@ public class HeatNetwork extends TickingBlockNetwork{
     public CompoundTag toNbt(){
         CompoundTag nbt = super.toNbt();
         nbt.put("heat_storage",heatStorage.toNbt());
+        nbt.put("connected_heat_storage",NbtUtil.writeToNbtList(connectedHeatStorageNetworks,uuid->{
+            CompoundTag uuidNbt = new CompoundTag();
+            uuidNbt.putUUID("uuid",uuid);
+            return uuidNbt;
+        }));
         nbt.put("transfer_processers",NbtUtil.writeMapToNbtList(
                 transferProcesserMap,
                 NbtUtil::blockPosToNbt,
@@ -232,6 +274,7 @@ public class HeatNetwork extends TickingBlockNetwork{
                 "networkID=" + networkID +
                 "block counts: "+connectedBlocks.size()+
                 ", connectedBlocks=" + connectedBlocks +
+                ", connectedHeatStorage=" + connectedHeatStorageNetworks +
                 '}';
     }
 }

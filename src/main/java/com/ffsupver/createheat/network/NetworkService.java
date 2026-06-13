@@ -53,6 +53,10 @@ public class NetworkService {
         return SERVICE_DATA_MAP.get(services.id);
     }
 
+    public static boolean isLoad(Services services){
+        return SERVICE_DATA_MAP.containsKey(services.id);
+    }
+
     /**
      * Get Network from level and networkID
      * @param level should be server level

@@ -1,5 +1,7 @@
 package com.ffsupver.createheat.network;
 
+import com.ffsupver.createheat.block.tightCompressStone.HeatStorageBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -18,6 +20,14 @@ public class HeatStorageNetwork extends TickingBlockNetwork{
     @Override
     public Set<? extends TickingBlockNetwork> onNetworkSplit(Set<BlockPos> disconnectedBlocks, ServerLevel level) {
         return NetworkService.onNetworkSplit(disconnectedBlocks, level, HEAT_STORAGE);
+    }
+
+    @Override
+    protected void onBlockMergeToNetwork(ServerLevel serverLevel, BlockPos pos, TickingBlockNetwork finalNetwork) {
+        HeatStorageBehaviour heatStorageBehaviour = BlockEntityBehaviour.get(serverLevel,pos,HeatStorageBehaviour.TYPE);
+        if (heatStorageBehaviour != null){
+            heatStorageBehaviour.setNetworkId(finalNetwork.getNetworkID());
+        }
     }
 
     public static HeatStorageNetwork fromNbt(Tag tag){

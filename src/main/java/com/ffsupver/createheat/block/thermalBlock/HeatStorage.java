@@ -10,6 +10,11 @@ public class HeatStorage{
         this.amount = 0;
     }
 
+    /**
+     * Insert heat
+     * @param heat heat to insert
+     * @return heat left after insert
+     */
     public int insert(int heat){
         int max = amount + heat;
         if (max > capacity){
@@ -17,10 +22,16 @@ public class HeatStorage{
             return heat - (max - capacity);
         }else {
             amount = max;
-            return heat;
+            return 0;
         }
     }
 
+    /**
+     * Extract heat
+     * @param heat heat to extract
+     * @param simulate whether to simulate the extraction
+     * @return heat left after extraction
+     */
     public int extract(int heat,boolean simulate){
         int min = amount - heat;
         if (min < 0){

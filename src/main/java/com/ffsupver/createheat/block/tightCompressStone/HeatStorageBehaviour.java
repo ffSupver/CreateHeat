@@ -1,6 +1,7 @@
 package com.ffsupver.createheat.block.tightCompressStone;
 
 import com.ffsupver.createheat.block.thermalBlock.HeatStorage;
+import com.ffsupver.createheat.util.HeatUtil;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -40,6 +41,14 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
         if (newHeat != getHeat()){
             setHeat(newHeat);
         }
+    }
+
+    public HeatUtil.HeatData insertHeat(HeatUtil.HeatData heatData){
+        return superHeatStorage.insert(heatData);
+    }
+
+    public HeatUtil.HeatData extractHeat(HeatUtil.HeatData heatData,boolean simulate){
+        return superHeatStorage.extract(heatData,simulate);
     }
 
     public TightCompressStone1.Heat getHeat(){
@@ -88,6 +97,39 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
         public SuperHeatStorage(int capacity) {
             super(capacity);
             superCapacity = capacity;
+        }
+
+        /**
+         * Insert heat
+         * @param heatData heat data to insert
+         * @return heat data left
+         */
+        public HeatUtil.HeatData insert(HeatUtil.HeatData heatData) {
+            if (getAmount() >= getCapacity()) {
+                int toInsert = Math.min(superCapacity - superAmount, heatData.heat());
+                superAmount += toInsert;
+                return heatData.sub(new HeatUtil.HeatData(toInsert, 1));
+            } else {
+                int leftHeat = super.insert(heatData.heat());
+                return new HeatUtil.HeatData(leftHeat, heatData.superHeatCount());
+            }
+        }
+
+        /**
+         * Extract heat
+         * @param heatData heat data to extract
+         * @return heat data actually extracted
+         */
+        public HeatUtil.HeatData extract(HeatUtil.HeatData heatData,boolean simulate) {
+            if (superAmount > 0){
+                int toExtract = Math.min(superAmount, heatData.heat());
+                if (!simulate){
+                    superAmount -= toExtract;
+                }
+                return new HeatUtil.HeatData(toExtract,1);
+            }else {
+                return new HeatUtil.HeatData(super.extract(heatData.heat(),simulate),0);
+            }
         }
 
         @Override
