@@ -7,7 +7,7 @@ import com.ffsupver.createheat.item.ItemAttackEvent;
 import com.ffsupver.createheat.item.thermalTool.ThermalToolPointRenderNetwork;
 import com.ffsupver.createheat.item.thermalTool.ThermalToolPointServer;
 import com.ffsupver.createheat.item.thermalTool.ThermalToolUseActions;
-import com.ffsupver.createheat.network.HeatService;
+import com.ffsupver.createheat.network.NetworkService;
 import com.ffsupver.createheat.registries.*;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -89,7 +89,7 @@ public class CreateHeat {
         LOGGER.info("Create Heat Loading");
     }
     @SubscribeEvent
-    public void onServerStopping(ServerStoppingEvent event){HeatService.onServerStop(event);}
+    public void onServerStopping(ServerStoppingEvent event){NetworkService.onServerStop(event);}
 
     public static CreateRegistrate registrate(){
         return REGISTRATE;
@@ -102,6 +102,6 @@ public class CreateHeat {
     public void onServerTicking(ServerTickEvent.Post serverTickEvent){
         BlockEntityTicker.registerEvent(serverTickEvent);
         ThermalToolPointServer.tick(serverTickEvent);
-        HeatService.onServerTickPost(serverTickEvent);
+        NetworkService.onServerTickPost(serverTickEvent);
     }
 }
