@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 public class NetworkService {
     private static final Map<String,ServiceData<?>> SERVICE_DATA_MAP = new HashMap<>();
@@ -20,12 +21,13 @@ public class NetworkService {
     public static void onServerTickPost(ServerTickEvent.Post event){
         MinecraftServer server = event.getServer();
 
+        System.out.println("Network tick:"+SERVICE_DATA_MAP);
         for (Services services : Services.values()){
             if (!SERVICE_DATA_MAP.containsKey(services.id)){
                 DimensionDataStorage dataStorage = server.overworld().getDataStorage();
-                ServiceData<?> serviceData = dataStorage.get((SavedData.Factory<ServiceData<?>>) (SavedData.Factory<?>) services.factory, services.id);
+                ServiceData<?> serviceData = dataStorage.get((SavedData.Factory<ServiceData<?>>) (SavedData.Factory<?>) services.factoryFromNbt, services.id);
                 if (serviceData == null){
-                    serviceData = new HeatService.HeatServiceData(new HashMap<>());
+                    serviceData = services.factory.get();
                     dataStorage.set(services.id, serviceData);
                 }
                 SERVICE_DATA_MAP.put(services.id, serviceData);
@@ -111,11 +113,14 @@ public class NetworkService {
 
 
     public enum Services{
-        HEAT("heat_service_data", HeatService.HeatServiceData.factory());
+        HEAT("heat_service_data", HeatService.HeatServiceData.factory(), HeatService.HeatServiceData::new),
+        HEAT_STORAGE("heat_storage_service_data", HeatStorageService.HeatStorageServiceData.factory(),HeatStorageService.HeatStorageServiceData::new),;
         public final String id;
-        private final SavedData.Factory<? extends ServiceData<? extends TickingBlockNetwork>> factory;
-        Services(String id, SavedData.Factory<? extends ServiceData<? extends TickingBlockNetwork>> factory){
+        private final SavedData.Factory<? extends ServiceData<? extends TickingBlockNetwork>> factoryFromNbt;
+        private final Supplier<? extends ServiceData<? extends TickingBlockNetwork>> factory;
+        Services(String id, SavedData.Factory<? extends ServiceData<? extends TickingBlockNetwork>> factoryFromNbt, Supplier<? extends ServiceData<? extends TickingBlockNetwork>> factory){
             this.id = id;
+            this.factoryFromNbt = factoryFromNbt;
             this.factory = factory;
         }
     }

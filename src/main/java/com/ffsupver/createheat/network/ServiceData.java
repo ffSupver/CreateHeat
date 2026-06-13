@@ -49,7 +49,7 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
         Set<UUID> networkNeedToRemove = new HashSet<>();
         System.out.println("ticking:"+serverLevel.dimension()+" level:"+serverLevel);
         for (T network : networks.values()){
-            System.out.println("network T:"+network);
+            System.out.println("network T:"+network.getClass()+"  "+network);
             if(network.tick(serverLevel)){
                 needSave = true;
             }

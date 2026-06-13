@@ -4,7 +4,9 @@ import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.block.thermalBlock.*;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStone;
+import com.ffsupver.createheat.block.tightCompressStone.TightCompressStone1;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
+import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity1;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.api.registry.SimpleRegistry;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -38,6 +40,17 @@ public class CHBlocks {
 //            .blockEntity("thermal_block1",BaseThermalBlockEntity1::new)
 //            .validBlock(THERMAL_BLOCK1)
 //            .register();
+
+    public static final BlockEntry<TightCompressStone1> TIGHT_COMPRESSED_STONE1 = REGISTRATE
+            .block("tight_compressed_stone1", TightCompressStone1::new)
+            .properties(p->BlockBehaviour.Properties.ofFullCopy(Blocks.STONE))
+            .item()
+            .build()
+            .register();
+    public static final BlockEntityEntry<TightCompressStoneEntity1> TIGHT_COMPRESSED_STONE_ENTITY1 = REGISTRATE
+            .blockEntity("tight_compressed_stone1",TightCompressStoneEntity1::new)
+            .validBlock(TIGHT_COMPRESSED_STONE1)
+            .register();
 
     public static final BlockEntry<ThermalBlock> THERMAL_BLOCK = REGISTRATE
             .block("thermal_block", ThermalBlock::new)

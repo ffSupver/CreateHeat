@@ -62,6 +62,10 @@ public class HeatService {
             super(networks,NAME);
         }
 
+        public HeatServiceData(){
+            this(new HashMap<>());
+        }
+
 
         @Override
         public HeatNetwork createNetwork(UUID networkID, Collection<BlockPos> originalPos) {
