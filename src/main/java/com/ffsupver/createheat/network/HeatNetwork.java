@@ -5,6 +5,7 @@ import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
 import com.ffsupver.createheat.block.thermalBlock.BaseThermalBlockBehaviour;
 import com.ffsupver.createheat.block.thermalBlock.HeatStorage;
+import com.ffsupver.createheat.block.tightCompressStone.HeatStorageBehaviour;
 import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
 import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.HeatUtil;
@@ -56,7 +57,6 @@ public class HeatNetwork extends TickingBlockNetwork{
         }
         hasBlockTicking = 0;
 
-        // process heat
         // check heat storage connection
         Set<UUID> heatStorageNetworkNeedToCheck = new HashSet<>();
         Set<UUID> heatStorageNetworkNeedToAdd = new HashSet<>();
@@ -70,9 +70,11 @@ public class HeatNetwork extends TickingBlockNetwork{
                 heatStorageNetworkNeedToCheck.add(heatStorageNetworkId);
             }
         }
+        System.out.println("heat storage network need to check: " + heatStorageNetworkNeedToCheck+" last"+lastConnectedHeatStorageNetworks);
         lastConnectedHeatStorageNetworks.clear();
         connectedHeatStorageNetworks.addAll(heatStorageNetworkNeedToAdd);
         boolean removedHeatStorageNetwork = false;
+        Set<HeatStorageBehaviour.SuperHeatStorage> heatStorageNetworkStorages = new HashSet<>();
         if(NetworkService.isLoad(NetworkService.Services.HEAT_STORAGE)){
             for (UUID heatStorageNetworkId : heatStorageNetworkNeedToCheck) {
                 TickingBlockNetwork heatStorageNetwork = NetworkService.getNetwork(level, heatStorageNetworkId, NetworkService.Services.HEAT_STORAGE);
@@ -80,6 +82,8 @@ public class HeatNetwork extends TickingBlockNetwork{
                 if (!isConnected) {
                     connectedHeatStorageNetworks.remove(heatStorageNetworkId);
                     removedHeatStorageNetwork = true;
+                }else if (heatStorageNetwork instanceof HeatStorageNetwork heatStorageNetwork1){
+                    heatStorageNetworkStorages.add(heatStorageNetwork1.getHeatStorage());
                 }
             }
         }
@@ -87,7 +91,7 @@ public class HeatNetwork extends TickingBlockNetwork{
 
         HeatStorage.Snapshot lastHeatStorage = heatStorage.snapshot();
 
-        heatStorage.insert(heatGenDataLastTick.heat());
+        insertHeat(level,heatGenDataLastTick);
         heatStorage.extract(heatCostDataLastTick.heat(),false);
 
         displayHeatData = new HeatUtil.HeatIOData(heatGenDataLastTick,heatCostDataLastTick);
@@ -146,6 +150,20 @@ public class HeatNetwork extends TickingBlockNetwork{
         System.out.println("tickingHeatNetwork "+level.dimension()+"   heat:"+heatStorage+"   lastHeat:"+ heatDataLastTickRemain +"   hTPs:"+transferProcesserMap+"   blocks:"+connectedBlocks.size()+" / "+connectedBlocks+" storage="+connectedHeatStorageNetworks);
 
         return shouldSave;
+    }
+
+    private void insertHeat(ServerLevel level,HeatUtil.HeatData heatGenDataLastTick){
+        int leftHeat = heatStorage.insert(heatGenDataLastTick.heat());
+        System.out.println("insert heat:"+heatGenDataLastTick+"   left:"+leftHeat);
+        if (leftHeat > 0){
+            HeatUtil.HeatData toInsert = new HeatUtil.HeatData(leftHeat,heatGenDataLastTick.superHeatCount());
+            for (UUID heatStorageNetworkId : connectedHeatStorageNetworks) {
+                if(NetworkService.getNetwork(level, heatStorageNetworkId, NetworkService.Services.HEAT_STORAGE) instanceof HeatStorageNetwork heatStorageNetwork){
+                    toInsert = heatStorageNetwork.insert(level,toInsert);
+                    System.out.println("insert heat to heatStorageNetwork:"+heatStorageNetwork+"   heat:"+toInsert);
+                }
+            }
+        }
     }
 
     private HeatUtil.HeatData calculateHeatCanProvideThisTick(HeatUtil.HeatData heatGenDataLastTick) {

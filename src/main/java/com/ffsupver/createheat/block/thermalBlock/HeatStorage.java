@@ -19,7 +19,7 @@ public class HeatStorage{
         int max = amount + heat;
         if (max > capacity){
             amount = capacity;
-            return heat - (max - capacity);
+            return max - capacity;
         }else {
             amount = max;
             return 0;

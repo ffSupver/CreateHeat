@@ -51,6 +51,14 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
         return superHeatStorage.extract(heatData,simulate);
     }
 
+    public int getCapacity() {
+        return superHeatStorage.getCapacity();
+    }
+
+    public int getAmount() {
+        return superHeatStorage.getAmount();
+    }
+
     public TightCompressStone1.Heat getHeat(){
         return getBlockState().getValue(HEAT);
     }
@@ -106,9 +114,13 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
          */
         public HeatUtil.HeatData insert(HeatUtil.HeatData heatData) {
             if (getAmount() >= getCapacity()) {
-                int toInsert = Math.min(superCapacity - superAmount, heatData.heat());
-                superAmount += toInsert;
-                return heatData.sub(new HeatUtil.HeatData(toInsert, 1));
+                if (heatData.superHeatCount() > 0){
+                    int toInsert = Math.min(superCapacity - superAmount, heatData.heat());
+                    superAmount += toInsert;
+                    return heatData.sub(new HeatUtil.HeatData(toInsert, 1));
+                }else {
+                    return heatData;
+                }
             } else {
                 int leftHeat = super.insert(heatData.heat());
                 return new HeatUtil.HeatData(leftHeat, heatData.superHeatCount());
