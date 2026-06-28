@@ -15,8 +15,7 @@ import static com.ffsupver.createheat.network.NetworkService.Services.HEAT_STORA
 import static com.ffsupver.createheat.util.HeatUtil.NO_HEAT_PROVIDE;
 
 public class HeatStorageNetwork extends TickingBlockNetwork{
-    private final HeatStorageBehaviour.SuperHeatStorage heatStorage = new HeatStorageBehaviour.SuperHeatStorage(0);
-    private HeatUtil.HeatData heatDataLastTickRemain = NO_HEAT_PROVIDE;
+    private final HeatStorageNetworkStorage heatStorage = new HeatStorageNetworkStorage(0);
 
     public HeatStorageNetwork(UUID networkID, Set<BlockPos> connectedBlocks) {
         super(networkID, connectedBlocks);
@@ -26,17 +25,31 @@ public class HeatStorageNetwork extends TickingBlockNetwork{
     public boolean tick(ServerLevel level) {
         boolean shouldSave = super.tick(level);
 
-        int capacity = 0;
-        int amount = 0;
+
+        HeatStorageBehaviour.SuperHeatStorage.SuperSnapshot heatChange = heatStorage.getHeatChange();
+        heatStorage.clear();
+
         for (BlockPos pos : connectedBlocks){
             HeatStorageBehaviour heatStorageBehaviour = BlockEntityBehaviour.get(level,pos,HeatStorageBehaviour.TYPE);
             if (heatStorageBehaviour != null){
-                capacity += heatStorageBehaviour.getCapacity();
-                amount += heatStorageBehaviour.getAmount();
+                HeatUtil.HeatData superHeatExtracted = NO_HEAT_PROVIDE;
+                HeatUtil.HeatData heatExtracted = NO_HEAT_PROVIDE;
+                if (heatChange.superAmount() < 0){
+                    superHeatExtracted = heatStorageBehaviour.extractHeat(new HeatUtil.HeatData(-heatChange.superAmount(),1),false);
+                }
+                if (heatChange.amount() < 0){
+                    heatExtracted = heatStorageBehaviour.extractHeat(new HeatUtil.HeatData(-heatChange.amount(),0),false);
+                }
+                heatChange = new HeatStorageBehaviour.SuperHeatStorage.SuperSnapshot(heatChange.amount() - heatExtracted.heat(),heatChange.superAmount() - superHeatExtracted.heat(),heatChange.capacity(),heatChange.superCapacity());
+
+                heatStorage.merge(heatStorageBehaviour.getSuperHeatStorage());
+                if (heatStorageBehaviour.getSuperHeatStorage().getSuperAmount() > 0){
+                    heatStorage.superHeatCount += 1;
+                }
             }
         }
-        heatStorage.setCapacity(capacity);
-        heatStorage.setAmount(amount);
+        heatStorage.updateSnapshot();
+
 
 
         return shouldSave;
@@ -49,7 +62,6 @@ public class HeatStorageNetwork extends TickingBlockNetwork{
      * @return heat data left
      */
     public HeatUtil.HeatData insert(ServerLevel level,HeatUtil.HeatData heatData) {
-        System.out.println("HeatStorageNetwork insertingHeat:"+heatData);
         for (BlockPos pos : connectedBlocks){
             HeatStorageBehaviour heatStorageBehaviour = BlockEntityBehaviour.get(level,pos,HeatStorageBehaviour.TYPE);
             if (heatStorageBehaviour != null){
@@ -98,5 +110,45 @@ public class HeatStorageNetwork extends TickingBlockNetwork{
         return "HeatStorageNetwork{" +
                 "size="+connectedBlocks.size()+ "   networkID=" + networkID + "    blocks="+connectedBlocks+
                 '}';
+    }
+
+    private static class HeatStorageNetworkStorage extends HeatStorageBehaviour.SuperHeatStorage{
+        private SuperSnapshot superSnapshot;
+        private int superHeatCount;  // super heat count storage
+
+        public HeatStorageNetworkStorage(int capacity) {
+            super(capacity);
+        }
+
+        @Override
+        public HeatUtil.HeatData extract(HeatUtil.HeatData heatData, boolean simulate) {
+            if (heatData.superHeatCount() > superHeatCount){
+                return NO_HEAT_PROVIDE;
+            }
+
+            HeatUtil.HeatData extract = super.extract(heatData, simulate);
+            if (!simulate){
+                superHeatCount -= extract.superHeatCount();
+            }
+            return extract;
+        }
+
+        @Override
+        public void clear() {
+            super.clear();
+            superHeatCount = 0;
+        }
+
+        public SuperSnapshot getHeatChange(){
+            if (superSnapshot == null){
+                return new SuperSnapshot(0,0,0,0);
+            }else {
+                return new SuperSnapshot(getAmount() - superSnapshot.amount(),getSuperAmount() - superSnapshot.superAmount(),0,0);
+            }
+        }
+
+        public void updateSnapshot(){
+            superSnapshot = superSnapshot();
+        }
     }
 }

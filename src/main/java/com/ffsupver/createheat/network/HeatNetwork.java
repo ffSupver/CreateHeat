@@ -20,6 +20,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import static com.ffsupver.createheat.util.HeatUtil.NO_HEAT_PROVIDE;
+
 public class HeatNetwork extends TickingBlockNetwork{
 
 
@@ -30,10 +32,12 @@ public class HeatNetwork extends TickingBlockNetwork{
     private final HeatStorage heatStorage;
     private final Set<UUID> connectedHeatStorageNetworks = new HashSet<>();
     private final Set<UUID> lastConnectedHeatStorageNetworks = new HashSet<>();
-    private HeatUtil.HeatData heatGenDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
-    private HeatUtil.HeatData heatDataLastTickRemain = HeatUtil.NO_HEAT_PROVIDE;
-    private HeatUtil.HeatData heatCostDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
+    private HeatUtil.HeatData heatGenDataLastTick = NO_HEAT_PROVIDE;
+//    private HeatUtil.HeatData heatDataLastTickRemain = HeatUtil.NO_HEAT_PROVIDE;
+    private HeatInteractionData heatInteractionData = new HeatInteractionData(Set.of(), NO_HEAT_PROVIDE);
+    private HeatUtil.HeatData heatCostDataLastTick = NO_HEAT_PROVIDE;
     private HeatUtil.HeatIOData displayHeatData = HeatUtil.HeatIOData.NO_HEAT_IO;
+    private HeatStorage displayHeatStorage = new HeatStorage(0);
 
     // heat transfer processor
     private final Map<BlockPos, HeatTransferProcesser> transferProcesserMap = new HashMap<>();
@@ -70,11 +74,10 @@ public class HeatNetwork extends TickingBlockNetwork{
                 heatStorageNetworkNeedToCheck.add(heatStorageNetworkId);
             }
         }
-        System.out.println("heat storage network need to check: " + heatStorageNetworkNeedToCheck+" last"+lastConnectedHeatStorageNetworks);
+
         lastConnectedHeatStorageNetworks.clear();
         connectedHeatStorageNetworks.addAll(heatStorageNetworkNeedToAdd);
         boolean removedHeatStorageNetwork = false;
-        Set<HeatStorageBehaviour.SuperHeatStorage> heatStorageNetworkStorages = new HashSet<>();
         if(NetworkService.isLoad(NetworkService.Services.HEAT_STORAGE)){
             for (UUID heatStorageNetworkId : heatStorageNetworkNeedToCheck) {
                 TickingBlockNetwork heatStorageNetwork = NetworkService.getNetwork(level, heatStorageNetworkId, NetworkService.Services.HEAT_STORAGE);
@@ -82,8 +85,6 @@ public class HeatNetwork extends TickingBlockNetwork{
                 if (!isConnected) {
                     connectedHeatStorageNetworks.remove(heatStorageNetworkId);
                     removedHeatStorageNetwork = true;
-                }else if (heatStorageNetwork instanceof HeatStorageNetwork heatStorageNetwork1){
-                    heatStorageNetworkStorages.add(heatStorageNetwork1.getHeatStorage());
                 }
             }
         }
@@ -92,13 +93,27 @@ public class HeatNetwork extends TickingBlockNetwork{
         HeatStorage.Snapshot lastHeatStorage = heatStorage.snapshot();
 
         insertHeat(level,heatGenDataLastTick);
-        heatStorage.extract(heatCostDataLastTick.heat(),false);
+        heatStorage.extract(heatInteractionData.getCostHeat().heat(),false);
+
+        Set<HeatStorageBehaviour.SuperHeatStorage> heatStorageNetworkStorages = new HashSet<>();
+        for (UUID heatStorageNetworkId : connectedHeatStorageNetworks) {
+            if (NetworkService.getNetwork(level, heatStorageNetworkId, NetworkService.Services.HEAT_STORAGE) instanceof HeatStorageNetwork heatStorageNetwork){
+                heatStorageNetworkStorages.add(heatStorageNetwork.getHeatStorage());
+            }
+        }
 
         displayHeatData = new HeatUtil.HeatIOData(heatGenDataLastTick,heatCostDataLastTick);
-        heatDataLastTickRemain = calculateHeatCanProvideThisTick(heatGenDataLastTick);
+        displayHeatStorage.clear();
+        displayHeatStorage.merge(heatStorage);
+        for (HeatStorage connectHeatStorage : heatStorageNetworkStorages){
+            displayHeatStorage.merge(connectHeatStorage);
+        }
 
-        heatGenDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
-        heatCostDataLastTick = HeatUtil.NO_HEAT_PROVIDE;
+//        heatDataLastTickRemain = calculateHeatCanProvideThisTick(heatGenDataLastTick);
+        calculateHeatCanProvideThisTick(heatGenDataLastTick,heatStorageNetworkStorages);
+
+        heatGenDataLastTick = NO_HEAT_PROVIDE;
+        heatCostDataLastTick = NO_HEAT_PROVIDE;
 
         shouldSave = shouldSave || !lastHeatStorage.equals(heatStorage.snapshot());
 
@@ -134,7 +149,7 @@ public class HeatNetwork extends TickingBlockNetwork{
             }
 
             // tick hTP
-            HeatUtil.HeatData heatProvideToHTP = HeatUtil.NO_HEAT_PROVIDE;
+            HeatUtil.HeatData heatProvideToHTP = NO_HEAT_PROVIDE;
             for (HeatUtil.HeatData heatData : heatSetProvideToHTP){
                 heatProvideToHTP = heatProvideToHTP.merge(heatData);
             }
@@ -147,14 +162,13 @@ public class HeatNetwork extends TickingBlockNetwork{
         heatTransferProcesserToRemovePosSet.stream().map(pos -> Map.entry(pos,transferProcesserMap.get(pos))).toList().forEach(transferProcesserMap.entrySet()::remove);
         shouldSave = shouldSave || !heatTransferProcesserToRemovePosSet.isEmpty();
 
-        System.out.println("tickingHeatNetwork "+level.dimension()+"   heat:"+heatStorage+"   lastHeat:"+ heatDataLastTickRemain +"   hTPs:"+transferProcesserMap+"   blocks:"+connectedBlocks.size()+" / "+connectedBlocks+" storage="+connectedHeatStorageNetworks);
+        System.out.println("tickingHeatNetwork "+level.dimension()+"   heat:"+heatStorage+"   lastHeat:"+ heatInteractionData.networkHeatRemain +"   hTPs:"+transferProcesserMap+"   blocks:"+connectedBlocks.size()+" / "+connectedBlocks+" storage="+connectedHeatStorageNetworks);
 
         return shouldSave;
     }
 
     private void insertHeat(ServerLevel level,HeatUtil.HeatData heatGenDataLastTick){
         int leftHeat = heatStorage.insert(heatGenDataLastTick.heat());
-        System.out.println("insert heat:"+heatGenDataLastTick+"   left:"+leftHeat);
         if (leftHeat > 0){
             HeatUtil.HeatData toInsert = new HeatUtil.HeatData(leftHeat,heatGenDataLastTick.superHeatCount());
             for (UUID heatStorageNetworkId : connectedHeatStorageNetworks) {
@@ -166,9 +180,15 @@ public class HeatNetwork extends TickingBlockNetwork{
         }
     }
 
-    private HeatUtil.HeatData calculateHeatCanProvideThisTick(HeatUtil.HeatData heatGenDataLastTick) {
+    private void calculateHeatCanProvideThisTick(HeatUtil.HeatData heatGenDataLastTick,Set<HeatStorageBehaviour.SuperHeatStorage> heatStorageNetworkStorages) {
         HeatUtil.HeatData heatProvideFromStorage = new HeatUtil.HeatData(heatStorage.getAmount(),0);
-        return heatGenDataLastTick.merge(heatProvideFromStorage);
+        HeatUtil.HeatData heatProvideFromNetwork = heatGenDataLastTick.merge(heatProvideFromStorage);
+
+
+
+        heatInteractionData.setHeatStorageNetworks(heatStorageNetworkStorages);
+        heatInteractionData.setNetworkHeatRemain(heatProvideFromNetwork);
+        System.out.println("heatInteractionData:"+heatInteractionData);
     }
 
 
@@ -177,7 +197,8 @@ public class HeatNetwork extends TickingBlockNetwork{
 
         this.heatGenDataLastTick = this.heatGenDataLastTick.merge(heatGenData);
         this.heatCostDataLastTick = this.heatCostDataLastTick.merge(heatCostData);
-        this.heatDataLastTickRemain = this.heatDataLastTickRemain.sub(heatCostData);
+//        this.heatDataLastTickRemain = this.heatDataLastTickRemain.sub(heatCostData);
+        this.heatInteractionData.extractHeat(heatCostData,false);
 
         lastConnectedHeatStorageNetworks.addAll(neighborHeatStorageNetworkIds);
     }
@@ -206,9 +227,13 @@ public class HeatNetwork extends TickingBlockNetwork{
         heatStorage.setCapacity(connectedBlocks.size() * MAX_HEAT.get());
     }
 
-    public HeatUtil.HeatData getHeatDataLastTickRemain() {
-        return heatDataLastTickRemain;
+    public HeatInteractionData getHeatInteractionData() {
+        return heatInteractionData;
     }
+
+//    public HeatUtil.HeatData getHeatDataLastTickRemain() {
+//        return heatDataLastTickRemain;
+//    }
     public HeatTransferProcesser getTransferProcesser(BlockPos pos) {
         return transferProcesserMap.get(pos);
     }
@@ -219,7 +244,7 @@ public class HeatNetwork extends TickingBlockNetwork{
     }
 
     public HeatStorage.Snapshot getDisplayHeatStorage() {
-        return heatStorage.snapshot();
+        return displayHeatStorage.snapshot();
     }
     public HeatUtil.HeatIOData getDisplayHeatData() {
         return displayHeatData;
@@ -230,9 +255,9 @@ public class HeatNetwork extends TickingBlockNetwork{
         this.transferProcesserMap.clear();
         this.transferProcesserMap.putAll(transferProcesserMap);
     }
-    private void setHeatDataLastTickRemain(HeatUtil.HeatData heatDataLastTickRemain) {
-        this.heatDataLastTickRemain = heatDataLastTickRemain;
-    }
+//    private void setHeatDataLastTickRemain(HeatUtil.HeatData heatDataLastTickRemain) {
+//        this.heatDataLastTickRemain = heatDataLastTickRemain;
+//    }
     private void setConnectedHeatStorageNetworks(Collection<UUID> connectedHeatStorageNetworks){
         this.connectedHeatStorageNetworks.clear();
         this.connectedHeatStorageNetworks.addAll(connectedHeatStorageNetworks);
@@ -250,12 +275,14 @@ public class HeatNetwork extends TickingBlockNetwork{
                 NbtUtil::blockPosFromNbt,
                 CHHeatTransferProcessers::fromNbt
         ));
+        HeatInteractionData heatInteractionData = HeatInteractionData.fromNbt(nbt);
 
         HeatNetwork heatNetwork = fromNbt(nbt, HeatNetwork::new);
         heatNetwork.heatStorage.fromNbt(nbt.getCompound("heat_storage"));
         heatNetwork.setConnectedHeatStorageNetworks(NbtUtil.readListFromNbt(nbt.getList("connected_heat_storage",Tag.TAG_COMPOUND),uuidNbt-> ((CompoundTag)uuidNbt).getUUID("uuid")));
         heatNetwork.setTransferProcesserMap(transferProcesserMap);
-        heatNetwork.setHeatDataLastTickRemain(HeatUtil.HeatData.fromNbt(nbt.getCompound("heat_data_last_tick_remain")));
+//        heatNetwork.setHeatDataLastTickRemain(HeatUtil.HeatData.fromNbt(nbt.getCompound("heat_data_last_tick_remain")));
+        heatNetwork.heatInteractionData = heatInteractionData;
         return heatNetwork;
     }
 
@@ -272,7 +299,8 @@ public class HeatNetwork extends TickingBlockNetwork{
                 NbtUtil::blockPosToNbt,
                 CHHeatTransferProcessers::toNbt
         ));
-        nbt.put("heat_data_last_tick_remain",heatDataLastTickRemain.toNbt());
+        heatInteractionData.toNbt(nbt);
+//        nbt.put("heat_data_last_tick_remain",heatDataLastTickRemain.toNbt());
         System.out.println("savingHeatNetworkNbt:"+nbt);
         return nbt;
     }
@@ -294,5 +322,104 @@ public class HeatNetwork extends TickingBlockNetwork{
                 ", connectedBlocks=" + connectedBlocks +
                 ", connectedHeatStorage=" + connectedHeatStorageNetworks +
                 '}';
+    }
+
+    public static class HeatInteractionData{
+        public Set<HeatStorageBehaviour.SuperHeatStorage> heatStorageNetworks;
+        public HeatUtil.HeatData networkHeatRemain;
+        public HeatUtil.HeatData lastNetworkHeatRemain;
+
+        public HeatInteractionData(Set<HeatStorageBehaviour.SuperHeatStorage> heatStorageNetworks, HeatUtil.HeatData networkHeatRemain) {
+            this.heatStorageNetworks = heatStorageNetworks;
+            this.networkHeatRemain = networkHeatRemain;
+            this.lastNetworkHeatRemain = networkHeatRemain;
+        }
+
+        /**
+         * extract heat from heat storage networks
+         * @param heatData heat to extract
+         * @param simulate whether to simulate the extraction
+         * @return the heat actually extracted
+         */
+        public HeatUtil.HeatData extractHeat(HeatUtil.HeatData heatData,boolean simulate){
+            if (heatData.heat() <= 0){
+                return NO_HEAT_PROVIDE;
+            }
+
+            HeatUtil.HeatData leftHeatData = heatData;
+            for (HeatStorageBehaviour.SuperHeatStorage heatStorage : heatStorageNetworks){
+                HeatUtil.HeatData extractedHeatData = heatStorage.extract(leftHeatData, simulate);
+                leftHeatData = leftHeatData.sub(extractedHeatData);
+
+                if (leftHeatData.heat() <= 0 && leftHeatData.superHeatCount() <= 0){
+                    return heatData.sub(leftHeatData);
+                }
+            }
+
+            if (networkHeatRemain.heat() >= leftHeatData.heat() && networkHeatRemain.superHeatCount() >= leftHeatData.superHeatCount()){
+                if (!simulate){
+                    networkHeatRemain = networkHeatRemain.sub(leftHeatData);
+                }
+                return heatData;
+            }else if (networkHeatRemain.heat() >= leftHeatData.heat()) {
+                int leftSuperHeatCount = leftHeatData.superHeatCount() - networkHeatRemain.superHeatCount();
+                if (!simulate) {
+                    networkHeatRemain = networkHeatRemain.sub(new HeatUtil.HeatData(leftHeatData.heat(), networkHeatRemain.superHeatCount()));
+                }
+                return new HeatUtil.HeatData(heatData.heat(), heatData.superHeatCount() - leftSuperHeatCount);
+            }else if (networkHeatRemain.superHeatCount() >= leftHeatData.superHeatCount()){
+                int leftHeatCount = leftHeatData.heat() - networkHeatRemain.heat();
+                if (!simulate) {
+                    networkHeatRemain = networkHeatRemain.sub(new HeatUtil.HeatData(networkHeatRemain.heat(), leftHeatData.superHeatCount()));
+                }
+                return new HeatUtil.HeatData(heatData.heat() - leftHeatCount, heatData.superHeatCount());
+            }else {
+                HeatUtil.HeatData notExtractedHeat = leftHeatData.sub(networkHeatRemain);
+                if (!simulate) {
+                    networkHeatRemain = new HeatUtil.HeatData(0, 0);
+                }
+                return heatData.sub(notExtractedHeat);
+            }
+        }
+
+        public HeatUtil.HeatData getAllHeat(){
+            HeatUtil.HeatData heatData = networkHeatRemain;
+            for (HeatStorageBehaviour.SuperHeatStorage heatStorage : heatStorageNetworks){
+                HeatUtil.HeatData heatStorageHeatData = heatStorage.getAllHeat();
+                heatData = heatData.merge(heatStorageHeatData);
+            }
+            return heatData;
+        }
+
+        public HeatUtil.HeatData getCostHeat(){
+            return lastNetworkHeatRemain.sub(networkHeatRemain);
+        }
+
+        public CompoundTag toNbt(CompoundTag nbt){
+            nbt.put("heat_data_last_tick_remain",networkHeatRemain.toNbt());
+            return nbt;
+        }
+
+        public static HeatInteractionData fromNbt(CompoundTag nbt){
+            HeatUtil.HeatData networkHeatRemain = HeatUtil.HeatData.fromNbt(nbt.getCompound("heat_data_last_tick_remain"));
+            return new HeatInteractionData(Set.of(),networkHeatRemain);
+        }
+
+        public void setNetworkHeatRemain(HeatUtil.HeatData networkHeatRemain) {
+            this.networkHeatRemain = networkHeatRemain;
+            this.lastNetworkHeatRemain = networkHeatRemain;
+        }
+
+        public void setHeatStorageNetworks(Set<HeatStorageBehaviour.SuperHeatStorage> heatStorageNetworks) {
+            this.heatStorageNetworks = heatStorageNetworks;
+        }
+
+        @Override
+        public String toString() {
+            return "HeatInteractionData{" +
+                    "heatStorageNetworks=" + heatStorageNetworks +
+                    ", networkHeatRemain=" + networkHeatRemain +
+                    '}';
+        }
     }
 }

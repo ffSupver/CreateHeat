@@ -51,9 +51,17 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
         return superHeatStorage.extract(heatData,simulate);
     }
 
-    public int getCapacity() {
-        return superHeatStorage.getCapacity();
+//    public HeatUtil.HeatData extractHeat(HeatUtil.HeatData heatData,boolean simulate){
+//        return superHeatStorage.extract(heatData,simulate);
+//    }
+
+    public SuperHeatStorage getSuperHeatStorage() {
+        return superHeatStorage;
     }
+
+//    public int getCapacity() {
+//        return superHeatStorage.getCapacity();
+//    }
 
     public int getAmount() {
         return superHeatStorage.getAmount();
@@ -144,6 +152,51 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
             }
         }
 
+        /**
+         * Get all heat this storage contains
+         * @return heat data
+         */
+        public HeatUtil.HeatData getAllHeat() {
+            return new HeatUtil.HeatData(getAmount()+superAmount,superAmount > 0 ? 1 : 0);
+        }
+
+        /**
+         * Merge two storage into this storage
+         * @param storage storage to merge
+         */
+        public void merge(SuperHeatStorage storage){
+            setAmount(getAmount()+storage.getAmount());
+            setCapacity(getCapacity()+storage.getCapacity());
+            superAmount += storage.superAmount;
+            superCapacity += storage.superCapacity;
+        }
+
+        @Override
+        public void merge(HeatStorage other) {
+            super.merge(other);
+            setAmount(getAmount() + superAmount);
+            setCapacity(getCapacity() + superCapacity);
+        }
+
+        @Override
+        public void clear() {
+            super.clear();
+            superAmount = 0;
+            superCapacity = 0;
+        }
+
+        public SuperSnapshot superSnapshot(){
+            return new SuperSnapshot(getAmount(),superAmount,getCapacity(),superCapacity);
+        }
+
+        public int getSuperAmount() {
+            return superAmount;
+        }
+
+        public int getSuperCapacity() {
+            return superCapacity;
+        }
+
         @Override
         public CompoundTag toNbt() {
             CompoundTag nbt = super.toNbt();
@@ -167,6 +220,9 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
         @Override
         public String toString() {
             return super.toString()+"--super{"+superAmount+"/"+superCapacity+"}";
+        }
+
+        public record SuperSnapshot(int amount, int superAmount, int capacity, int superCapacity){
         }
     }
 }

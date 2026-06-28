@@ -56,6 +56,16 @@ public class HeatStorage{
         return capacity;
     }
 
+    public void merge(HeatStorage other){
+        this.amount += other.amount;
+        this.capacity += other.capacity;
+    }
+
+    public void clear(){
+        this.amount = 0;
+        this.capacity = 0;
+    }
+
     public CompoundTag toNbt(){
         CompoundTag nbt = new CompoundTag();
         nbt.putInt("capacity",capacity);
