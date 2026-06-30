@@ -37,7 +37,7 @@ public class HeatNetwork extends TickingBlockNetwork{
     private HeatInteractionData heatInteractionData = new HeatInteractionData(Set.of(), NO_HEAT_PROVIDE);
     private HeatUtil.HeatData heatCostDataLastTick = NO_HEAT_PROVIDE;
     private HeatUtil.HeatIOData displayHeatData = HeatUtil.HeatIOData.NO_HEAT_IO;
-    private HeatStorage displayHeatStorage = new HeatStorage(0);
+    private final HeatStorageBehaviour.SuperHeatStorage displayHeatStorage = new HeatStorageBehaviour.SuperHeatStorage(0);
 
     // heat transfer processor
     private final Map<BlockPos, HeatTransferProcesser> transferProcesserMap = new HashMap<>();
@@ -244,7 +244,9 @@ public class HeatNetwork extends TickingBlockNetwork{
     }
 
     public HeatStorage.Snapshot getDisplayHeatStorage() {
-        return displayHeatStorage.snapshot();
+        HeatStorage dis = new HeatStorage(displayHeatStorage.getCapacity() + displayHeatStorage.getSuperCapacity());
+        dis.setAmount(displayHeatStorage.getAmount() + displayHeatStorage.getSuperAmount());
+        return dis.snapshot();
     }
     public HeatUtil.HeatIOData getDisplayHeatData() {
         return displayHeatData;

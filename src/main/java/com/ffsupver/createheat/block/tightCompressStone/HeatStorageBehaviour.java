@@ -173,9 +173,11 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
 
         @Override
         public void merge(HeatStorage other) {
-            super.merge(other);
-            setAmount(getAmount() + superAmount);
-            setCapacity(getCapacity() + superCapacity);
+            if (other instanceof SuperHeatStorage storage) {
+                merge(storage);
+            }else {
+                super.merge(other);
+            }
         }
 
         @Override
