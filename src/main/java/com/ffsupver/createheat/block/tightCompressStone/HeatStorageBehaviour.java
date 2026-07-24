@@ -121,10 +121,12 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
          * @return heat data left
          */
         public HeatUtil.HeatData insert(HeatUtil.HeatData heatData) {
+            System.out.println("start insert heat to SHS:"+heatData);
             if (getAmount() >= getCapacity()) {
                 if (heatData.superHeatCount() > 0){
                     int toInsert = Math.min(superCapacity - superAmount, heatData.heat());
                     superAmount += toInsert;
+                    System.out.println("toInsert"+toInsert+" supC"+superCapacity+" supA"+superAmount+" heat:"+heatData.heat());
                     return heatData.sub(new HeatUtil.HeatData(toInsert, 1));
                 }else {
                     return heatData;
@@ -148,6 +150,9 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
                 }
                 return new HeatUtil.HeatData(toExtract,1);
             }else {
+                if (heatData.superHeatCount() > 0){
+                    return HeatUtil.NO_HEAT_PROVIDE;
+                }
                 return new HeatUtil.HeatData(super.extract(heatData.heat(),simulate),0);
             }
         }

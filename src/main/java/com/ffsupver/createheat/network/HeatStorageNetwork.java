@@ -40,7 +40,9 @@ public class HeatStorageNetwork extends TickingBlockNetwork{
                 if (heatChange.amount() < 0){
                     heatExtracted = heatStorageBehaviour.extractHeat(new HeatUtil.HeatData(-heatChange.amount(),0),false);
                 }
-                heatChange = new HeatStorageBehaviour.SuperHeatStorage.SuperSnapshot(heatChange.amount() - heatExtracted.heat(),heatChange.superAmount() - superHeatExtracted.heat(),heatChange.capacity(),heatChange.superCapacity());
+
+                // heatChange的值是负的，所以要加
+                heatChange = new HeatStorageBehaviour.SuperHeatStorage.SuperSnapshot(heatChange.amount() + heatExtracted.heat(),heatChange.superAmount() + superHeatExtracted.heat(),heatChange.capacity(),heatChange.superCapacity());
 
                 heatStorage.merge(heatStorageBehaviour.getSuperHeatStorage());
                 if (heatStorageBehaviour.getSuperHeatStorage().getSuperAmount() > 0){
@@ -62,10 +64,12 @@ public class HeatStorageNetwork extends TickingBlockNetwork{
      * @return heat data left
      */
     public HeatUtil.HeatData insert(ServerLevel level,HeatUtil.HeatData heatData) {
+        System.out.println("start insert heat:"+heatData);
         for (BlockPos pos : connectedBlocks){
             HeatStorageBehaviour heatStorageBehaviour = BlockEntityBehaviour.get(level,pos,HeatStorageBehaviour.TYPE);
             if (heatStorageBehaviour != null){
                 heatData = heatStorageBehaviour.insertHeat(heatData);
+                System.out.println("insert heat to "+pos+" heat:"+heatData);
             }
         }
         return heatData;
