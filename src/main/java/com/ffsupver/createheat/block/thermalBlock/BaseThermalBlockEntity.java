@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class BaseThermalBlockEntity1 extends SmartBlockEntity implements IHaveGoggleInformation {
+public class BaseThermalBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
 
-    public BaseThermalBlockEntity1(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+    public BaseThermalBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 
@@ -30,7 +30,7 @@ public class BaseThermalBlockEntity1 extends SmartBlockEntity implements IHaveGo
     public Set<UUID> getNeighborNetworkId(){
         Set<UUID> neighborNetworkIds = new HashSet<>();
         BlockUtil.AllDirectionOf(getBlockPos(), neighborPos->{
-            if (getLevel().getBlockEntity(neighborPos) instanceof BaseThermalBlockEntity1 neighborBE){
+            if (getLevel().getBlockEntity(neighborPos) instanceof BaseThermalBlockEntity neighborBE){
                 UUID neighborID = neighborBE.getHeatNetworkId();
                 if (neighborID != null){
                     neighborNetworkIds.add(neighborID);

@@ -10,7 +10,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
 
-public  class SmartThermalBlock extends BaseThermalBlock1<SmartThermalBlockEntity> implements IWrenchable {
+public  class SmartThermalBlock extends BaseThermalBlock<SmartThermalBlockEntity> implements IWrenchable {
     public SmartThermalBlock(Properties properties) {
         super(properties, SmartThermalBlockEntity.class,()->CHBlocks.SMART_THERMAL_BLOCK_ENTITY.get());
     }

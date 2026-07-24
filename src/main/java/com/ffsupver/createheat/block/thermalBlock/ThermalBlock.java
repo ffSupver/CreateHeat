@@ -14,10 +14,10 @@ import net.minecraft.world.phys.Vec3;
 
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
 
-public class ThermalBlock extends BaseThermalBlock1<BaseThermalBlockEntity1> implements IWrenchable {
+public class ThermalBlock extends BaseThermalBlock<BaseThermalBlockEntity> implements IWrenchable {
 
     public ThermalBlock(Properties properties) {
-        super(properties,BaseThermalBlockEntity1.class,()-> CHBlocks.THERMAL_BLOCK_ENTITY.get());
+        super(properties, BaseThermalBlockEntity.class,()-> CHBlocks.THERMAL_BLOCK_ENTITY.get());
     }
 
     @Override

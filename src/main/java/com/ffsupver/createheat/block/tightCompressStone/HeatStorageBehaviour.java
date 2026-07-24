@@ -11,8 +11,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.UUID;
 
-import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone1.HEAT;
-import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone1.Heat.*;
+import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.HEAT;
+import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.Heat.*;
 import static com.ffsupver.createheat.network.HeatNetwork.MAX_HEAT;
 
 public class HeatStorageBehaviour extends BlockEntityBehaviour {
@@ -30,7 +30,7 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
     public void tick() {
         super.tick();
 
-        TightCompressStone1.Heat newHeat = getHeat();
+        TightCompressStone.Heat newHeat = getHeat();
         if (this.superHeatStorage.superAmount > 0){
             newHeat = SUPER_HEAT;
         }else if (this.superHeatStorage.getAmount() > 0){
@@ -67,11 +67,11 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
         return superHeatStorage.getAmount();
     }
 
-    public TightCompressStone1.Heat getHeat(){
+    public TightCompressStone.Heat getHeat(){
         return getBlockState().getValue(HEAT);
     }
 
-    public void setHeat(TightCompressStone1.Heat heat){
+    public void setHeat(TightCompressStone.Heat heat){
         getWorld().setBlock(getPos(),getBlockState().setValue(HEAT, heat),3);
     }
 

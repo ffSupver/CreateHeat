@@ -1,7 +1,8 @@
 package com.ffsupver.createheat.block.tightCompressStone;
 
-import com.ffsupver.createheat.block.ConnectableBlock;
+import com.ffsupver.createheat.network.NetworkService;
 import com.ffsupver.createheat.registries.CHBlocks;
+import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
@@ -18,14 +19,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.neoforged.neoforge.common.extensions.IBlockExtension;
 import org.jetbrains.annotations.NotNull;
 
-public class TightCompressStone extends ConnectableBlock<TightCompressStoneEntity,TightCompressStoneEntity> implements IBlockExtension {
-    public static final Property<Heat> HEAT = EnumProperty.create("heat",Heat.class);
+import java.util.Set;
+import java.util.UUID;
+
+public class TightCompressStone extends Block implements IBE<TightCompressStoneEntity> {
+    public static final Property<Heat> HEAT = EnumProperty.create("heat", Heat.class);
     public TightCompressStone(Properties properties) {
         super(properties);
-        registerDefaultState(defaultBlockState().setValue(HEAT,Heat.NONE));
+        registerDefaultState(defaultBlockState().setValue(HEAT, Heat.NONE));
     }
 
     @Override
@@ -35,8 +38,43 @@ public class TightCompressStone extends ConnectableBlock<TightCompressStoneEntit
     }
 
     @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (!oldState.getBlock().equals(state.getBlock())) { // new block
+            withBlockEntityDo(level,pos,tightCompressStoneEntity -> {
+                Set<UUID> neighborNetworkId = tightCompressStoneEntity.getNeighborNetworkId();
+                tightCompressStoneEntity.setNetworkId(NetworkService.addBlockToNetwork(pos,level,neighborNetworkId, NetworkService.Services.HEAT_STORAGE));
+                System.out.println("add blockTTS"+tightCompressStoneEntity.getNetworkId());
+            });
+        }
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.getBlock().equals(newState.getBlock())){ // destroy
+            withBlockEntityDo(level, pos, tightCompressStoneEntity -> {
+                System.out.println("remove blockTTS"+tightCompressStoneEntity.getNetworkId());
+                if (tightCompressStoneEntity.getNetworkId() != null) {
+                    NetworkService.removeBlockFromNetwork(level, pos, tightCompressStoneEntity.getNetworkId(), NetworkService.Services.HEAT_STORAGE);
+                }
+            });
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
     public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
         return state.getValue(HEAT).getLight();
+    }
+
+    @Override
+    public Class<TightCompressStoneEntity> getBlockEntityClass() {
+        return TightCompressStoneEntity.class;
+    }
+
+    @Override
+    public BlockEntityType<? extends TightCompressStoneEntity> getBlockEntityType() {
+        return CHBlocks.TIGHT_COMPRESSED_STONE_ENTITY.get();
     }
 
     @Override
@@ -61,16 +99,6 @@ public class TightCompressStone extends ConnectableBlock<TightCompressStoneEntit
                 level.addParticle(particleOptions,pos.getX() + d0,pos.getY() + d1,pos.getZ() + d2,0,0,0);
             }
         }
-    }
-
-    @Override
-    public Class<TightCompressStoneEntity> getBlockEntityClass() {
-        return TightCompressStoneEntity.class;
-    }
-
-    @Override
-    public BlockEntityType<? extends TightCompressStoneEntity> getBlockEntityType() {
-        return CHBlocks.TIGHT_COMPRESSED_STONE_ENTITY.get();
     }
 
     @Override

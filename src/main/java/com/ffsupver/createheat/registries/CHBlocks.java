@@ -4,9 +4,7 @@ import com.ffsupver.createheat.CHTags;
 import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.block.thermalBlock.*;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStone;
-import com.ffsupver.createheat.block.tightCompressStone.TightCompressStone1;
 import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
-import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity1;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.api.registry.SimpleRegistry;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -41,15 +39,15 @@ public class CHBlocks {
 //            .validBlock(THERMAL_BLOCK1)
 //            .register();
 
-    public static final BlockEntry<TightCompressStone1> TIGHT_COMPRESSED_STONE1 = REGISTRATE
-            .block("tight_compressed_stone1", TightCompressStone1::new)
+    public static final BlockEntry<TightCompressStone> TIGHT_COMPRESSED_STONE = REGISTRATE
+            .block("tight_compressed_stone", TightCompressStone::new)
             .properties(p->BlockBehaviour.Properties.ofFullCopy(Blocks.STONE))
             .item()
             .build()
             .register();
-    public static final BlockEntityEntry<TightCompressStoneEntity1> TIGHT_COMPRESSED_STONE_ENTITY1 = REGISTRATE
-            .blockEntity("tight_compressed_stone1",TightCompressStoneEntity1::new)
-            .validBlock(TIGHT_COMPRESSED_STONE1)
+    public static final BlockEntityEntry<TightCompressStoneEntity> TIGHT_COMPRESSED_STONE_ENTITY = REGISTRATE
+            .blockEntity("tight_compressed_stone", TightCompressStoneEntity::new)
+            .validBlock(TIGHT_COMPRESSED_STONE)
             .register();
 
     public static final BlockEntry<ThermalBlock> THERMAL_BLOCK = REGISTRATE
@@ -61,12 +59,6 @@ public class CHBlocks {
             .build()
             .register();
 
-    public static final BlockEntry<TightCompressStone> TIGHT_COMPRESSED_STONE = REGISTRATE
-            .block("tight_compressed_stone",TightCompressStone::new)
-            .properties(p->BlockBehaviour.Properties.ofFullCopy(Blocks.STONE))
-            .item()
-            .build()
-            .register();
 
     public static final BlockEntry<SmartThermalBlock> SMART_THERMAL_BLOCK = REGISTRATE
             .block("smart_thermal_block", SmartThermalBlock::new)
@@ -86,13 +78,9 @@ public class CHBlocks {
             .item()
             .build()
             .register();
-    public static final BlockEntityEntry<BaseThermalBlockEntity1> THERMAL_BLOCK_ENTITY = REGISTRATE
-            .blockEntity("thermal_block",BaseThermalBlockEntity1::new)
+    public static final BlockEntityEntry<BaseThermalBlockEntity> THERMAL_BLOCK_ENTITY = REGISTRATE
+            .blockEntity("thermal_block", BaseThermalBlockEntity::new)
             .validBlock(THERMAL_BLOCK)
-            .register();
-    public static final BlockEntityEntry<TightCompressStoneEntity> TIGHT_COMPRESSED_STONE_ENTITY = REGISTRATE
-            .blockEntity("tight_compressed_stone",TightCompressStoneEntity::new)
-            .validBlock(TIGHT_COMPRESSED_STONE)
             .register();
 
     public static final BlockEntityEntry<SmartThermalBlockEntity> SMART_THERMAL_BLOCK_ENTITY = REGISTRATE

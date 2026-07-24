@@ -2,7 +2,6 @@ package com.ffsupver.createheat.item.thermalTool;
 
 import com.ffsupver.createheat.block.ConnectableBlockEntity;
 import com.ffsupver.createheat.block.thermalBlock.BaseThermalBlockBehaviour;
-import com.ffsupver.createheat.block.tightCompressStone.TightCompressStoneEntity;
 import com.ffsupver.createheat.network.HeatNetwork;
 import com.ffsupver.createheat.network.HeatService;
 import com.simibubi.create.AllBlocks;
@@ -134,13 +133,13 @@ public class ThermalToolUseActions {
 //                            ).withStyle(ChatFormatting.RED), true
 //                    );
 //                }else
-                    if (connectableBlockEntity.getControllerEntity() instanceof TightCompressStoneEntity tightCompressStoneEntity){
-                    player.displayClientMessage(Component.literal(
-                                    "Tight Compress Stone:  Connect count :"+tightCompressStoneEntity.getConnectedBlocks().size()+" x:" + tightCompressStoneEntity.getBlockPos().getX() + " y:" + tightCompressStoneEntity.getBlockPos().getY() + " z:" + tightCompressStoneEntity.getBlockPos().getZ() +
-                                            " heatStorage:" + tightCompressStoneEntity.getStoneHeatStorage()
-                            ).withStyle(ChatFormatting.RED), true
-                    );
-                }
+//                    if (connectableBlockEntity.getControllerEntity() instanceof TightCompressStoneEntity tightCompressStoneEntity){
+//                    player.displayClientMessage(Component.literal(
+//                                    "Tight Compress Stone:  Connect count :"+tightCompressStoneEntity.getConnectedBlocks().size()+" x:" + tightCompressStoneEntity.getBlockPos().getX() + " y:" + tightCompressStoneEntity.getBlockPos().getY() + " z:" + tightCompressStoneEntity.getBlockPos().getZ() +
+//                                            " heatStorage:" + tightCompressStoneEntity.getStoneHeatStorage()
+//                            ).withStyle(ChatFormatting.RED), true
+//                    );
+//                }
             }else {
 //                if (controllerEntity != null && level instanceof ServerLevel serverLevel) {
 //                    ThermalToolPointServer.tiggerPoint(serverLevel,pos,ThermalToolPointLogic.HEAT_SOURCE);

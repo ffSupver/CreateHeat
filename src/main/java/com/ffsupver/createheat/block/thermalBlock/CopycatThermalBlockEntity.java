@@ -31,7 +31,7 @@ import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.Hea
 import static net.minecraft.world.level.block.Blocks.*;
 import static net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT;
 
-public class CopycatThermalBlockEntity extends BaseThermalBlockEntity1 {
+public class CopycatThermalBlockEntity extends BaseThermalBlockEntity {
     private BlockState cashedState;
     private BlockState cashedMaterial;
     private BlockState material;

@@ -36,7 +36,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
 
     private UUID heatNetworkId;
     private HeatNetwork heatNetwork;
-    private final BaseThermalBlockEntity1 thermalBlockEntity;
+    private final BaseThermalBlockEntity thermalBlockEntity;
     private int litUpCooldown;
 
     // api
@@ -51,7 +51,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     private HeatUtil.HeatIOData displayHeatRemain;
 
 
-    public BaseThermalBlockBehaviour(BaseThermalBlockEntity1 be) {
+    public BaseThermalBlockBehaviour(BaseThermalBlockEntity be) {
         super(be);
         thermalBlockEntity = be;
     }

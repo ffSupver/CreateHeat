@@ -17,7 +17,7 @@ import java.util.List;
 
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.*;
 
-public class SmartThermalBlockEntity extends BaseThermalBlockEntity1 implements IHaveGoggleInformation {
+public class SmartThermalBlockEntity extends BaseThermalBlockEntity implements IHaveGoggleInformation {
     private ScrollOptionBehaviour<MaxHeatSelections> maxHeatLevelSelections;
     public SmartThermalBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);

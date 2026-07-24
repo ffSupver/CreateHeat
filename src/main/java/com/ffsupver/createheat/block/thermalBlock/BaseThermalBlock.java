@@ -25,10 +25,10 @@ import java.util.function.Supplier;
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL;
 import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.NONE;
 
-public class BaseThermalBlock1<T extends BaseThermalBlockEntity1> extends Block implements IBE<T>, IWrenchable {
+public class BaseThermalBlock<T extends BaseThermalBlockEntity> extends Block implements IBE<T>, IWrenchable {
     private final Class<T> blockEntityClass;
     private final Supplier<BlockEntityType<? extends T>> blockEntityType;
-    public BaseThermalBlock1(Properties properties, Class<T> blockEntityClass, Supplier<BlockEntityType<? extends T>> blockEntityType) {
+    public BaseThermalBlock(Properties properties, Class<T> blockEntityClass, Supplier<BlockEntityType<? extends T>> blockEntityType) {
         super(properties);
         this.blockEntityClass = blockEntityClass;
         this.blockEntityType = blockEntityType;
@@ -108,7 +108,7 @@ public class BaseThermalBlock1<T extends BaseThermalBlockEntity1> extends Block 
 
     @Override
     public boolean isBurning(BlockState state, BlockGetter level, BlockPos pos) {
-        BaseThermalBlockEntity1 baseThermalBlock = getBlockEntity(level,pos);
+        BaseThermalBlockEntity baseThermalBlock = getBlockEntity(level,pos);
         return baseThermalBlock != null && baseThermalBlock.isBurning();
     }
 

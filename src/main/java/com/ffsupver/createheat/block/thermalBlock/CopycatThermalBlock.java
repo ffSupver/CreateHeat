@@ -37,7 +37,7 @@ import java.util.function.Supplier;
 import static com.simibubi.create.content.redstone.RoseQuartzLampBlock.POWERING;
 import static net.minecraft.world.level.block.state.properties.BlockStateProperties.*;
 
-public class CopycatThermalBlock extends BaseThermalBlock1<CopycatThermalBlockEntity>{
+public class CopycatThermalBlock extends BaseThermalBlock<CopycatThermalBlockEntity> {
 
     public CopycatThermalBlock(Properties properties) {
         super(properties, CopycatThermalBlockEntity.class, ()->CHBlocks.COPYCAT_THERMAL_BLOCK_ENTITY.get());
