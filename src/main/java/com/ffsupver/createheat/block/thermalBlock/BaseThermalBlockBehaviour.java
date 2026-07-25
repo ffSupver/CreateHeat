@@ -129,7 +129,11 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     /** calculate heat cost by BlockState
      */
     public HeatUtil.HeatData getCurrentHeatCostData() {
-       return new HeatUtil.HeatData(getHeatPerTick(getHeatLevel()),getHeatLevel().isAtLeast(SEETHING)? 1:0);
+        int costSuperHeatCount = getHeatLevel().isAtLeast(SEETHING)? 1:0;
+        if (Config.ALLOW_GENERATE_SUPER_HEAT.get() || Config.ALLOW_SUPER_HEAT_REPRODUCE.get()){
+            costSuperHeatCount = 0;
+        }
+       return new HeatUtil.HeatData(getHeatPerTick(getHeatLevel()),costSuperHeatCount);
     }
 
     private HeatUtil.HeatData genHeat(){
@@ -150,20 +154,17 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
 
     private void checkHeatLevel(HeatNetwork.HeatInteractionData networkRemainHeat, Set<HeatTransferProcesser> neighborTransferProcesser){
         HeatLevel heatLevel = getHeatLevel();
-//        boolean haveEnoughHeat = getHeatPerTick(heatLevel) <= networkRemainHeat.heat() && (!heatLevel.isAtLeast(SEETHING) || networkRemainHeat.superHeatCount() >= 1);
         boolean haveEnoughHeat = haveEnoughHeat(networkRemainHeat,heatLevel);
         boolean hasHTPNeighbor = !neighborTransferProcesser.isEmpty();
         HeatLevel newHeatLevel = heatLevel;
         if (haveEnoughHeat) {
             if (needToHeat(hasHTPNeighbor)) {
-//                boolean canSuperHeat = onCanSuperHeatTest() && networkRemainHeat.heat() >= getHeatPerTick(SEETHING) && networkRemainHeat.superHeatCount() >= 1;
                 boolean canSuperHeat = onCanSuperHeatTest() && haveEnoughHeat(networkRemainHeat,SEETHING);
 
 
                 if (canSuperHeat && needToHeatUp(SEETHING,hasHTPNeighbor)){
                     newHeatLevel = SEETHING;
                 }else if (
-//                        networkRemainHeat.heat() >= getHeatPerTick(KINDLED) && // has enough heat for KINDLED
                         haveEnoughHeat(networkRemainHeat,KINDLED) &&
                                 (needToHeatUp(KINDLED,hasHTPNeighbor) || heatLevel.isAtLeast(SEETHING) && !canSuperHeat) // NONE->KINDLED or SEETHING->KINDLED
                 ){
@@ -173,7 +174,6 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
                 newHeatLevel = NONE;
             }
         }else {
-//            if (heatLevel.isAtLeast(SEETHING) && networkRemainHeat.heat() >= getHeatPerTick(KINDLED)){
             if (heatLevel.isAtLeast(SEETHING) && haveEnoughHeat(networkRemainHeat,KINDLED)){
                 newHeatLevel = KINDLED;
             }else {
@@ -187,8 +187,12 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     }
 
     private boolean haveEnoughHeat(HeatNetwork.HeatInteractionData networkRemainHeat,HeatLevel heatLevel){
-        HeatUtil.HeatData toExtract =new HeatUtil.HeatData(getHeatPerTick(heatLevel),heatLevel.isAtLeast(SEETHING) ? 1:0);
+        int superHeatCount = Config.ALLOW_GENERATE_SUPER_HEAT.get() ? 0 : (heatLevel.isAtLeast(SEETHING) ? 1:0);
+        HeatUtil.HeatData toExtract =new HeatUtil.HeatData(getHeatPerTick(heatLevel),superHeatCount);
         HeatUtil.HeatData testExtracted = networkRemainHeat.extractHeat(toExtract,true);
+        if(Config.ALLOW_SUPER_HEAT_REPRODUCE.get()){
+            return testExtracted.heat() >= toExtract.heat() && testExtracted.superHeatCount() >= Math.min(1,toExtract.superHeatCount());
+        }
         return testExtracted.equals(toExtract);
     }
 
