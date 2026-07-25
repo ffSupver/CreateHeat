@@ -20,6 +20,7 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
 
     private UUID networkId;
     private SuperHeatStorage superHeatStorage = new SuperHeatStorage(MAX_HEAT.get()*200);
+    private SuperHeatStorage.SuperSnapshot lastStorage;
 
 
     public HeatStorageBehaviour(SmartBlockEntity be) {
@@ -30,7 +31,15 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
     public void tick() {
         super.tick();
 
-        TightCompressStone.Heat newHeat = getHeat();
+        // check storage change
+        if (lastStorage != null && !lastStorage.equals(superHeatStorage.superSnapshot())){
+            blockEntity.notifyUpdate();
+        }
+        lastStorage = superHeatStorage.superSnapshot();
+
+
+        // update heat
+        TightCompressStone.Heat newHeat;
         if (this.superHeatStorage.superAmount > 0){
             newHeat = SUPER_HEAT;
         }else if (this.superHeatStorage.getAmount() > 0){
@@ -51,17 +60,11 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
         return superHeatStorage.extract(heatData,simulate);
     }
 
-//    public HeatUtil.HeatData extractHeat(HeatUtil.HeatData heatData,boolean simulate){
-//        return superHeatStorage.extract(heatData,simulate);
-//    }
 
     public SuperHeatStorage getSuperHeatStorage() {
         return superHeatStorage;
     }
 
-//    public int getCapacity() {
-//        return superHeatStorage.getCapacity();
-//    }
 
     public int getAmount() {
         return superHeatStorage.getAmount();

@@ -27,6 +27,7 @@ public class HeatStorageNetwork extends TickingBlockNetwork{
 
 
         HeatStorageBehaviour.SuperHeatStorage.SuperSnapshot heatChange = heatStorage.getHeatChange();
+//        System.out.println("heatChange:"+heatChange);
         heatStorage.clear();
 
         for (BlockPos pos : connectedBlocks){
@@ -64,12 +65,13 @@ public class HeatStorageNetwork extends TickingBlockNetwork{
      * @return heat data left
      */
     public HeatUtil.HeatData insert(ServerLevel level,HeatUtil.HeatData heatData) {
-        System.out.println("start insert heat:"+heatData);
+//        System.out.println("start insert heat:"+heatData);
         for (BlockPos pos : connectedBlocks){
             HeatStorageBehaviour heatStorageBehaviour = BlockEntityBehaviour.get(level,pos,HeatStorageBehaviour.TYPE);
+//            System.out.println("insert heat to PRE"+pos+" heat:"+heatData);
             if (heatStorageBehaviour != null){
                 heatData = heatStorageBehaviour.insertHeat(heatData);
-                System.out.println("insert heat to "+pos+" heat:"+heatData);
+//                System.out.println("insert heat to "+pos+" heat:"+heatData);
             }
         }
         return heatData;
