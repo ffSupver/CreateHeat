@@ -27,7 +27,7 @@ public class HeatStorageNetwork extends TickingBlockNetwork{
 
 
         HeatStorageBehaviour.SuperHeatStorage.SuperSnapshot heatChange = heatStorage.getHeatChange();
-//        System.out.println("heatChange:"+heatChange);
+//        System.out.println("HeatStorageNetwork:"+connectedBlocks.size()+"heatChange:"+heatChange+" blocks:"+connectedBlocks);
         heatStorage.clear();
 
         for (BlockPos pos : connectedBlocks){

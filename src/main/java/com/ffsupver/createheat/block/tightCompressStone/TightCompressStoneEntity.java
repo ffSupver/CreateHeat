@@ -1,13 +1,11 @@
 package com.ffsupver.createheat.block.tightCompressStone;
 
-import com.ffsupver.createheat.util.BlockUtil;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -18,16 +16,7 @@ public class TightCompressStoneEntity extends SmartBlockEntity{
     }
 
     public Set<UUID> getNeighborNetworkId(){
-        Set<UUID> neighborNetworkIds = new HashSet<>();
-        BlockUtil.AllDirectionOf(getBlockPos(), neighborPos->{
-            if (getLevel().getBlockEntity(neighborPos) instanceof TightCompressStoneEntity neighborBE){
-                UUID neighborID = neighborBE.getNetworkId();
-                if (neighborID != null){
-                    neighborNetworkIds.add(neighborID);
-                }
-            }
-        });
-        return neighborNetworkIds;
+        return getBehaviour().getNeighborNetworkId();
     }
 
     @Override

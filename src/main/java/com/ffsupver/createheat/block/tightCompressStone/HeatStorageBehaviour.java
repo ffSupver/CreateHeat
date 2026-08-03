@@ -1,24 +1,33 @@
 package com.ffsupver.createheat.block.tightCompressStone;
 
 import com.ffsupver.createheat.block.thermalBlock.HeatStorage;
+import com.ffsupver.createheat.network.HeatStorageNetwork;
+import com.ffsupver.createheat.network.NetworkService;
+import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.HeatUtil;
+import com.ffsupver.createheat.util.NbtUtil;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.HEAT;
 import static com.ffsupver.createheat.block.tightCompressStone.TightCompressStone.Heat.*;
 import static com.ffsupver.createheat.network.HeatNetwork.MAX_HEAT;
+import static com.ffsupver.createheat.network.NetworkService.Services.HEAT_STORAGE;
 
 public class HeatStorageBehaviour extends BlockEntityBehaviour {
     public static final BehaviourType<HeatStorageBehaviour> TYPE = new BehaviourType<>();
 
     private UUID networkId;
+    private BlockPos lastPos;
     private SuperHeatStorage superHeatStorage = new SuperHeatStorage(MAX_HEAT.get()*200);
     private SuperHeatStorage.SuperSnapshot lastStorage;
 
@@ -30,6 +39,20 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
     @Override
     public void tick() {
         super.tick();
+
+        if (lastPos == null){
+            lastPos = getPos();
+        }
+
+        if (!lastPos.equals(getPos())){
+            System.out.println("TTS block change:"+getPos()+" last:"+lastPos+" networkId:"+networkId);
+            if (networkId != null && NetworkService.getNetwork(getWorld(),networkId, HEAT_STORAGE) instanceof HeatStorageNetwork heatStorageNetwork){
+                heatStorageNetwork.removeBlock(lastPos);
+            }
+            networkId = NetworkService.addBlockToNetwork(getPos(),getWorld(),getNeighborNetworkId(), HEAT_STORAGE);
+            lastPos = getPos();
+        }
+
 
         // check storage change
         if (lastStorage != null && !lastStorage.equals(superHeatStorage.superSnapshot())){
@@ -90,18 +113,39 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
         return networkId;
     }
 
+    public Set<UUID> getNeighborNetworkId(){
+        Set<UUID> neighborNetworkIds = new HashSet<>();
+        BlockUtil.AllDirectionOf(getPos(), neighborPos->{
+            if (BlockEntityBehaviour.get(getWorld(),neighborPos, TYPE) instanceof HeatStorageBehaviour neighborBE){
+                UUID neighborID = neighborBE.getNetworkId();
+                if (neighborID != null){
+                    neighborNetworkIds.add(neighborID);
+                }
+            }
+        });
+        return neighborNetworkIds;
+    }
+
     @Override
     public void read(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(nbt, registries, clientPacket);
         networkId = nbt.getUUID("NetworkId");
         superHeatStorage.fromNbt(nbt.getCompound("super_storage"));
+        if (nbt.contains("lastPos")){
+            lastPos = NbtUtil.blockPosFromNbt(nbt.getCompound("lastPos"));
+        }
     }
 
     @Override
     public void write(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(nbt, registries, clientPacket);
-        nbt.putUUID("NetworkId", networkId);
+        if (networkId != null){
+            nbt.putUUID("NetworkId", networkId);
+        }
         nbt.put("super_storage",superHeatStorage.toNbt());
+        if (lastPos != null){
+            nbt.put("lastPos", NbtUtil.blockPosToNbt(lastPos));
+        }
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.ffsupver.createheat.registries;
 
+import com.simibubi.create.AllItems;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -29,6 +30,8 @@ public class CHCreativeTab {
                 output.accept(SMART_THERMAL_BLOCK);
                 output.accept(COPYCAT_THERMAL_BLOCK);
                 output.accept(TIGHT_COMPRESSED_STONE);
+
+                output.accept(AllItems.GOGGLES);
             })
             .build());
 

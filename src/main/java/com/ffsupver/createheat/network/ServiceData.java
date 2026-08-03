@@ -13,6 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
+import org.checkerframework.checker.units.qual.N;
 
 import java.util.*;
 import java.util.function.Function;
@@ -47,9 +48,9 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
 
         // tick each network
         Set<UUID> networkNeedToRemove = new HashSet<>();
-        System.out.println("ticking:"+serverLevel.dimension()+" level:"+serverLevel+" type:"+this);
+//        System.out.println("ticking:"+serverLevel.dimension()+" level:"+serverLevel+" type:"+this);
         for (T network : networks.values()){
-            System.out.println("network T:"+network.getClass()+"  "+network);
+//            System.out.println("network T:"+network.getClass()+"  "+network);
             if(network.tick(serverLevel)){
                 needSave = true;
             }
@@ -69,7 +70,15 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
 
     public T getNetwork(ResourceKey<Level> levelKey,UUID uuid){
         if (NETWORKS.containsKey(levelKey)){
-            return NETWORKS.get(levelKey).get(uuid);
+            if (NETWORKS.get(levelKey).containsKey(uuid)){
+                return NETWORKS.get(levelKey).get(uuid);
+            }
+        }
+        if (networkMapToAddNextTick.containsKey(levelKey)){
+            Optional<T> networkOp = networkMapToAddNextTick.get(levelKey).stream().filter(network -> network.getNetworkID().equals(uuid)).findAny();
+            if (networkOp.isPresent()){
+                return networkOp.get();
+            }
         }
         return null;
     }
@@ -91,7 +100,7 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
     public UUID addBlockToNetwork(BlockPos pos, ServerLevel level, UUID networkID){
         T network = getNetwork(level.dimension(),networkID);
 
-        System.out.println("AddBlock network:"+networkID+"n "+network);
+        System.out.println("AddBlock network:"+networkID+" network "+network);
         if (network == null){
             networkID = UUID.randomUUID();
             network = createNetwork(networkID,Set.of(pos));

@@ -11,6 +11,7 @@ import com.ffsupver.createheat.registries.CHHeatProviders;
 import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
 import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.HeatUtil;
+import com.ffsupver.createheat.util.NbtUtil;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -38,6 +39,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     private HeatNetwork heatNetwork;
     private final BaseThermalBlockEntity thermalBlockEntity;
     private int litUpCooldown;
+    private BlockPos lastPos;
 
     // api
     private Predicate<BaseThermalBlockBehaviour> canSuperHeat;
@@ -59,11 +61,25 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     @Override
     public void tick() {
         super.tick();
+        if (lastPos == null){
+            lastPos = getPos();
+        }
+
+
+        if (!getPos().equals(lastPos)){
+            System.out.println("pos change last:"+lastPos+" now:"+getPos()+" isClient "+getWorld().isClientSide());
+            if (heatNetwork != null){
+                heatNetwork.removeBlock(lastPos);
+            }
+            heatNetworkId = null;
+            heatNetwork = null;
+            lastPos = getPos();
+        }
+
         // try to create network or find neighbor network
         if (heatNetworkId == null){
-            if (!thermalBlockEntity.getNeighborNetworkId().isEmpty()){
-                this.heatNetworkId = HeatService.addBlockToNetwork(getPos(),getWorld(),thermalBlockEntity.getNeighborNetworkId());
-            }
+//            System.out.println("try to create network Neighbour"+thermalBlockEntity.getNeighborNetworkId()+" this "+getPos());
+            this.heatNetworkId = HeatService.addBlockToNetwork(getPos(),getWorld(),thermalBlockEntity.getNeighborNetworkId());
         }
 
         // try to get network
@@ -320,6 +336,9 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         if (tag.contains("network_id")){
             this.heatNetworkId = tag.getUUID("network_id");
         }
+        if (tag.contains("last_pos")){
+            this.lastPos = NbtUtil.blockPosFromNbt(tag.getCompound("last_pos"));
+        }
 
         if (tag.contains("display_heat_remain")){
             this.displayHeatRemain = HeatUtil.HeatIOData.fromNbt(tag.getCompound("display_heat_remain"));
@@ -334,6 +353,9 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         super.write(nbt, registries, clientPacket);
         if (this.heatNetworkId != null){
             nbt.putUUID("network_id", this.heatNetworkId);
+        }
+        if (this.lastPos != null){
+            nbt.put("last_pos", NbtUtil.blockPosToNbt(this.lastPos));
         }
 
 
