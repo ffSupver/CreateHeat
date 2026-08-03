@@ -13,7 +13,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
-import org.checkerframework.checker.units.qual.N;
 
 import java.util.*;
 import java.util.function.Function;
@@ -39,18 +38,14 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
 
         //add network in networkMapToAddNextTick
         needSave = !networkMapToAddNextTick.isEmpty();
-//            System.out.println("adding network:"+networkMapToAddNextTick+" levelKey:"+levelKey);
         networkMapToAddNextTick.getOrDefault(levelKey,Set.of()).forEach(network -> {
             networks.put(network.getNetworkID(),network);
         });
-//            System.out.println("networks:"+networks+" levelKey:"+levelKey);
         networkMapToAddNextTick.remove(levelKey);
 
         // tick each network
         Set<UUID> networkNeedToRemove = new HashSet<>();
-//        System.out.println("ticking:"+serverLevel.dimension()+" level:"+serverLevel+" type:"+this);
         for (T network : networks.values()){
-//            System.out.println("network T:"+network.getClass()+"  "+network);
             if(network.tick(serverLevel)){
                 needSave = true;
             }
@@ -60,7 +55,6 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
             }
         }
 
-//            System.out.println("to Remove:"+networkNeedToRemove);
         networkNeedToRemove.forEach(networks::remove);
 
         if (needSave){
@@ -100,7 +94,6 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
     public UUID addBlockToNetwork(BlockPos pos, ServerLevel level, UUID networkID){
         T network = getNetwork(level.dimension(),networkID);
 
-        System.out.println("AddBlock network:"+networkID+" network "+network);
         if (network == null){
             networkID = UUID.randomUUID();
             network = createNetwork(networkID,Set.of(pos));
@@ -108,7 +101,6 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
         }else {
             network.addBlock(pos,true);
         }
-        System.out.println("AddBlock network:"+networkID);
         setDirty();
 
         return networkID;
@@ -122,7 +114,6 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
      * @return network id the pos added to
      */
     public UUID addBlockToNetwork(BlockPos pos,ServerLevel serverLevel,Set<UUID> allNeighborNetworkIDs){
-        System.out.println("AddAndMerge:"+pos+" ids:"+allNeighborNetworkIDs);
         if (allNeighborNetworkIDs.isEmpty()){
             return addBlockToNetwork(pos,serverLevel,(UUID)null);
         }else if (allNeighborNetworkIDs.size() == 1){
@@ -168,7 +159,6 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
      **/
     public void removeBlockFromNetwork(ServerLevel serverLevel, BlockPos pos, UUID networkID) {
         T network = getNetwork(serverLevel.dimension(),networkID);
-        System.out.println("removing block"+pos+" network:"+networkID+"n "+network);
         if (network != null){
             network.removeBlock(pos);
             setDirty();
@@ -199,7 +189,6 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
             addNetwork(level.dimension(),newNetwork);
             remainingBlocks.removeAll(connectedBlocks);
         }
-        System.out.println("disconnectedBlocks:"+disconnectedBlocks+"\nnew networks:"+newNetworks);
 
         return newNetworks;
     }

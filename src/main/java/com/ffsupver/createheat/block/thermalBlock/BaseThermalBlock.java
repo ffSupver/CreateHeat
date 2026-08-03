@@ -56,7 +56,6 @@ public class BaseThermalBlock<T extends BaseThermalBlockEntity> extends Block im
      */
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
-        System.out.println("onPlace"+pos+" old:"+oldState+" new:"+state+" isC:"+level.isClientSide());
         super.onPlace(state, level, pos, oldState, movedByPiston);
         if (!oldState.getBlock().equals(state.getBlock())){ // new block
             withBlockEntityDo(level, pos, baseThermalBlockEntity -> {
@@ -72,7 +71,6 @@ public class BaseThermalBlock<T extends BaseThermalBlockEntity> extends Block im
      */
     @Override
     protected void onRemove(BlockState oldState, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        System.out.println("onRemove"+pos+" old:"+oldState+" new:"+newState+" isC:"+level.isClientSide());
         if (!oldState.getBlock().equals(newState.getBlock())){ // destroy
             withBlockEntityDo(level,pos,baseThermalBlockEntity -> {
                 if (baseThermalBlockEntity.getHeatNetworkId() != null){

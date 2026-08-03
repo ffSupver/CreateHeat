@@ -162,7 +162,6 @@ public class HeatNetwork extends TickingBlockNetwork{
         heatTransferProcesserToRemovePosSet.stream().map(pos -> Map.entry(pos,transferProcesserMap.get(pos))).toList().forEach(transferProcesserMap.entrySet()::remove);
         shouldSave = shouldSave || !heatTransferProcesserToRemovePosSet.isEmpty();
 
-        System.out.println("tickingHeatNetwork "+level.dimension()+"   heat:"+heatStorage+"   lastHeat:"+ heatInteractionData.networkHeatRemain +"   hTPs:"+transferProcesserMap+"   blocks:"+connectedBlocks.size()+" / "+connectedBlocks+" storage="+connectedHeatStorageNetworks);
 
         return shouldSave;
     }
@@ -174,7 +173,6 @@ public class HeatNetwork extends TickingBlockNetwork{
             for (UUID heatStorageNetworkId : connectedHeatStorageNetworks) {
                 if(NetworkService.getNetwork(level, heatStorageNetworkId, NetworkService.Services.HEAT_STORAGE) instanceof HeatStorageNetwork heatStorageNetwork){
                     toInsert = heatStorageNetwork.insert(level,toInsert);
-                    System.out.println("insert heat to heatStorageNetwork:"+heatStorageNetwork+"   heat:"+toInsert);
                 }
             }
         }
@@ -188,7 +186,6 @@ public class HeatNetwork extends TickingBlockNetwork{
 
         heatInteractionData.setHeatStorageNetworks(heatStorageNetworkStorages);
         heatInteractionData.setNetworkHeatRemain(heatProvideFromNetwork);
-        System.out.println("heatInteractionData:"+heatInteractionData);
     }
 
 
@@ -279,7 +276,6 @@ public class HeatNetwork extends TickingBlockNetwork{
 
     public static HeatNetwork fromNbt(Tag tag){
         CompoundTag nbt = (CompoundTag) tag;
-        System.out.println("loadingHeatNetworkNbt:"+nbt);
         Map<BlockPos, HeatTransferProcesser> transferProcesserMap = new HashMap<>(NbtUtil.readMapFromNbtList(
                 nbt.getList("transfer_processers", Tag.TAG_COMPOUND),
                 NbtUtil::blockPosFromNbt,
@@ -310,8 +306,6 @@ public class HeatNetwork extends TickingBlockNetwork{
                 CHHeatTransferProcessers::toNbt
         ));
         heatInteractionData.toNbt(nbt);
-//        nbt.put("heat_data_last_tick_remain",heatDataLastTickRemain.toNbt());
-        System.out.println("savingHeatNetworkNbt:"+nbt);
         return nbt;
     }
 

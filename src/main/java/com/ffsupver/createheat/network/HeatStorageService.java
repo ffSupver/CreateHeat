@@ -40,10 +40,6 @@ public class HeatStorageService {
             if (networkBehaviour != null && networkBehaviour.checkNetworkType(NetworkService.Services.HEAT_STORAGE)){
                 networkBehaviour.setNetworkId(newNetworkID);
             }
-//            HeatStorageBehaviour heatStorageBehaviour = BlockEntityBehaviour.get(level,pos,HeatStorageBehaviour.TYPE);
-//            if (heatStorageBehaviour != null){
-//                heatStorageBehaviour.setNetworkId(newNetworkID);
-//            }
         }
 
 

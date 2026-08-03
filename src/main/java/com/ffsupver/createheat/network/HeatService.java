@@ -77,10 +77,6 @@ public class HeatService {
             if (networkBehaviour != null && networkBehaviour.checkNetworkType(HEAT)){
                 networkBehaviour.setNetworkId(newNetworkID);
             }
-//            BaseThermalBlockBehaviour baseThermalBlockBehaviour = BlockEntityBehaviour.get(level,pos,BaseThermalBlockBehaviour.TYPE);
-//            if (baseThermalBlockBehaviour != null){
-//                baseThermalBlockBehaviour.setHeatNetworkId(newNetworkID);
-//            }
         }
 
         public static Factory<HeatServiceData> factory(){

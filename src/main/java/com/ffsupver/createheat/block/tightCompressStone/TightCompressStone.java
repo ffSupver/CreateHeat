@@ -44,7 +44,7 @@ public class TightCompressStone extends Block implements IBE<TightCompressStoneE
             withBlockEntityDo(level,pos,tightCompressStoneEntity -> {
                 Set<UUID> neighborNetworkId = tightCompressStoneEntity.getNeighborNetworkId();
                 tightCompressStoneEntity.setNetworkId(NetworkService.addBlockToNetwork(pos,level,neighborNetworkId, NetworkService.Services.HEAT_STORAGE));
-                System.out.println("add blockTTS"+tightCompressStoneEntity.getNetworkId());
+
             });
         }
     }
@@ -53,7 +53,6 @@ public class TightCompressStone extends Block implements IBE<TightCompressStoneE
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.getBlock().equals(newState.getBlock())){ // destroy
             withBlockEntityDo(level, pos, tightCompressStoneEntity -> {
-                System.out.println("remove blockTTS"+tightCompressStoneEntity.getNetworkId());
                 if (tightCompressStoneEntity.getNetworkId() != null) {
                     NetworkService.removeBlockFromNetwork(level, pos, tightCompressStoneEntity.getNetworkId(), NetworkService.Services.HEAT_STORAGE);
                 }

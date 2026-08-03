@@ -21,7 +21,7 @@ public class NetworkService {
     public static void onServerTickPost(ServerTickEvent.Post event){
         MinecraftServer server = event.getServer();
 
-//        System.out.println("Network tick:"+SERVICE_DATA_MAP);
+
         for (Services services : Services.values()){
             if (!SERVICE_DATA_MAP.containsKey(services.id)){
                 DimensionDataStorage dataStorage = server.overworld().getDataStorage();

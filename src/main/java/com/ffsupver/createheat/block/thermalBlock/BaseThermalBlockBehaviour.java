@@ -103,12 +103,10 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
             if (!getWorld().isClientSide()){
                 HeatStorage.Snapshot newDisplayHeatStorage = heatNetwork.getDisplayHeatStorage();
                 HeatUtil.HeatIOData newDisplayHeatRemain = heatNetwork.getDisplayHeatData();
-//                System.out.println("new:"+newDisplayHeatStorage+":"+newDisplayHeatRemain+"   old:"+displayHeatStorage+":"+displayHeatRemain+" pos:"+getPos());
                 boolean displayDataChanged = !newDisplayHeatRemain.equals(displayHeatRemain) || !newDisplayHeatStorage.equals(displayHeatStorage);
                 displayHeatRemain = newDisplayHeatRemain;
                 displayHeatStorage = newDisplayHeatStorage;
                 if (displayDataChanged){
-//                    System.out.println("displayDataChanged");
                     thermalBlockEntity.sendData();
                 }
             }
@@ -229,7 +227,6 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
             getWorld().setBlock(getPos(), getBlockState().setValue(HEAT_LEVEL, heatLevel), 3);
             setSuccess = true;
         }
-        System.out.println("setBlockHeat:"+heatLevel+" pos:"+getPos()+" success:"+setSuccess);
         if (setSuccess && onSetHeatLevel != null){
             onSetHeatLevel.accept(heatLevel);
         }

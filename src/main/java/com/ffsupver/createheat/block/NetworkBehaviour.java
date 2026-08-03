@@ -37,7 +37,6 @@ public class NetworkBehaviour extends BlockEntityBehaviour {
         }
 
         if (!getPos().equals(lastPos)){
-            System.out.println("NPosChange last:"+lastPos+" now:"+getPos()+" isClient "+getWorld().isClientSide());
             if (network != null){
                 network.removeBlock(lastPos);
             }

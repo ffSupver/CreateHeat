@@ -91,7 +91,6 @@ public abstract class MainHeatTransferProcesser extends HeatTransferProcesser{
 
     @Override
     public void acceptHeat(Level level, BlockPos hTPPos, int heatProvide, int tickSkip,int superHeatCount) {
-        System.out.println("acceptHeat main:"+isMainProcesser+" heatProvide:"+heatProvide+" pos:"+hTPPos);
             if (isMainProcesser){
                 acceptHeatAsMain(level,hTPPos,heatProvide,tickSkip,acceptedHeat);
                 acceptedHeat = 0;
