@@ -1,5 +1,6 @@
 package com.ffsupver.createheat.network;
 
+import com.ffsupver.createheat.block.NetworkBehaviour;
 import com.ffsupver.createheat.block.tightCompressStone.HeatStorageBehaviour;
 import com.ffsupver.createheat.util.HeatUtil;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -85,9 +86,13 @@ public class HeatStorageNetwork extends TickingBlockNetwork{
 
     @Override
     protected void onBlockMergeToNetwork(ServerLevel serverLevel, BlockPos pos, TickingBlockNetwork finalNetwork) {
-        HeatStorageBehaviour heatStorageBehaviour = BlockEntityBehaviour.get(serverLevel,pos,HeatStorageBehaviour.TYPE);
-        if (heatStorageBehaviour != null){
-            heatStorageBehaviour.setNetworkId(finalNetwork.getNetworkID());
+//        HeatStorageBehaviour heatStorageBehaviour = BlockEntityBehaviour.get(serverLevel,pos,HeatStorageBehaviour.TYPE);
+//        if (heatStorageBehaviour != null){
+//            heatStorageBehaviour.setNetworkId(finalNetwork.getNetworkID());
+//        }
+        NetworkBehaviour networkBehaviour = BlockEntityBehaviour.get(serverLevel,pos, NetworkBehaviour.TYPE);
+        if (networkBehaviour != null && networkBehaviour.checkNetworkType(HEAT_STORAGE)){
+            networkBehaviour.setNetworkId(finalNetwork.getNetworkID());
         }
     }
 

@@ -6,12 +6,10 @@ import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
 import com.ffsupver.createheat.block.tightCompressStone.HeatStorageBehaviour;
 import com.ffsupver.createheat.network.HeatNetwork;
-import com.ffsupver.createheat.network.HeatService;
 import com.ffsupver.createheat.registries.CHHeatProviders;
 import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
 import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.HeatUtil;
-import com.ffsupver.createheat.util.NbtUtil;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -35,11 +33,8 @@ import static com.simibubi.create.content.processing.burner.BlazeBurnerBlock.Hea
 public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     public static final BehaviourType<BaseThermalBlockBehaviour> TYPE = new BehaviourType<>();
 
-    private UUID heatNetworkId;
-    private HeatNetwork heatNetwork;
     private final BaseThermalBlockEntity thermalBlockEntity;
     private int litUpCooldown;
-    private BlockPos lastPos;
 
     // api
     private Predicate<BaseThermalBlockBehaviour> canSuperHeat;
@@ -61,31 +56,9 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     @Override
     public void tick() {
         super.tick();
-        if (lastPos == null){
-            lastPos = getPos();
-        }
-
-
-        if (!getPos().equals(lastPos)){
-            System.out.println("pos change last:"+lastPos+" now:"+getPos()+" isClient "+getWorld().isClientSide());
-            if (heatNetwork != null){
-                heatNetwork.removeBlock(lastPos);
-            }
-            heatNetworkId = null;
-            heatNetwork = null;
-            lastPos = getPos();
-        }
-
-        // try to create network or find neighbor network
-        if (heatNetworkId == null){
-//            System.out.println("try to create network Neighbour"+thermalBlockEntity.getNeighborNetworkId()+" this "+getPos());
-            this.heatNetworkId = HeatService.addBlockToNetwork(getPos(),getWorld(),thermalBlockEntity.getNeighborNetworkId());
-        }
 
         // try to get network
-        if (heatNetwork == null) {
-            heatNetwork = HeatService.getNetwork(getWorld(), heatNetworkId);
-        }
+        HeatNetwork heatNetwork = getHeatNetwork();
 
         // tick with network
         if (heatNetwork != null){
@@ -276,11 +249,11 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     }
 
     private boolean isInSameNetwork(BlockPos checkPos){
-        BaseThermalBlockBehaviour checkBehaviour = BlockEntityBehaviour.get(getWorld(), checkPos, BaseThermalBlockBehaviour.TYPE);
-        return checkBehaviour != null && checkBehaviour.getHeatNetworkId() == heatNetworkId;
+       return thermalBlockEntity.getNetworkBehaviour().isInSameNetwork(checkPos);
     }
 
     public Optional<HeatTransferProcesser> getHeatTransferProcesserByOther(BlockPos belowPos) {
+        HeatNetwork heatNetwork = getHeatNetwork();
         if (heatNetwork != null){
             return Optional.ofNullable(heatNetwork.getTransferProcesser(belowPos));
         }
@@ -325,6 +298,13 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         return getWorld().getBlockState(getPos());
     }
 
+    public HeatNetwork getHeatNetwork(){
+        if (thermalBlockEntity.getNetworkBehaviour() != null && thermalBlockEntity.getNetworkBehaviour().getNetwork() instanceof HeatNetwork network){
+            return network;
+        }
+        return null;
+    }
+
 
     public boolean isBurning() {
        return getHeatLevel().isAtLeast(KINDLED);
@@ -333,12 +313,6 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     @Override
     public void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
-        if (tag.contains("network_id")){
-            this.heatNetworkId = tag.getUUID("network_id");
-        }
-        if (tag.contains("last_pos")){
-            this.lastPos = NbtUtil.blockPosFromNbt(tag.getCompound("last_pos"));
-        }
 
         if (tag.contains("display_heat_remain")){
             this.displayHeatRemain = HeatUtil.HeatIOData.fromNbt(tag.getCompound("display_heat_remain"));
@@ -351,12 +325,6 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
     @Override
     public void write(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(nbt, registries, clientPacket);
-        if (this.heatNetworkId != null){
-            nbt.putUUID("network_id", this.heatNetworkId);
-        }
-        if (this.lastPos != null){
-            nbt.put("last_pos", NbtUtil.blockPosToNbt(this.lastPos));
-        }
 
 
         if (displayHeatRemain != null){
@@ -372,13 +340,12 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         return TYPE;
     }
 
-    public void setHeatNetworkId(UUID heatNetworkId) {
-        this.heatNetworkId = heatNetworkId;
-        this.heatNetwork = null;
-    }
 
     public UUID getHeatNetworkId() {
-        return heatNetworkId;
+        if (thermalBlockEntity.getNetworkBehaviour() != null){
+            return thermalBlockEntity.getNetworkBehaviour().getNetworkId();
+        }
+        return null;
     }
 
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
@@ -403,8 +370,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
             ));
             return true;
         }
-
-        return heatNetworkId != null;
+        return true;
     }
 
     /**

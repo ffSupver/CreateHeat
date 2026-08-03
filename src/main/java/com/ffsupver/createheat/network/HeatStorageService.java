@@ -1,7 +1,6 @@
 package com.ffsupver.createheat.network;
 
-import com.ffsupver.createheat.block.tightCompressStone.HeatStorageBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.ffsupver.createheat.block.NetworkBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -37,10 +36,14 @@ public class HeatStorageService {
 
         @Override
         public void changeBlockNetwork(BlockPos pos, ServerLevel level, UUID newNetworkID) {
-            HeatStorageBehaviour heatStorageBehaviour = BlockEntityBehaviour.get(level,pos,HeatStorageBehaviour.TYPE);
-            if (heatStorageBehaviour != null){
-                heatStorageBehaviour.setNetworkId(newNetworkID);
+            NetworkBehaviour networkBehaviour = NetworkBehaviour.get(level,pos,NetworkBehaviour.TYPE);
+            if (networkBehaviour != null && networkBehaviour.checkNetworkType(NetworkService.Services.HEAT_STORAGE)){
+                networkBehaviour.setNetworkId(newNetworkID);
             }
+//            HeatStorageBehaviour heatStorageBehaviour = BlockEntityBehaviour.get(level,pos,HeatStorageBehaviour.TYPE);
+//            if (heatStorageBehaviour != null){
+//                heatStorageBehaviour.setNetworkId(newNetworkID);
+//            }
         }
 
 

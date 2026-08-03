@@ -1,5 +1,7 @@
 package com.ffsupver.createheat.block.tightCompressStone;
 
+import com.ffsupver.createheat.block.NetworkBehaviour;
+import com.ffsupver.createheat.network.NetworkService;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
@@ -16,23 +18,29 @@ public class TightCompressStoneEntity extends SmartBlockEntity{
     }
 
     public Set<UUID> getNeighborNetworkId(){
-        return getBehaviour().getNeighborNetworkId();
+        return getNetworkBehaviour().getNeighborNetworkId();
+//        return getBehaviour().getNeighborNetworkId();
     }
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        behaviours.add(new NetworkBehaviour(this, NetworkService.Services.HEAT_STORAGE));
         behaviours.add(new HeatStorageBehaviour(this));
     }
 
     public void setNetworkId(UUID id){
-        getBehaviour().setNetworkId(id);
+//        getBehaviour().setNetworkId(id);
+        getNetworkBehaviour().setNetworkId(id);
     }
 
     public UUID getNetworkId(){
-        return getBehaviour().getNetworkId();
+        return getNetworkBehaviour().getNetworkId();
     }
 
     public HeatStorageBehaviour getBehaviour(){
         return getBehaviour(HeatStorageBehaviour.TYPE);
+    }
+    public NetworkBehaviour getNetworkBehaviour(){
+        return getBehaviour(NetworkBehaviour.TYPE);
     }
 }

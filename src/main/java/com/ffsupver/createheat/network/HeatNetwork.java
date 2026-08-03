@@ -3,6 +3,7 @@ package com.ffsupver.createheat.network;
 import com.ffsupver.createheat.Config;
 import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
+import com.ffsupver.createheat.block.NetworkBehaviour;
 import com.ffsupver.createheat.block.thermalBlock.BaseThermalBlockBehaviour;
 import com.ffsupver.createheat.block.thermalBlock.HeatStorage;
 import com.ffsupver.createheat.block.tightCompressStone.HeatStorageBehaviour;
@@ -33,7 +34,6 @@ public class HeatNetwork extends TickingBlockNetwork{
     private final Set<UUID> connectedHeatStorageNetworks = new HashSet<>();
     private final Set<UUID> lastConnectedHeatStorageNetworks = new HashSet<>();
     private HeatUtil.HeatData heatGenDataLastTick = NO_HEAT_PROVIDE;
-//    private HeatUtil.HeatData heatDataLastTickRemain = HeatUtil.NO_HEAT_PROVIDE;
     private HeatInteractionData heatInteractionData = new HeatInteractionData(Set.of(), NO_HEAT_PROVIDE);
     private HeatUtil.HeatData heatCostDataLastTick = NO_HEAT_PROVIDE;
     private HeatUtil.HeatIOData displayHeatData = HeatUtil.HeatIOData.NO_HEAT_IO;
@@ -210,16 +210,16 @@ public class HeatNetwork extends TickingBlockNetwork{
 
     @Override
     protected void onUnloadedBlockLoaded(ServerLevel level, BlockPos unloadedPos) {
-        getThermalBlockBehaviour(level, unloadedPos).ifPresent(
-                baseThermalBlockBehaviour->baseThermalBlockBehaviour.setHeatNetworkId(networkID)
+        getNetworkBehaviour(level, unloadedPos).ifPresent(
+                networkBehaviour->networkBehaviour.setNetworkId(networkID)
         );
     }
 
     @Override
     protected void onBlockMergeToNetwork(ServerLevel serverLevel, BlockPos pos, TickingBlockNetwork finalNetwork) {
-        getThermalBlockBehaviour(serverLevel, pos).ifPresent(
-                baseThermalBlockBehaviour ->
-                        baseThermalBlockBehaviour.setHeatNetworkId(finalNetwork.getNetworkID())
+        getNetworkBehaviour(serverLevel, pos).ifPresent(
+                networkBehaviour ->
+                        networkBehaviour.setNetworkId(finalNetwork.getNetworkID())
         );
     }
 
@@ -267,6 +267,14 @@ public class HeatNetwork extends TickingBlockNetwork{
 
     private Optional<BaseThermalBlockBehaviour> getThermalBlockBehaviour(ServerLevel level, BlockPos pos) {
         return Optional.ofNullable(BlockEntityBehaviour.get(level, pos, BaseThermalBlockBehaviour.TYPE));
+    }
+
+    private Optional<NetworkBehaviour> getNetworkBehaviour(ServerLevel level, BlockPos pos) {
+        NetworkBehaviour networkBehaviour = BlockEntityBehaviour.get(level, pos, NetworkBehaviour.TYPE);
+        if (networkBehaviour != null && networkBehaviour.checkNetworkType(NetworkService.Services.HEAT)){
+            return Optional.of(networkBehaviour);
+        }
+        return Optional.empty();
     }
 
     public static HeatNetwork fromNbt(Tag tag){

@@ -1,7 +1,6 @@
 package com.ffsupver.createheat.network;
 
-import com.ffsupver.createheat.block.thermalBlock.BaseThermalBlockBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.ffsupver.createheat.block.NetworkBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -74,10 +73,14 @@ public class HeatService {
 
         @Override
         public void changeBlockNetwork(BlockPos pos, ServerLevel level, UUID newNetworkID) {
-            BaseThermalBlockBehaviour baseThermalBlockBehaviour = BlockEntityBehaviour.get(level,pos,BaseThermalBlockBehaviour.TYPE);
-            if (baseThermalBlockBehaviour != null){
-                baseThermalBlockBehaviour.setHeatNetworkId(newNetworkID);
+            NetworkBehaviour networkBehaviour = NetworkBehaviour.get(level,pos,NetworkBehaviour.TYPE);
+            if (networkBehaviour != null && networkBehaviour.checkNetworkType(HEAT)){
+                networkBehaviour.setNetworkId(newNetworkID);
             }
+//            BaseThermalBlockBehaviour baseThermalBlockBehaviour = BlockEntityBehaviour.get(level,pos,BaseThermalBlockBehaviour.TYPE);
+//            if (baseThermalBlockBehaviour != null){
+//                baseThermalBlockBehaviour.setHeatNetworkId(newNetworkID);
+//            }
         }
 
         public static Factory<HeatServiceData> factory(){

@@ -183,7 +183,7 @@ dependencies {
     implementation "maven.modrinth:jupiter:I4i9vhEW"
     implementation("dev.architectury:architectury-neoforge:13.0.8")
     compileOnly("curse.maven:ice-and-fire-ce-1040076:7037563")
-//    runtimeOnly("curse.maven:ice-and-fire-ce-1040076:7037563")
+    runtimeOnly("curse.maven:ice-and-fire-ce-1040076:7037563")
 
     //PneumaticCraft: Repressurized
     compileOnly("me.desht.pneumaticcraft:pneumaticcraft-repressurized:${pneumaticcraft_version}+mc${minecraft_version}") {transitive = true}
