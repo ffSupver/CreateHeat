@@ -1,6 +1,7 @@
 package com.ffsupver.createheat.mixin.iceAndFire;
 
 import com.ffsupver.createheat.block.dragonFireInput.DragonFireInputBlockEntity;
+import com.ffsupver.createheat.compat.Mods;
 import com.iafenvoy.iceandfire.entity.DragonBaseEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.EntityType;
@@ -13,6 +14,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Set;
+
 @Mixin(DragonBaseEntity.class)
 public abstract class EntityDragonBaseMixin extends Mob {
     @Shadow
@@ -24,6 +27,9 @@ public abstract class EntityDragonBaseMixin extends Mob {
     @Shadow
     public abstract void setBreathingFire(boolean breathing);
 
+    @Shadow
+    public abstract boolean isBreathingFire();
+
     protected EntityDragonBaseMixin(EntityType<? extends Mob> entityType, Level level) {
         super(entityType, level);
     }
@@ -34,7 +40,15 @@ public abstract class EntityDragonBaseMixin extends Mob {
         BlockEntity blockEntity = this.level().getBlockEntity(burningTarget);
         if (blockEntity instanceof DragonFireInputBlockEntity) {
             this.getLookControl().setLookAt((double)this.burningTarget.getX() + (double)0.5F, (double)this.burningTarget.getY() + (double)0.5F, (double)this.burningTarget.getZ() + (double)0.5F, 180.0F, 180.0F);
-            this.breathFireAtPos(this.burningTarget);
+            Set<BlockPos> logicalPosSet = Mods.collectGlobalBlockPos(level(),burningTarget);
+            BlockPos closestPos = burningTarget;
+            BlockPos dragonPos = new BlockPos(getBlockX(), getBlockY(), getBlockZ());
+            for (BlockPos pos : logicalPosSet){
+                if (closestPos.distSqr(dragonPos) >= pos.distSqr(dragonPos)){
+                    closestPos = pos;
+                }
+            }
+            this.breathFireAtPos(closestPos);
             this.setBreathingFire(true);
             ci.cancel();
         }

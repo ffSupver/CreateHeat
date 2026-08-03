@@ -3,7 +3,6 @@ package com.ffsupver.createheat.block.dragonFireInput;
 import com.ffsupver.createheat.api.iceAndFire.DragonHeater;
 import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.block.NetworkBehaviour;
-import com.ffsupver.createheat.compat.Mods;
 import com.ffsupver.createheat.network.HeatNetwork;
 import com.ffsupver.createheat.network.NetworkService;
 import com.ffsupver.createheat.util.HeatUtil;
@@ -150,13 +149,11 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity {
         }
     }
 
-    public Map<BlockPos,Set<DragonBaseEntity>> getDragonsInRange(Set<BlockPos> logicalPosSet) {
-        Map<BlockPos,Set<DragonBaseEntity>> dragonsInRange = new HashMap<>();
-        for (BlockPos pos : logicalPosSet){
+    public Set<DragonBaseEntity> getDragonsInRange(BlockPos pos) {
+        Set<DragonBaseEntity> dragonsInRange = new HashSet<>();
             BlockPos worldPosition = pos.immutable(); // why?
             AABB searchArea = new AABB((double)worldPosition.getX() - RADIUS, (double)worldPosition.getY() - RADIUS, (double)worldPosition.getZ() - RADIUS, (double)worldPosition.getX() + RADIUS, (double)worldPosition.getY() + RADIUS, (double)worldPosition.getZ() + RADIUS);
-            dragonsInRange.put(pos,Set.copyOf(this.level.getEntitiesOfClass(DragonBaseEntity.class, searchArea)));
-        }
+            dragonsInRange.addAll(Set.copyOf(this.level.getEntitiesOfClass(DragonBaseEntity.class, searchArea)));
         return dragonsInRange;
     }
 
@@ -164,21 +161,19 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity {
     protected void lureDragons(DragonType dragonType) {
         boolean canLungType = canLungDragon(dragonType,this.level);
 
-        Set<BlockPos> logicalPosSet = Mods.collectGlobalBlockPos(level,getBlockPos());
-
         boolean dragonSelected = false;
 
         DragonBaseEntity backUpDragon = null;
         BlockPos finalTargetPos = null;
 
-        for(Map.Entry<BlockPos,Set<DragonBaseEntity>> entry : getDragonsInRange(logicalPosSet).entrySet()) {
-            Set<DragonBaseEntity> dragons = entry.getValue();
-            BlockPos logicPos = entry.getKey();
+            BlockPos logicPos = getBlockPos();
+            Set<DragonBaseEntity> dragons = getDragonsInRange(logicPos);
             Vec3 targetPosition = new Vec3((float)logicPos.getX() + 0.5F, (float)logicPos.getY() + 0.5F, (float)logicPos.getZ() + 0.5F);
             for (DragonBaseEntity dragon : dragons){
                 boolean noTarget = dragon.burningTarget == null;
                 boolean isLastOne = dragon.getUUID().equals(this.lastDragonUUID);
                 boolean targetThis = !noTarget && dragon.burningTarget.equals(logicPos);
+
                 if (canLungType && assembled() && dragon.dragonType.equals(dragonType) && canSeeInput(dragon, targetPosition) && (noTarget || isLastOne)) {
                     if (backUpDragon == null) {
                         backUpDragon = dragon;
@@ -198,7 +193,7 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity {
                     dragon.burningTarget = null;
                 }
             }
-        }
+//        }
 
         if (backUpDragon != null){
             backUpDragon.burningTarget = finalTargetPos;
