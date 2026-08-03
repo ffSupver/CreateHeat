@@ -2,7 +2,6 @@ package com.ffsupver.createheat.compat.iceAndFire;
 
 import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.api.iceAndFire.DragonHeater;
-import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.block.dragonFireInput.DragonFireInputBlock;
 import com.ffsupver.createheat.block.dragonFireInput.DragonFireInputBlockEntity;
 import com.ffsupver.createheat.compat.CHModCompat;
@@ -11,6 +10,7 @@ import com.ffsupver.createheat.compat.ponder.scenes.iceAndFire.DragonFireInputSc
 import com.ffsupver.createheat.registries.CHBlocks;
 import com.ffsupver.createheat.registries.CHCreativeTab;
 import com.ffsupver.createheat.registries.CHDatapacks;
+import com.ffsupver.createheat.util.HeatUtil;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
@@ -55,7 +55,12 @@ public class IceAndFire implements CHModCompat {
 
     @Override
     public void registerBoilerHeater() {
-        BoilerHeater.REGISTRY.register(DRAGON_FIRE_INPUT.get(), HeatProvider.HEATER);
+        BoilerHeater.REGISTRY.register(DRAGON_FIRE_INPUT.get(), (level, pos, state) -> {
+            if (level.getBlockEntity(pos) instanceof DragonFireInputBlockEntity dragonFireInputBlockEntity){
+               return HeatUtil.toBoilerHeat(dragonFireInputBlockEntity.getHeatProvider().getHeatPerTick());
+            }
+            return BoilerHeater.NO_HEAT;
+        });
     }
 
     @Override

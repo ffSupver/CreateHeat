@@ -2,7 +2,11 @@ package com.ffsupver.createheat.block.dragonFireInput;
 
 import com.ffsupver.createheat.api.iceAndFire.DragonHeater;
 import com.ffsupver.createheat.block.HeatProvider;
+import com.ffsupver.createheat.block.NetworkBehaviour;
 import com.ffsupver.createheat.compat.Mods;
+import com.ffsupver.createheat.network.HeatNetwork;
+import com.ffsupver.createheat.network.NetworkService;
+import com.ffsupver.createheat.util.HeatUtil;
 import com.iafenvoy.iceandfire.data.DragonType;
 import com.iafenvoy.iceandfire.entity.DragonBaseEntity;
 import com.iafenvoy.iceandfire.registry.IafRegistries;
@@ -24,7 +28,7 @@ import java.util.*;
 
 import static com.ffsupver.createheat.block.dragonFireInput.DragonFireInputBlock.BURNING;
 
-public class DragonFireInputBlockEntity extends SmartBlockEntity implements HeatProvider {
+public class DragonFireInputBlockEntity extends SmartBlockEntity {
     public int lastDragonFlameTimer = 0;
     public boolean isHitByFrame;
     private static final int COOL_DOWN = 60;
@@ -58,9 +62,6 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity implements Heat
         }
 
 
-
-
-
         RegistryAccess registryAccess = level.registryAccess();
         Optional<Holder.Reference<DragonHeater>> dragonHeaterReferenceOp = DragonHeater.getFromDragonType(registryAccess,dragonType);
         if (dragonHeaterReferenceOp.isPresent()) {
@@ -83,6 +84,13 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity implements Heat
         }
 
         updateBurning();
+
+        // try gen heat to network
+        if(getNetworkBehaviour().getNetwork() instanceof HeatNetwork heatNetwork){
+            HeatProvider heatProvider = getHeatProvider();
+            HeatUtil.HeatData heatGen = new HeatUtil.HeatData(heatProvider.getHeatPerTick(),heatProvider.getSupperHeatCount());
+            heatNetwork.onBlockTick(getBlockPos(),heatGen,HeatUtil.NO_HEAT_PROVIDE,Set.of());
+        }
     }
 
     private void checkAssembled(){
@@ -248,22 +256,28 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity implements Heat
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        NetworkBehaviour networkBehaviour = new NetworkBehaviour(this, NetworkService.Services.HEAT);
+        behaviours.add(networkBehaviour);
     }
 
-    private HeatProvider getHeatProvider(){
+    public HeatProvider getHeatProvider(){
         if (!assembled() || dragonHeater == null || !getBurning()){
             return DragonHeater.NO_HEAT_PROVIDER;
         }
         return dragonHeater.heatProviderByStage().apply(lastStage);
     }
 
-    @Override
-    public int getHeatPerTick() {
-        return getHeatProvider().getHeatPerTick();
-    }
+//    @Override
+//    public int getHeatPerTick() {
+//        return getHeatProvider().getHeatPerTick();
+//    }
+//
+//    @Override
+//    public int getSupperHeatCount() {
+//        return getHeatProvider().getSupperHeatCount();
+//    }
 
-    @Override
-    public int getSupperHeatCount() {
-        return getHeatProvider().getSupperHeatCount();
+    public NetworkBehaviour getNetworkBehaviour(){
+        return getBehaviour(NetworkBehaviour.TYPE);
     }
 }

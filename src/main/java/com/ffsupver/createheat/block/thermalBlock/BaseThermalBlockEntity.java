@@ -29,14 +29,6 @@ public class BaseThermalBlockEntity extends SmartBlockEntity implements IHaveGog
 
     public Set<UUID> getNeighborNetworkId(){
         return getNetworkBehaviour().getNeighborNetworkId();
-//        Set<UUID> neighborNetworkIds = new HashSet<>();
-//        BlockUtil.AllDirectionOf(getBlockPos(), neighborPos->{
-//            NetworkBehaviour neighborNetworkBehaviour = NetworkBehaviour.get(getLevel(), neighborPos, NetworkBehaviour.TYPE);
-//            if (neighborNetworkBehaviour != null && neighborNetworkBehaviour.checkNetworkType(NetworkService.Services.HEAT)){
-//                neighborNetworkIds.add(neighborNetworkBehaviour.getNetworkId());
-//            }
-//        });
-//        return neighborNetworkIds;
     }
 
     public void setHeatNetworkId(UUID heatNetworkId) {

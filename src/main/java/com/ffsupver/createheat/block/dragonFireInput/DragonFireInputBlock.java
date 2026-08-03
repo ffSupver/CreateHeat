@@ -1,6 +1,8 @@
 package com.ffsupver.createheat.block.dragonFireInput;
 
+import com.ffsupver.createheat.block.NetworkBehaviour;
 import com.ffsupver.createheat.compat.iceAndFire.IceAndFire;
+import com.ffsupver.createheat.network.HeatService;
 import com.iafenvoy.iceandfire.data.DragonType;
 import com.iafenvoy.iceandfire.item.block.util.DragonProof;
 import com.iafenvoy.iceandfire.registry.IafDragonTypes;
@@ -16,6 +18,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.Property;
+
+import java.util.Set;
+import java.util.UUID;
 
 public class DragonFireInputBlock extends Block implements DragonProof, DragonTypeProvider, IBE<DragonFireInputBlockEntity>, IWrenchable {
     public static final Property<Boolean> BURNING = BooleanProperty.create("burning");
@@ -53,6 +58,29 @@ public class DragonFireInputBlock extends Block implements DragonProof, DragonTy
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.getBlock().equals(newState.getBlock())){ // destroy
+            withBlockEntityDo(level,pos,dragonFireInputBlockEntity -> {
+                NetworkBehaviour networkBehaviour = dragonFireInputBlockEntity.getNetworkBehaviour();
+                if (networkBehaviour != null){
+                    HeatService.removeBlockFromNetwork(level,pos,networkBehaviour.getNetworkId());
+                }
+            });
+        }
         IBE.onRemove(state,level,pos,newState);
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (!oldState.getBlock().equals(state.getBlock())) { // new block
+            withBlockEntityDo(level, pos, dragonFireInputBlockEntity -> {
+                NetworkBehaviour networkBehaviour = dragonFireInputBlockEntity.getNetworkBehaviour();
+                if (networkBehaviour != null){
+                    Set<UUID> neighborNetworkId = networkBehaviour.getNeighborNetworkId();
+                    networkBehaviour.setNetworkId(HeatService.addBlockToNetwork(pos, level, neighborNetworkId));
+                }
+            });
+        }
     }
 }
