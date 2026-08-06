@@ -180,7 +180,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         if(Config.ALLOW_SUPER_HEAT_REPRODUCE.get()){
             return testExtracted.heat() >= toExtract.heat() && testExtracted.superHeatCount() >= Math.min(1,toExtract.superHeatCount());
         }
-        return testExtracted.equals(toExtract);
+        return testExtracted.heat() >= toExtract.heat() && testExtracted.superHeatCount() >= toExtract.superHeatCount();
     }
 
     /**

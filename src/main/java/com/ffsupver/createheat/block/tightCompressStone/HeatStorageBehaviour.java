@@ -150,7 +150,7 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
                 if (!simulate){
                     superAmount -= toExtract;
                 }
-                return new HeatUtil.HeatData(toExtract,1);
+                return new HeatUtil.HeatData(toExtract,Math.min(1,heatData.superHeatCount()));
             }else {
                 if (heatData.superHeatCount() > 0){
                     return HeatUtil.NO_HEAT_PROVIDE;

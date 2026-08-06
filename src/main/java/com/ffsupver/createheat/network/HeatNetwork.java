@@ -109,7 +109,6 @@ public class HeatNetwork extends TickingBlockNetwork{
             displayHeatStorage.merge(connectHeatStorage);
         }
 
-//        heatDataLastTickRemain = calculateHeatCanProvideThisTick(heatGenDataLastTick);
         calculateHeatCanProvideThisTick(heatGenDataLastTick,heatStorageNetworkStorages);
 
         heatGenDataLastTick = NO_HEAT_PROVIDE;
@@ -194,7 +193,6 @@ public class HeatNetwork extends TickingBlockNetwork{
 
         this.heatGenDataLastTick = this.heatGenDataLastTick.merge(heatGenData);
         this.heatCostDataLastTick = this.heatCostDataLastTick.merge(heatCostData);
-//        this.heatDataLastTickRemain = this.heatDataLastTickRemain.sub(heatCostData);
         this.heatInteractionData.extractHeat(heatCostData,false);
 
         lastConnectedHeatStorageNetworks.addAll(neighborHeatStorageNetworkIds);
@@ -228,9 +226,7 @@ public class HeatNetwork extends TickingBlockNetwork{
         return heatInteractionData;
     }
 
-//    public HeatUtil.HeatData getHeatDataLastTickRemain() {
-//        return heatDataLastTickRemain;
-//    }
+
     public HeatTransferProcesser getTransferProcesser(BlockPos pos) {
         return transferProcesserMap.get(pos);
     }
@@ -254,9 +250,7 @@ public class HeatNetwork extends TickingBlockNetwork{
         this.transferProcesserMap.clear();
         this.transferProcesserMap.putAll(transferProcesserMap);
     }
-//    private void setHeatDataLastTickRemain(HeatUtil.HeatData heatDataLastTickRemain) {
-//        this.heatDataLastTickRemain = heatDataLastTickRemain;
-//    }
+
     private void setConnectedHeatStorageNetworks(Collection<UUID> connectedHeatStorageNetworks){
         this.connectedHeatStorageNetworks.clear();
         this.connectedHeatStorageNetworks.addAll(connectedHeatStorageNetworks);

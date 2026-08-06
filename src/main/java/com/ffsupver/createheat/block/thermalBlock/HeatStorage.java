@@ -30,7 +30,7 @@ public class HeatStorage{
      * Extract heat
      * @param heat heat to extract
      * @param simulate whether to simulate the extraction
-     * @return heat left after extraction
+     * @return heat actually extracted after extraction. e.g. if heat = 10, capacity = 7, amount = 6, then return 6
      */
     public int extract(int heat,boolean simulate){
         int min = amount - heat;
