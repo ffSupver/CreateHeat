@@ -361,8 +361,9 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
             ).append(
                     Component.translatable(
                             "createheat.gui.goggles.heat_remain",
-                            displayHeatRemain.inHeat()+"-"+displayHeatRemain.outHeat()+"="+displayHeatRemain.heatGen()+
-                                    " / "+displayHeatRemain.inSuperHeatCount()+"-"+displayHeatRemain.outSuperHeatCount()+"="+displayHeatRemain.superHeatCountGen()
+                                (displayHeatRemain.inHeat() - displayHeatRemain.outHeat())
+//                            displayHeatRemain.inHeat()+"-"+displayHeatRemain.outHeat()+"="+displayHeatRemain.heatGen()+
+//                                    " / "+displayHeatRemain.inSuperHeatCount()+"-"+displayHeatRemain.outSuperHeatCount()+"="+displayHeatRemain.superHeatCountGen()
                     )
             ));
             return true;

@@ -77,6 +77,23 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
         return null;
     }
 
+    /**
+     * Get all network id
+     * @return all network id
+     */
+    public Map<ResourceKey<Level>, Set<UUID>> getAllNetworkId(){
+        Map<ResourceKey<Level>, Set<UUID>> allNetworkId = new HashMap<>();
+        for (Map.Entry<ResourceKey<Level>, Map<UUID, T>> entry : NETWORKS.entrySet()) {
+            allNetworkId.put(entry.getKey(), entry.getValue().keySet());
+        }
+        return allNetworkId;
+    }
+
+    /**
+     * Add a new network to be added next tick
+     * @param levelKey level of the network
+     * @param network the network to be added
+     */
     public void addNetwork(ResourceKey<Level> levelKey,T network){
         Set<T> levelNetworks = networkMapToAddNextTick.getOrDefault(levelKey,new HashSet<>());
         levelNetworks.add(network);

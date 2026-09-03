@@ -44,7 +44,6 @@
   "createheat.gui.goggles.heat_amount": "热量: %s / %s",
   "createheat.gui.goggles.heat_remain": "剩余热: %s/t",
 
-
   "createheat.ponder.thermal_block.use.header": "使用导热块",
   "createheat.ponder.thermal_block.use.text_1": "热量通过导热块传播",
   "createheat.ponder.thermal_block.use.text_2": "导热块为上面的机器供热",
@@ -77,5 +76,16 @@
   "createheat.ponder.thermal_block.smart_thermal_block.text_7": "提供不高于\"超级加热\"的热量",
 
   "createheat.recipe.heat":"加热",
-  "createheat.recipe.heat.amount": "至少: %s 总共: %s"
+  "createheat.recipe.heat.amount": "至少: %s 总共: %s",
+
+  "commands.createheat.network.invalid_uuid": "错误的网络ID格式:%s",
+  "commands.createheat.network.list.network_no_found": "在%s找不到网络",
+  "commands.createheat.network.list.total": "%s个网络在%s中 :",
+  "commands.createheat.network.list.info": "ID为%s的网络:包含%s个方块, 第一个方块位于%s",
+  "commands.createheat.network.info.not_found": "找不到网络",
+  "commands.createheat.network.info.network_not_found": "找不到ID为%s的网络",
+  "commands.createheat.network.info.network_id_not_found": "在%s处找不到网络ID",
+  "commands.createheat.network.info.not_network_block": "在%s处找不到网络",
+  "commands.createheat.network.info.success": "[ID为%s的网络]: 方块数:%s 维度:%s\n  信息:%s",
+  "commands.createheat.network.remove.success": "移除了%s个方块于ID为%s的网络"
 }

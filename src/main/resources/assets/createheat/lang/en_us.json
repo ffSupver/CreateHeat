@@ -76,5 +76,16 @@
   "createheat.ponder.thermal_block.smart_thermal_block.text_7": "it will provide heat not higher than \"Super Heat\" level",
 
   "createheat.recipe.heat":"Heat",
-  "createheat.recipe.heat.amount": "Min: %s Total: %s"
+  "createheat.recipe.heat.amount": "Min: %s Total: %s",
+
+  "commands.createheat.network.invalid_uuid": "Invalid network ID format:%s",
+  "commands.createheat.network.list.network_no_found": "No network found in %s",
+  "commands.createheat.network.list.total": "%s networks found in %s :",
+  "commands.createheat.network.list.info": "Network with ID:%s contains %s blocks, first blocks is %s",
+  "commands.createheat.network.info.not_found": "Network not found",
+  "commands.createheat.network.info.network_not_found": "No network found with ID:%s",
+  "commands.createheat.network.info.network_id_not_found": "No network ID found at %s",
+  "commands.createheat.network.info.not_network_block": "No network found At %s",
+  "commands.createheat.network.info.success": "[Network ID:%s]: Blocks:%s Dimension:%s\n  Detail:%s",
+  "commands.createheat.network.remove.success": "Removed %s blocks in network with ID:%s"
 }

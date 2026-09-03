@@ -1,6 +1,7 @@
 package com.ffsupver.createheat.network;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -70,6 +71,10 @@ public class NetworkService {
         }
 
         return SERVICE_DATA_MAP.get(services.id).getNetwork(serverLevel.dimension(),networkID);
+    }
+
+    public static Map<ResourceKey<Level>, Set<UUID>> getAllNetworkId(Services services){
+        return SERVICE_DATA_MAP.get(services.id).getAllNetworkId();
     }
 
     /**

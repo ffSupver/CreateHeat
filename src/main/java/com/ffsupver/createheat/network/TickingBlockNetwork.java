@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -135,6 +136,15 @@ public abstract class TickingBlockNetwork {
 
     public UUID getNetworkID() {
         return networkID;
+    }
+
+    /**
+     * Get the set of connected block positions.
+     * 获取已连接方块位置的集合
+     * @return unmodifiable view of connected blocks 已连接方块的不可变视图
+     */
+    public Set<BlockPos> getConnectedBlocks() {
+        return Collections.unmodifiableSet(connectedBlocks);
     }
 
 

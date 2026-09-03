@@ -76,6 +76,7 @@ public class CreateHeat {
         event.enqueueWork(()->{
             CHBlocks.registerBoilHeater();
         });
+        NeoForge.EVENT_BUS.addListener(CHCommands::registerCommands);
         NeoForge.EVENT_BUS.addListener(CHDatapacks::onDatapackReload);
         NeoForge.EVENT_BUS.addListener(ItemAttackEvent::onAttack);
         ThermalToolPointServer.registerEvent();
