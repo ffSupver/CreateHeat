@@ -5,6 +5,8 @@ import com.ffsupver.createheat.Config;
 import com.ffsupver.createheat.block.HeatProvider;
 import com.ffsupver.createheat.block.HeatTransferProcesser;
 import com.ffsupver.createheat.block.tightCompressStone.HeatStorageBehaviour;
+import com.ffsupver.createheat.item.thermalTool.ThermalToolPointLogic;
+import com.ffsupver.createheat.item.thermalTool.ThermalToolPointServer;
 import com.ffsupver.createheat.network.HeatNetwork;
 import com.ffsupver.createheat.registries.CHHeatProviders;
 import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
@@ -127,15 +129,25 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         BlockPos belowPos = getPos().below();
         boolean avoidHTP = !onCanGenerateHeatIgnoreHTPTest() && getHeatTransferProcesserByOther(belowPos).isPresent();
 
+        HeatUtil.HeatData baseHeatData = HeatUtil.NO_HEAT_PROVIDE;
+        ThermalToolPointLogic logic = ThermalToolPointServer.getPoint(getWorld().dimension(),getPos());
+        if(ThermalToolPointLogic.HEAT_SOURCE.equals(logic)){
+            baseHeatData = baseHeatData.merge(new HeatUtil.HeatData(Config.HEAT_PER_FADING_BLAZE.get(),0));
+        }else if (ThermalToolPointLogic.SUPER_HEAT_SOURCE.equals(logic)) {
+            baseHeatData = baseHeatData.merge(new HeatUtil.HeatData(Config.HEAT_PER_SEETHING_BLAZE.get(), 1));
+        }
+
         if (isInSameNetwork(belowPos) || avoidHTP){ //防止加热自己或者被处理的热源
-            return HeatUtil.NO_HEAT_PROVIDE;
+            return baseHeatData;
         }
         Optional<HeatProvider> heatProviderOp = CHHeatProviders.findHeatProvider(getWorld(),belowPos,getWorld().getBlockState(belowPos));
         if (heatProviderOp.isPresent()) {
             HeatProvider provider = heatProviderOp.get();
-            return new HeatUtil.HeatData(provider.getHeatPerTick(), provider.getSupperHeatCount());
+            HeatUtil.HeatData blockHeatData = new HeatUtil.HeatData(provider.getHeatPerTick(), provider.getSupperHeatCount());
+            return baseHeatData.merge(blockHeatData);
         }else {
-            return HeatUtil.fromBoilerHeat(BoilerHeater.findHeat(getWorld(), getPos().below(), getWorld().getBlockState(getPos().below())));
+            HeatUtil.HeatData boilerHeatData = HeatUtil.fromBoilerHeat(BoilerHeater.findHeat(getWorld(), getPos().below(), getWorld().getBlockState(getPos().below())));
+            return baseHeatData.merge(boilerHeatData);
         }
     }
 

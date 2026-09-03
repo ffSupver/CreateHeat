@@ -1,12 +1,8 @@
 package com.ffsupver.createheat.registries;
 
-import com.ffsupver.createheat.Config;
 import com.ffsupver.createheat.CreateHeat;
 import com.ffsupver.createheat.api.CustomHeater;
-import com.ffsupver.createheat.api.SimpleHeatProvider;
 import com.ffsupver.createheat.block.HeatProvider;
-import com.ffsupver.createheat.item.thermalTool.ThermalToolPointLogic;
-import com.ffsupver.createheat.item.thermalTool.ThermalToolPointServer;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
 import net.minecraft.core.BlockPos;
@@ -45,15 +41,6 @@ public class CHHeatProviders {
             Optional<Holder.Reference<CustomHeater>> customHeatOp = CustomHeater.getFromBlockState(level.registryAccess(),level.getBlockState(pos));
             return customHeatOp.<HeatProvider>map(Holder.Reference::value).orElse(null);
         }));
-        registerHeatFinder("thermal_tool_point",()->(level, pos, state)->{
-            ThermalToolPointLogic logic = ThermalToolPointServer.getPoint(level.dimension(),pos.above());
-           if(ThermalToolPointLogic.HEAT_SOURCE.equals(logic)){
-                return new SimpleHeatProvider(Config.HEAT_PER_FADING_BLAZE.get(),0);
-           } else if (ThermalToolPointLogic.SUPER_HEAT_SOURCE.equals(logic)) {
-               return new SimpleHeatProvider(Config.HEAT_PER_SEETHING_BLAZE.get(),1);
-           }
-           return null;
-        });
     }
     public static Optional<HeatProvider> findHeatProvider(Level level, BlockPos pos, BlockState state){
        return REGISTRATE.getAll(HEAT_FINDER_REGISTRY_KEY).stream().map(s->s.get().getHeatProvider(level,pos,state))
