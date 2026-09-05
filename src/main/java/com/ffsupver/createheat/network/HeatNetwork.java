@@ -316,6 +316,7 @@ public class HeatNetwork extends TickingBlockNetwork{
     public String toString() {
         return "HeatNetwork{" +
                 "networkID=" + networkID +
+                ", heatStorage=" + heatStorage +
                 "block counts: "+connectedBlocks.size()+
                 ", connectedBlocks=" + connectedBlocks +
                 ", connectedHeatStorage=" + connectedHeatStorageNetworks +

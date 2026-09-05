@@ -3,10 +3,11 @@ package com.ffsupver.createheat.compat.sable;
 import com.ffsupver.createheat.compat.CHModCompat;
 import com.ffsupver.createheat.compat.Mods;
 import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.companion.math.BoundingBox3d;
+import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import org.joml.Vector3d;
 
@@ -28,22 +29,25 @@ public class SableCompat implements CHModCompat {
     public Set<BlockPos> getGlobalBlockPos(Level level, BlockPos worldPos) {
         SubLevel subLevel = Sable.HELPER.getContaining(level, worldPos);
         if (subLevel != null) {
-            Vector3d localPos = subLevel.logicalPose().transformPositionInverse(
-                    new Vector3d(worldPos.getX(), worldPos.getY(), worldPos.getZ())
-            );
-            Vector3d worldPosition = subLevel.logicalPose().transformPosition(localPos);
             Vector3d transPos = subLevel.logicalPose().transformPosition(
                     new Vector3d(worldPos.getX(), worldPos.getY(), worldPos.getZ())
             );
-            Vec3 poj = Sable.HELPER.projectOutOfSubLevel(level, Vec3.atLowerCornerOf(worldPos));
             HashSet<BlockPos> result = new HashSet<>();
-            result.add(BlockPos.containing(worldPosition.x(), worldPosition.y(), worldPosition.z()));
             result.add(BlockPos.containing(transPos.x(), transPos.y(), transPos.z()));
-            result.add(BlockPos.containing(poj.x(), poj.y(), poj.z()));
             return result;
         }
         return Set.of();
     }
 
-
+    @Override
+    public Set<BlockPos> findHitBlockPos(Level level, BlockPos pos) {
+        Set<BlockPos> result = new HashSet<>();
+        for (SubLevel subLevel : Sable.HELPER.getAllIntersecting(level, new BoundingBox3d(pos))) {
+            Pose3d pose = subLevel.logicalPose();
+            Vector3d transformedPos = pose.transformPositionInverse(new Vector3d(pos.getX(), pos.getY(), pos.getZ()));
+            BlockPos transformedBlockPos = BlockPos.containing(transformedPos.x(), transformedPos.y(), transformedPos.z());
+            result.add(transformedBlockPos);
+        }
+        return result;
+    }
 }

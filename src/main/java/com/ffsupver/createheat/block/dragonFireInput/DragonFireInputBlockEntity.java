@@ -26,6 +26,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.*;
 
 import static com.ffsupver.createheat.block.dragonFireInput.DragonFireInputBlock.BURNING;
+import static com.ffsupver.createheat.util.BlockUtil.isInDistance;
 
 public class DragonFireInputBlockEntity extends SmartBlockEntity {
     public int lastDragonFlameTimer = 0;
@@ -193,7 +194,6 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity {
                     dragon.burningTarget = null;
                 }
             }
-//        }
 
         if (backUpDragon != null){
             backUpDragon.burningTarget = finalTargetPos;
@@ -204,14 +204,21 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity {
     }
 
     private boolean canSeeInput(DragonBaseEntity dragon, Vec3 target) {
+        if (level == null){
+            return false;
+        }
         if (target != null) {
-            assert this.level != null;
-
-            HitResult rayTrace = this.level.clip(new ClipContext(dragon.getHeadPosition(), target, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, dragon));
-            double distance = dragon.getHeadPosition().distanceTo(rayTrace.getLocation());
-            return distance < (double)(10.0F + dragon.getBbWidth() * 2.0F);
+            HitResult rayTrace = level.clip(new ClipContext(dragon.getHeadPosition(), target, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, dragon));
+            return isInDistance(rayTrace.getLocation(),dragon.getHeadPosition(),dragon.level(), 10.0F + dragon.getBbWidth() * 2.0F);
         } else {
             return false;
+        }
+    }
+
+    // dragon fire breath try hitting on DragonFireInput
+    public static void hitDragonFireInput(Level level, DragonBaseEntity dragon, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof DragonFireInputBlockEntity dragonFireInputBlockEntity) {
+            dragonFireInputBlockEntity.onHitByFrame(dragon.getDragonStage());
         }
     }
 

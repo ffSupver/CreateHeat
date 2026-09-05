@@ -122,12 +122,24 @@ public class Mods {
      * collect all result of CHModCompat {@link CHModCompat#getGlobalBlockPos(Level, BlockPos)}
      * @param level
      * @param worldPos
-     * @return
+     * @return always contains the input pos
      */
     public static Set<BlockPos> collectGlobalBlockPos(Level level, BlockPos worldPos){
-        Set<BlockPos> blockPosSet = new HashSet<>();
+        Set<BlockPos> blockPosSet = new HashSet<>(Set.of(worldPos));
         executeIfLoad(chModCompat->blockPosSet.addAll(chModCompat.getGlobalBlockPos(level,worldPos)));
-        return blockPosSet.isEmpty() ? Set.of(worldPos) : blockPosSet;
+        return blockPosSet;
+    }
+
+    /**
+     * collect all result of CHModCompat {@link CHModCompat#findHitBlockPos(Level, BlockPos)}
+     * @param level
+     * @param worldPos
+     * @return always contains the input pos
+     */
+    public static Set<BlockPos> collectHitBlockPos(Level level, BlockPos worldPos){
+        Set<BlockPos> blockPosSet = new HashSet<>(Set.of(worldPos));
+        executeIfLoad(chModCompat->blockPosSet.addAll(chModCompat.findHitBlockPos(level,worldPos)));
+        return blockPosSet;
     }
 
     public enum ModIds{

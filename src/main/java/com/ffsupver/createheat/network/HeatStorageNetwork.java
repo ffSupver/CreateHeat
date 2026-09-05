@@ -110,7 +110,10 @@ public class HeatStorageNetwork extends TickingBlockNetwork{
     @Override
     public String toString() {
         return "HeatStorageNetwork{" +
-                "size="+connectedBlocks.size()+ "   networkID=" + networkID + "    blocks="+connectedBlocks+
+                "size="+connectedBlocks.size() +
+                "   heatStorage=" + heatStorage +
+                "   networkID=" + networkID +
+                "    blocks="+connectedBlocks +
                 '}';
     }
 

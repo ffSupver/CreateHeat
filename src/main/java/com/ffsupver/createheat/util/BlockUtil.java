@@ -1,10 +1,14 @@
 package com.ffsupver.createheat.util;
 
 import com.ffsupver.createheat.Config;
+import com.ffsupver.createheat.compat.Mods;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Position;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Collection;
 import java.util.Set;
@@ -83,5 +87,19 @@ public final class BlockUtil {
             }
         }
         return false;
+    }
+
+
+    public static boolean isInDistance(Position target, Vec3 dragonHead, Level level, double maxDistance) {
+        Set<BlockPos> rayDesPosSet = Mods.collectGlobalBlockPos(level,BlockPos.containing(target));
+        boolean inDistance = false;
+        for (BlockPos rayDesPos : rayDesPosSet) {
+            double distance = dragonHead.distanceTo(rayDesPos.getCenter());
+            if (distance < maxDistance){
+                inDistance = true;
+                break;
+            }
+        }
+        return inDistance;
     }
 }
