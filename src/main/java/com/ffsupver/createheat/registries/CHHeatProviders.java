@@ -6,6 +6,7 @@ import com.ffsupver.createheat.block.HeatProvider;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
@@ -30,25 +31,25 @@ public class CHHeatProviders {
         REGISTRATE.generic(name,HEAT_FINDER_REGISTRY_KEY, NonNullSupplier.of(heatFinderSupplier)).register();
     }
     public static void bootSetup(){
-        registerHeatFinder("block_entity",()->(level, pos, state)->{
+        registerHeatFinder("block_entity",()->(level, pos, state,d)->{
             if (level.getBlockEntity(pos) instanceof HeatProvider provider){
                 return provider;
             }else {
                 return null;
             }
         });
-        registerHeatFinder("custom_heater",()->((level, pos, state) -> {
-            Optional<Holder.Reference<CustomHeater>> customHeatOp = CustomHeater.getFromBlockState(level.registryAccess(),level.getBlockState(pos));
+        registerHeatFinder("custom_heater",()->((level, pos, state,d) -> {
+            Optional<Holder.Reference<CustomHeater>> customHeatOp = CustomHeater.getFromBlockState(level.registryAccess(),level.getBlockState(pos),d);
             return customHeatOp.<HeatProvider>map(Holder.Reference::value).orElse(null);
         }));
     }
-    public static Optional<HeatProvider> findHeatProvider(Level level, BlockPos pos, BlockState state){
-       return REGISTRATE.getAll(HEAT_FINDER_REGISTRY_KEY).stream().map(s->s.get().getHeatProvider(level,pos,state))
+    public static Optional<HeatProvider> findHeatProvider(Level level, BlockPos pos, BlockState state,Direction direction){
+       return REGISTRATE.getAll(HEAT_FINDER_REGISTRY_KEY).stream().map(s->s.get().getHeatProvider(level,pos,state,direction))
                .filter(Objects::nonNull).findFirst();
     }
 
     @FunctionalInterface
     public interface HeatFinder{
-        HeatProvider getHeatProvider(Level level, BlockPos pos, BlockState state);
+        HeatProvider getHeatProvider(Level level, BlockPos pos, BlockState state, Direction direction);
     }
 }

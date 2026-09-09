@@ -175,7 +175,7 @@ public class DragonFireInputBlockEntity extends SmartBlockEntity {
                 boolean isLastOne = dragon.getUUID().equals(this.lastDragonUUID);
                 boolean targetThis = !noTarget && dragon.burningTarget.equals(logicPos);
 
-                if (canLungType && assembled() && dragon.dragonType.equals(dragonType) && canSeeInput(dragon, targetPosition) && (noTarget || isLastOne)) {
+                if (canLungType && assembled() && dragon.dragonType.equals(dragonType) && (dragon.isChained() || dragon.isTame()) && canSeeInput(dragon, targetPosition) && (noTarget || isLastOne)) {
                     if (backUpDragon == null) {
                         backUpDragon = dragon;
                         finalTargetPos = logicPos;

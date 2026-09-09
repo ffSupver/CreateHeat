@@ -9,6 +9,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.api.boiler.BoilerHeater;
 import com.simibubi.create.api.registry.SimpleRegistry;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.level.Level;
@@ -16,18 +17,22 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-public record CustomHeater(BlockStateTester heaterState, int heatPerTick, int superHeatCount) implements HeatProvider {
+public record CustomHeater(BlockStateTester heaterState, int heatPerTick, int superHeatCount, List<Direction> directions) implements HeatProvider {
     public static Codec<CustomHeater> CODEC = RecordCodecBuilder.create(i->i.group(
             BlockStateTester.CODEC.fieldOf("block").forGetter(CustomHeater::heaterState),
             Codec.INT.fieldOf("heat_per_tick").forGetter(CustomHeater::heatPerTick),
-            Codec.INT.fieldOf("super_heat_count").forGetter(CustomHeater::superHeatCount)
+            Codec.INT.fieldOf("super_heat_count").forGetter(CustomHeater::superHeatCount),
+            Codec.list(Direction.CODEC).optionalFieldOf("directions", List.of(Direction.UP)).forGetter(CustomHeater::directions)  // face of custom heater block
     ).apply(i, CustomHeater::new));
 
-    public static Optional<Holder.Reference<CustomHeater>> getFromBlockState(RegistryAccess registryAccess, BlockState state){
+    public static Optional<Holder.Reference<CustomHeater>> getFromBlockState(RegistryAccess registryAccess, BlockState state,Direction direction){
         List<Holder.Reference<CustomHeater>> allList = getAll(registryAccess);
         return allList.stream()
-                .filter(customHeaterReference -> customHeaterReference.value().heaterState.test(state))
+                .filter(customHeaterReference ->
+                        customHeaterReference.value().heaterState.test(state) && customHeaterReference.value().directions.contains(direction)
+                )
                 .findFirst();
     }
     public static List<Holder.Reference<CustomHeater>> getAll(RegistryAccess registryAccess){
@@ -55,7 +60,7 @@ public record CustomHeater(BlockStateTester heaterState, int heatPerTick, int su
         }
 
         public float getHeat (Level level, BlockPos pos, BlockState state){
-            Optional<Holder.Reference<CustomHeater>> heaterOp = getFromBlockState(registryAccess, state);
+            Optional<Holder.Reference<CustomHeater>> heaterOp = getFromBlockState(registryAccess, state,Direction.UP);
             if (heaterOp.isPresent()) {
                 return HeatUtil.toBoilerHeat(heaterOp.get().value().heatPerTick);
             } else {

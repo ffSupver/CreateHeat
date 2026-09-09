@@ -10,6 +10,7 @@
       ]
     }
   },
+  "directions": ["up", "down","north","south","west","east"],
   "heat_per_tick": 2,
   "super_heat_count": 0
 }

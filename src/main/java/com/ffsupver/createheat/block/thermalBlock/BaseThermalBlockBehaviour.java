@@ -17,6 +17,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import joptsimple.internal.Strings;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -24,6 +25,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -37,6 +39,7 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
 
     private final BaseThermalBlockEntity thermalBlockEntity;
     private int litUpCooldown;
+    private BlockPos heatProviderUsing;
 
     // api
     private Predicate<BaseThermalBlockBehaviour> canSuperHeat;
@@ -140,10 +143,46 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
         if (isInSameNetwork(belowPos) || avoidHTP){ //防止加热自己或者被处理的热源
             return baseHeatData;
         }
-        Optional<HeatProvider> heatProviderOp = CHHeatProviders.findHeatProvider(getWorld(),belowPos,getWorld().getBlockState(belowPos));
-        if (heatProviderOp.isPresent()) {
-            HeatProvider provider = heatProviderOp.get();
-            HeatUtil.HeatData blockHeatData = new HeatUtil.HeatData(provider.getHeatPerTick(), provider.getSupperHeatCount());
+
+        // test old heat provider
+        if (heatProviderUsing != null){
+            Optional<HeatProvider> heatProviderOp = CHHeatProviders.findHeatProvider(getWorld(),heatProviderUsing,getWorld().getBlockState(heatProviderUsing), Direction.fromDelta(getPos().getX()-heatProviderUsing.getX(),getPos().getY()-heatProviderUsing.getY(),getPos().getZ()-heatProviderUsing.getZ()));
+            if (heatProviderOp.isPresent()){
+                HeatProvider provider = heatProviderOp.get();
+                HeatUtil.HeatData blockHeatData = new HeatUtil.HeatData(provider.getHeatPerTick(), provider.getSupperHeatCount());
+                return baseHeatData.merge(blockHeatData);
+            }else {
+                heatProviderUsing = null;
+            }
+        }
+
+        // find new heat provider
+        Map<BlockPos,HeatProvider> heatProviders = new HashMap<>();
+        BlockUtil.AllDirectionOf(getPos(),(checkPos,face)->{
+            Optional<HeatProvider> heatProviderOp = CHHeatProviders.findHeatProvider(getWorld(),checkPos,getWorld().getBlockState(checkPos), face.getOpposite());
+            heatProviderOp.ifPresent(provider -> heatProviders.put(checkPos, provider));
+        });
+        if (!heatProviders.isEmpty()) {
+            HeatUtil.HeatData blockHeatData = HeatUtil.NO_HEAT_PROVIDE;
+            for (Map.Entry<BlockPos, HeatProvider> entry : heatProviders.entrySet()){
+                BlockPos testPos = entry.getKey();
+                HeatProvider testProvider = entry.getValue();
+                if (testProvider.getSupperHeatCount() > blockHeatData.superHeatCount() || testProvider.getSupperHeatCount() == blockHeatData.superHeatCount() && testProvider.getHeatPerTick() > blockHeatData.heat()){
+                    AtomicBoolean hasBeenUsed = new AtomicBoolean(false);
+                    BlockUtil.AllDirectionOf(testPos,(checkPos,face)->{
+                        BaseThermalBlockBehaviour behaviour = BlockEntityBehaviour.get(getWorld(),checkPos,TYPE);
+                        if (behaviour != null && behaviour.heatProviderUsing != null && behaviour.heatProviderUsing.equals(testPos)){
+                            hasBeenUsed.set(true);
+                        }
+                    });
+
+                    if (!hasBeenUsed.get()){
+                        blockHeatData = new HeatUtil.HeatData(testProvider.getHeatPerTick(), testProvider.getSupperHeatCount());
+                        heatProviderUsing = testPos;
+                    }
+                }
+            }
+
             return baseHeatData.merge(blockHeatData);
         }else {
             HeatUtil.HeatData boilerHeatData = HeatUtil.fromBoilerHeat(BoilerHeater.findHeat(getWorld(), getPos().below(), getWorld().getBlockState(getPos().below())));
