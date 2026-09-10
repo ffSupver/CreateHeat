@@ -140,10 +140,6 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
             baseHeatData = baseHeatData.merge(new HeatUtil.HeatData(Config.HEAT_PER_SEETHING_BLAZE.get(), 1));
         }
 
-        if (isInSameNetwork(belowPos) || avoidHTP){ //防止加热自己或者被处理的热源
-            return baseHeatData;
-        }
-
         // test old heat provider
         if (heatProviderUsing != null){
             Optional<HeatProvider> heatProviderOp = CHHeatProviders.findHeatProvider(getWorld(),heatProviderUsing,getWorld().getBlockState(heatProviderUsing), Direction.fromDelta(getPos().getX()-heatProviderUsing.getX(),getPos().getY()-heatProviderUsing.getY(),getPos().getZ()-heatProviderUsing.getZ()));
@@ -156,11 +152,14 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
             }
         }
 
+
         // find new heat provider
         Map<BlockPos,HeatProvider> heatProviders = new HashMap<>();
         BlockUtil.AllDirectionOf(getPos(),(checkPos,face)->{
-            Optional<HeatProvider> heatProviderOp = CHHeatProviders.findHeatProvider(getWorld(),checkPos,getWorld().getBlockState(checkPos), face.getOpposite());
-            heatProviderOp.ifPresent(provider -> heatProviders.put(checkPos, provider));
+            if (!isInSameNetwork(checkPos)){
+                Optional<HeatProvider> heatProviderOp = CHHeatProviders.findHeatProvider(getWorld(), checkPos, getWorld().getBlockState(checkPos), face.getOpposite());
+                heatProviderOp.ifPresent(provider -> heatProviders.put(checkPos, provider));
+            }
         });
         if (!heatProviders.isEmpty()) {
             HeatUtil.HeatData blockHeatData = HeatUtil.NO_HEAT_PROVIDE;
@@ -184,7 +183,11 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
             }
 
             return baseHeatData.merge(blockHeatData);
-        }else {
+        }
+
+        if (isInSameNetwork(belowPos) || avoidHTP){ //防止加热自己或者被处理的热源
+            return baseHeatData;
+        } else {
             HeatUtil.HeatData boilerHeatData = HeatUtil.fromBoilerHeat(BoilerHeater.findHeat(getWorld(), getPos().below(), getWorld().getBlockState(getPos().below())));
             return baseHeatData.merge(boilerHeatData);
         }
