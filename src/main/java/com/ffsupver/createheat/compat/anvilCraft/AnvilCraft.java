@@ -13,6 +13,7 @@ import dev.dubhe.anvilcraft.api.heat.HeatTier;
 import dev.dubhe.anvilcraft.block.entity.heatable.HeatableBlockEntity;
 import dev.dubhe.anvilcraft.block.heatable.HeatableBlock;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
@@ -24,6 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.IEventBus;
 
 import java.util.Optional;
+import java.util.Set;
 
 import static com.simibubi.create.api.registry.SimpleRegistry.Provider.forBlockTag;
 
@@ -41,7 +43,7 @@ public class AnvilCraft implements CHModCompat {
     public void init(IEventBus eventBus) {
         CHHeatTransferProcessers.registerHeatTransferProcesser(HeatableBlockTransferProcesser.TYPE.getPath(), () -> HeatableBlockTransferProcesser::new);
         CHHeatTransferProcessers.registerHeatTransferProcesser(HeatCollectorTransferProcesser.TYPE.getPath(), () -> HeatCollectorTransferProcesser::new);
-        CHHeatTransferProcessers.registerOptionalNeedHeatBlock(state -> state.is(BlockTags.CAULDRONS));
+        CHHeatTransferProcessers.registerOptionalNeedHeatBlock("anvil_craft",state -> state.is(BlockTags.CAULDRONS), Set.of(Direction.UP));
         CHBoilerUpdaters.registerBoilerUpdater(HeatProducerBoilHeater::shouldUpdateBoiler);
         ThermalToolUseActions.registerAction(AnvilCraft::isHeatable,AnvilCraft::changeHeatTierByThermalTool);
 

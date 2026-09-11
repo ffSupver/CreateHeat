@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
+import java.util.Set;
 
 public abstract class HeatTransferProcesser {
     private final ResourceLocation typeId;
@@ -31,7 +32,7 @@ public abstract class HeatTransferProcesser {
     }
     public abstract void acceptHeat(Level level, BlockPos hTPPos,int heatProvide,int tickSkip,int superHeatCount);
     public abstract boolean shouldProcessEveryTick();
-    public boolean shouldHeatAt(Direction face){return true;}
+
     public boolean shouldWriteAndReadFromNbt(){return false;}
     public CompoundTag toNbt(){
         return null;
@@ -44,5 +45,11 @@ public abstract class HeatTransferProcesser {
 
     public void onControllerRemove(){}
 
+    /** direction set can transfer heat from, direction from Thermal Block to HeatTransferProcesser
+     * @return direction set
+     */
+    public Set<Direction> canTransferHeatFrom(){
+        return Set.of(Direction.values());
+    }
     public record HeatAcceptData(int heatProvide, int tickSkip,int superHeatCount){}
 }

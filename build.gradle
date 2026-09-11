@@ -158,8 +158,8 @@ dependencies {
      localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
 
     // Shader test
-    localRuntime files("./libs/sodium-neoforge-0.6.9+mc1.21.1.jar")
-    localRuntime files("./libs/iris-neoforge-1.8.12+mc1.21.1.jar")
+    additionalRuntimeClasspath files("./libs/sodium-neoforge-0.8.12+mc1.21.1.jar")
+    localRuntime files("./libs/iris-neoforge-1.8.14-beta.1+mc1.21.1.jar")
 
 
     implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") {
@@ -205,10 +205,14 @@ dependencies {
         exclude group: "foundry.veil"
         exclude group: "com.tterrag.registrate"
     }
-    implementation("foundry.veil:veil-common-${minecraft_version}:${project.veil_version}") {
-        exclude group: "maven.modrinth"
-        exclude group: "com.tterrag.registrate"
-    }
+//    implementation("foundry.veil:veil-common-${minecraft_version}:${project.veil_version}") {
+//        exclude group: "maven.modrinth"
+//        exclude group: "com.tterrag.registrate"
+//    }
+//    implementation("curse.maven:create-aeronautics-676721:8763471")
+    implementation "dev.eriksonn.aeronautics:aeronautics-neoforge-1.21.1:${aeronautics_version}"
+    implementation "dev.ryanhcode.offroad:offroad-neoforge-1.21.1:${aeronautics_version}"
+    implementation "dev.simulated_team.simulated:simulated-neoforge-1.21.1:${aeronautics_version}"
 }
 
 

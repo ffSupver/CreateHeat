@@ -1,6 +1,7 @@
 package com.ffsupver.createheat.compat;
 
 import com.ffsupver.createheat.CreateHeat;
+import com.ffsupver.createheat.compat.aeronautics.AeronauticsSimulateCompat;
 import com.ffsupver.createheat.compat.anvilCraft.AnvilCraft;
 import com.ffsupver.createheat.compat.coldSweat.ColdSweat;
 import com.ffsupver.createheat.compat.iceAndFire.IceAndFire;
@@ -39,6 +40,7 @@ public class Mods {
             addMod(ModIds.COLD_SWEAT, ColdSweat.class);
             addMod(ModIds.ANVIL_CRAFT, AnvilCraft.class);
             addMod(ModIds.SABLE, SableCompat.class);
+            addMod(ModIds.AERONAUTICS, AeronauticsSimulateCompat.class);
 
             MOD_SUPPLIERS.forEach(Mods::intiMod);
 
@@ -147,7 +149,9 @@ public class Mods {
         PNEUMATICCRAFT("pneumaticcraft"),
         COLD_SWEAT("cold_sweat"),
         ANVIL_CRAFT("anvilcraft"),
-        SABLE("sable");
+        SABLE("sable"),
+        AERONAUTICS("aeronautics"),
+        SIMULATED("simulated");
         public final String ModId;
 
         ModIds(String modId) {

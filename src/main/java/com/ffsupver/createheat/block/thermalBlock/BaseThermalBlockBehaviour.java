@@ -84,7 +84,10 @@ public class BaseThermalBlockBehaviour extends BlockEntityBehaviour {
                             }
                     );
                 }else {
-                    neighborTransferProcesser.add(heatNetwork.getTransferProcesser(checkPos));
+                    HeatTransferProcesser heatTransferProcesser = heatNetwork.getTransferProcesser(checkPos);
+                    if (heatTransferProcesser.canTransferHeatFrom().contains(face)){
+                        neighborTransferProcesser.add(heatTransferProcesser);
+                    }
                 }
 
                 // find heat storage
