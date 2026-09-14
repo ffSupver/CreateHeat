@@ -13,6 +13,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Collection;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -36,9 +37,9 @@ public final class BlockUtil {
     }
 
 
-    public static void walkAllBlocks(BlockPos startPos, Set<BlockPos> walkedBlockPos, Predicate<BlockPos> check,int maxRange,int currentRange) {
+    public static void walkAllBlocks(BlockPos startPos,Direction fromFace, Set<BlockPos> walkedBlockPos, BiPredicate<BlockPos,Direction> check,int maxRange,int currentRange) {
         // 如果超出范围,或者当前位置已经遍历过.或者不满足条件，则返回
-        if (currentRange > maxRange || walkedBlockPos.contains(startPos) || !check.test(startPos)) {
+        if (currentRange > maxRange || walkedBlockPos.contains(startPos) || !check.test(startPos,fromFace)) {
             return;
         }
 
@@ -46,16 +47,16 @@ public final class BlockUtil {
         walkedBlockPos.add(startPos);
 
         // 遍历六个方向（上、下、北、南、西、东）
-        AllDirectionOf(startPos,neighborPos->{
+        AllDirectionOf(startPos,(neighborPos,face)->{
             // 递归遍历相邻方块
-            walkAllBlocks(neighborPos, walkedBlockPos, check,maxRange,currentRange + 1);
+            walkAllBlocks(neighborPos, face,walkedBlockPos, check,maxRange,currentRange + 1);
         });
     }
 
-    public static void walkAllBlocks(BlockPos startPos, Set<BlockPos> walkedBlockPos, Predicate<BlockPos> check,int maxRange){
-        walkAllBlocks(startPos,walkedBlockPos,check, maxRange,0);
+    public static void walkAllBlocks(BlockPos startPos, Set<BlockPos> walkedBlockPos, BiPredicate<BlockPos,Direction> check, int maxRange){
+        walkAllBlocks(startPos,null,walkedBlockPos,check, maxRange,0);
     }
-    public static void walkAllBlocks(BlockPos startPos, Set<BlockPos> walkedBlockPos, Predicate<BlockPos> check){
+    public static void walkAllBlocks(BlockPos startPos, Set<BlockPos> walkedBlockPos, BiPredicate<BlockPos,Direction> check){
         walkAllBlocks(startPos,walkedBlockPos,check, Config.MAX_CONNECT_RANGE.get());
     }
 

@@ -11,6 +11,7 @@
   "block.createheat.copycat_thermal_block.tooltip.behaviour1": "Applies _held item_ as its _material_ if possible. _Click again_ to open _Interface_ according to _material_. Use a _Wrench_ to _reset_ the material.",
   "block.createheat.copycat_thermal_block.tooltip.condition2": "When Sneak-click with empty hand",
   "block.createheat.copycat_thermal_block.tooltip.behaviour2": "Will cycle _powered_ state if possible.",
+  "block.createheat.thermal_pipe_block": "Thermal Pipe",
 
 
   "item.createheat.thermal_tool": "Thermal Tool",

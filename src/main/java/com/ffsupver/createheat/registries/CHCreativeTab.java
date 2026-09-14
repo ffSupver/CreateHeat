@@ -31,6 +31,8 @@ public class CHCreativeTab {
                 output.accept(COPYCAT_THERMAL_BLOCK);
                 output.accept(TIGHT_COMPRESSED_STONE);
 
+                output.accept(THERMAL_PIPE_BLOCK);
+
                 output.accept(AllItems.GOGGLES);
             })
             .build());

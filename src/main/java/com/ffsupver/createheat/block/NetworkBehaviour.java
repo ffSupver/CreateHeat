@@ -1,5 +1,6 @@
 package com.ffsupver.createheat.block;
 
+import com.ffsupver.createheat.network.DirectionalNetworkConnect;
 import com.ffsupver.createheat.network.NetworkService;
 import com.ffsupver.createheat.network.TickingBlockNetwork;
 import com.ffsupver.createheat.util.BlockUtil;
@@ -10,6 +11,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -88,7 +90,22 @@ public class NetworkBehaviour extends BlockEntityBehaviour {
 
     public Set<UUID> getNeighborNetworkId(){
         Set<UUID> neighborNetworkIds = new HashSet<>();
-        BlockUtil.AllDirectionOf(getPos(), neighborPos->{
+        BlockState thisBlockState = getWorld().getBlockState(getPos());
+        DirectionalNetworkConnect directionalNetworkConnect;
+        if (thisBlockState.getBlock() instanceof DirectionalNetworkConnect d){
+            directionalNetworkConnect = d;
+        } else {
+            directionalNetworkConnect = null;
+        }
+        BlockUtil.AllDirectionOf(getPos(), (neighborPos,face)->{
+            if (directionalNetworkConnect != null && !directionalNetworkConnect.canDirectionConnect(thisBlockState, face)){
+                return;
+            }
+            BlockState neighborBlockState = getWorld().getBlockState(neighborPos);
+            if (neighborBlockState.getBlock() instanceof DirectionalNetworkConnect neighborDirectionalNetworkConnect && !neighborDirectionalNetworkConnect.canDirectionConnect(neighborBlockState,face.getOpposite())){
+                return;
+            }
+
             NetworkBehaviour neighborNetworkBehaviour = NetworkBehaviour.get(getWorld(), neighborPos, NetworkBehaviour.TYPE);
             if (neighborNetworkBehaviour != null && neighborNetworkBehaviour.checkNetworkType(networkType) && !neighborNetworkBehaviour.isPosIdChanging()){
                 neighborNetworkIds.add(neighborNetworkBehaviour.getNetworkId());

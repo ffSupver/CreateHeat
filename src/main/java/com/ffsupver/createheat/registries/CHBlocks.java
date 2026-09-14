@@ -65,6 +65,12 @@ public class CHBlocks {
             .item()
             .build()
             .register();
+    public static final BlockEntry<ThermalPipeBlock> THERMAL_PIPE_BLOCK = REGISTRATE
+            .block("thermal_pipe_block", ThermalPipeBlock::new)
+            .properties(p->BlockBehaviour.Properties.ofFullCopy(Blocks.COPPER_BLOCK))
+            .item(ThermalPipeBlockItem::new)
+            .build()
+            .register();
     public static final BlockEntityEntry<BaseThermalBlockEntity> THERMAL_BLOCK_ENTITY = REGISTRATE
             .blockEntity("thermal_block", BaseThermalBlockEntity::new)
             .validBlock(THERMAL_BLOCK)
@@ -79,6 +85,10 @@ public class CHBlocks {
             .blockEntity("copycat_thermal_block",CopycatThermalBlockEntity::new)
             .validBlock(COPYCAT_THERMAL_BLOCK)
             .renderer(()->CopycatThermalBlockEntityRenderer::new)
+            .register();
+    public static final BlockEntityEntry<ThermalPipeBlockEntity> THERMAL_PIPE_BLOCK_ENTITY = REGISTRATE
+            .blockEntity("thermal_pipe_block",ThermalPipeBlockEntity::new)
+            .validBlock(THERMAL_PIPE_BLOCK)
             .register();
 
 

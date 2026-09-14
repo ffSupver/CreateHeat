@@ -3,9 +3,11 @@ package com.ffsupver.createheat.network;
 import com.ffsupver.createheat.util.BlockUtil;
 import com.ffsupver.createheat.util.NbtUtil;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -56,7 +58,7 @@ public abstract class TickingBlockNetwork {
         // check block connection
         if (!connectedBlocks.isEmpty() && shouldCheckConnection){
             Set<BlockPos> checkedPosSet = new HashSet<>();
-            BlockUtil.walkAllBlocks(connectedBlocks.iterator().next(),checkedPosSet, connectedBlocks::contains);
+            BlockUtil.walkAllBlocks(connectedBlocks.iterator().next(),checkedPosSet,(cPos,face)-> checkBlockConnect(cPos, face, level, connectedBlocks));
             if (connectedBlocks.size() > checkedPosSet.size()){
                 Set<BlockPos> disconnectedBlocks = new HashSet<>(connectedBlocks);
                 disconnectedBlocks.removeAll(checkedPosSet);
@@ -165,5 +167,19 @@ public abstract class TickingBlockNetwork {
         nbt.put("unloaded_blocks",NbtUtil.writeBlockPosToNbtList(unloadedBlocks));
 
         return nbt;
+    }
+
+    public static boolean checkBlockConnect(BlockPos checkPos, Direction face,ServerLevel level,Set<BlockPos> oldBlockSet){
+        if (face != null){
+            BlockState checkState = level.getBlockState(checkPos);
+            BlockState fromState = level.getBlockState(checkPos.relative(face.getOpposite()));
+            if (checkState.getBlock() instanceof DirectionalNetworkConnect checkBlock && !checkBlock.canDirectionConnect(checkState, face.getOpposite())) {
+                return false;
+            }
+            if (fromState.getBlock() instanceof DirectionalNetworkConnect fromBlock && !fromBlock.canDirectionConnect(fromState, face)) {
+                return false;
+            }
+        }
+        return oldBlockSet.contains(checkPos);
     }
 }

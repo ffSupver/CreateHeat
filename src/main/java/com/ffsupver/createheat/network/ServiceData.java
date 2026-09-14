@@ -90,6 +90,38 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
     }
 
     /**
+     * Update network when block changed
+     * @param pos pos to update
+     * @param level should be server level
+     * @param networkID id of this network,or null if not found
+     * @param allNeighborNetworkIDs all neighbor network id from the pos
+     * @param disconnect if the network is disconnected, needing block connection check
+     * @return final network id the pos should be
+     */
+    public UUID updateNetwork(BlockPos pos, ServerLevel level, UUID networkID,Set<UUID> allNeighborNetworkIDs,boolean disconnect){
+        if (networkID == null){
+            return addBlockToNetwork(pos,level,allNeighborNetworkIDs);
+        }
+        Set<UUID> networkIds = new HashSet<>(allNeighborNetworkIDs);
+        networkIds.add(networkID);
+
+        if (networkIds.size() <= 1){ // only one network
+            if (disconnect){
+                T network = getNetwork(level.dimension(),networkID);
+                network.shouldCheckConnection = true;
+            }
+            return networkID;
+        }
+
+        Set<T> networks = new HashSet<>();
+        for (UUID uuid : networkIds){
+            networks.add(getNetwork(level.dimension(),uuid));
+        }
+
+        return mergeNetwork(level,networks);
+    }
+
+    /**
      * Add a new network to be added next tick
      * @param levelKey level of the network
      * @param network the network to be added
@@ -197,7 +229,11 @@ public abstract class ServiceData<T extends TickingBlockNetwork> extends SavedDa
         Set<BlockPos> remainingBlocks = new HashSet<>(disconnectedBlocks);
         while (!remainingBlocks.isEmpty()){
             Set<BlockPos> connectedBlocks = new HashSet<>();
-            BlockUtil.walkAllBlocks(remainingBlocks.iterator().next(),connectedBlocks,remainingBlocks::contains);
+            BlockUtil.walkAllBlocks(
+                    remainingBlocks.iterator().next(),
+                    connectedBlocks,
+                    (checkPos,face)-> TickingBlockNetwork.checkBlockConnect(checkPos,face,level,remainingBlocks)
+            );
             T newNetwork = createNetwork(UUID.randomUUID(),connectedBlocks);
             for (BlockPos pos : connectedBlocks){
                 changeBlockNetwork(pos,level,newNetwork.getNetworkID());

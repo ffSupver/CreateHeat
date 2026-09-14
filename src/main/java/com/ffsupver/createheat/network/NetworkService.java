@@ -77,6 +77,13 @@ public class NetworkService {
         return SERVICE_DATA_MAP.get(services.id).getAllNetworkId();
     }
 
+    public static UUID updateNetwork(BlockPos pos, Level level, UUID networkID,Set<UUID> allNeighborNetworkIDs,boolean disconnect,Services services){
+        if (!SERVICE_DATA_MAP.containsKey(services.id) || !(level instanceof ServerLevel serverLevel)){
+            return null;
+        }
+        return SERVICE_DATA_MAP.get(services.id).updateNetwork(pos,serverLevel,networkID,allNeighborNetworkIDs,disconnect);
+    }
+
     /**
      * Add a Block to Network and try to merge with neighbor network
      * @param pos pos to add

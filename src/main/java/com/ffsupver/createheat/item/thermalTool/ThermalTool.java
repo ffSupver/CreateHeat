@@ -87,7 +87,7 @@ public class ThermalTool extends Item {
     private static boolean removeBoiler(ServerLevel serverLevel,BlockPos pos,Player player){
         Set<BlockPos> NeedRemovePosSet = new HashSet<>();
         BlockUtil.walkAllBlocks(pos,NeedRemovePosSet,
-                b-> {
+                (b, face) -> {
                     BlockState state = serverLevel.getBlockState(b);
                     if (state.is(AllBlocks.STEAM_ENGINE)){
                         BlockPos shaftPos = b.relative(SteamEngineBlock.getFacing(state),2);
