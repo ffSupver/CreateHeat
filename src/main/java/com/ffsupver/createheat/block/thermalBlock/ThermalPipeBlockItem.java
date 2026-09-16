@@ -28,14 +28,38 @@ public class ThermalPipeBlockItem extends BlockItem {
         BlockPos checkPos = clickPos.relative(clickedFace);
         Level level = context.getLevel();
         BlockState checkState = level.getBlockState(checkPos);
-        if (checkState.is(CHTags.BlockTag.THERMAL_PIPE_CONNECT) || checkState.getBlock() instanceof ThermalPipeBlock){
-            BlockState clickState = level.getBlockState(clickPos);
-            if (clickState.getBlock() instanceof ThermalPipeBlock thermalPipeBlock){
-                thermalPipeBlock.updateNetworkConnect(level,clickPos, clickState, clickedFace,false);
-                return InteractionResult.SUCCESS;
-            }
+        BlockState clickState = level.getBlockState(clickPos);
+
+        // try to connect clicked pipe with other
+        if (tryUpdatePipe(level, clickPos, clickState, checkState, clickedFace)) {
+            return InteractionResult.SUCCESS;
         }
+        // try to connect other pipe with clicked
+        if (tryUpdatePipe(level, checkPos, checkState, clickState, clickedFace.getOpposite())) {
+            return InteractionResult.SUCCESS;
+        }
+
         return super.useOn(context);
+    }
+
+    /**
+     * 如果 pipeState 是 ThermalPipeBlock 且 neighborState 可连接，
+     * 就更新 pipeState 在 face 方向上的连接。
+     * if pipeState is ThermalPipeBlock and neighborState is connectable,
+     * then update the connection of pipeState in the face direction.
+     * @return whether the pipeState is successfully updated
+     */
+    private static boolean tryUpdatePipe(Level level, BlockPos pipePos, BlockState pipeState,
+                                         BlockState neighborState, Direction face) {
+        if (!(pipeState.getBlock() instanceof ThermalPipeBlock pipe)) {
+            return false;
+        }
+        if (!neighborState.is(CHTags.BlockTag.THERMAL_PIPE_CONNECT)
+                && !(neighborState.getBlock() instanceof ThermalPipeBlock)) {
+            return false;
+        }
+        pipe.updateNetworkConnect(level, pipePos, pipeState, face, false);
+        return true;
     }
 
     @Override

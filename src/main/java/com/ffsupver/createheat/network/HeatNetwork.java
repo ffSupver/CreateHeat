@@ -320,6 +320,7 @@ public class HeatNetwork extends TickingBlockNetwork{
                 "block counts: "+connectedBlocks.size()+
                 ", connectedBlocks=" + connectedBlocks +
                 ", connectedHeatStorage=" + connectedHeatStorageNetworks +
+                ", htp=" + transferProcesserMap +
                 '}';
     }
 

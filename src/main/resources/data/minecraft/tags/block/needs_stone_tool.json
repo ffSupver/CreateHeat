@@ -1,6 +1,7 @@
 {
   "values": [
     "#createheat:thermal_blocks",
+    "createheat:thermal_pipe_block",
     {
       "id": "createheat:dragon_fire_input",
       "required": false
