@@ -77,11 +77,18 @@ public final class BlockUtil {
         return true;
     }
 
-    public static boolean isConnect(Set<BlockPos> set1,Set<BlockPos> set2){
+    /**
+     * whether set1 and set2 is connected
+     * @param set1 BlockPos set1
+     * @param set2 BlockPos set2
+     * @param check check function, input Pos in set1 and direction, return whether connect
+     * @return whether set1 and set2 is connected
+     */
+    public static boolean isConnect(Set<BlockPos> set1,Set<BlockPos> set2, BiPredicate<BlockPos,Direction> check){
         for (BlockPos thisPos : set1){
             for (Direction d : Direction.values()){
                 for (BlockPos thPos : set2) {
-                    if (thisPos.relative(d).equals(thPos)){
+                    if (thisPos.relative(d).equals(thPos) && check.test(thisPos,d)){
                         return true;
                     }
                 }

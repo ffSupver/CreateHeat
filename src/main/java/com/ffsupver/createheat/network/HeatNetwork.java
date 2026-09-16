@@ -16,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -81,7 +82,14 @@ public class HeatNetwork extends TickingBlockNetwork{
         if(NetworkService.isLoad(NetworkService.Services.HEAT_STORAGE)){
             for (UUID heatStorageNetworkId : heatStorageNetworkNeedToCheck) {
                 TickingBlockNetwork heatStorageNetwork = NetworkService.getNetwork(level, heatStorageNetworkId, NetworkService.Services.HEAT_STORAGE);
-                boolean isConnected = heatStorageNetwork != null && BlockUtil.isConnect(connectedBlocks, heatStorageNetwork.connectedBlocks);
+                boolean isConnected = heatStorageNetwork != null && BlockUtil.isConnect(connectedBlocks, heatStorageNetwork.connectedBlocks,(pos,face)->{
+                    BlockState checkState = level.getBlockState(pos);
+                    if (checkState.getBlock() instanceof DirectionalNetworkConnect directionalNetworkConnect){
+                        return directionalNetworkConnect.canDirectionConnect(checkState,face);
+                    }else {
+                        return true; // if the block is not a directional network connect, it is considered as connected with all directions
+                    }
+                });
                 if (!isConnected) {
                     connectedHeatStorageNetworks.remove(heatStorageNetworkId);
                     removedHeatStorageNetwork = true;
