@@ -46,7 +46,7 @@
   "createheat.gui.goggles.heat_remain": "Heat Remain: %s/t",
 
   "createheat.ponder.thermal_block.use.header": "Using Thermal Block",
-  "createheat.ponder.thermal_block.use.text_1": "Heat goes through Thermal Block",
+  "createheat.ponder.thermal_block.use.text_1": "Heat goes through Thermal Block or Thermal Pipe",
   "createheat.ponder.thermal_block.use.text_2": "Thermal Block provide heat for machines above",
   "createheat.ponder.thermal_block.use.text_3": "Super heat",
   "createheat.ponder.thermal_block.storage.header": "Storge Heat Using Thermal Block",

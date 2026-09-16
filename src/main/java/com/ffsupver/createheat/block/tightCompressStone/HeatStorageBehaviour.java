@@ -8,6 +8,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.UUID;
@@ -48,7 +49,7 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
         }else {
             newHeat = NONE;
         }
-        if (newHeat != getHeat()){
+        if (newHeat != getHeat() && !getWorld().isClientSide()){
             setHeat(newHeat);
         }
     }
@@ -76,7 +77,8 @@ public class HeatStorageBehaviour extends BlockEntityBehaviour {
     }
 
     public void setHeat(TightCompressStone.Heat heat){
-        getWorld().setBlock(getPos(),getBlockState().setValue(HEAT, heat),3);
+        getWorld().setBlock(getPos(),getBlockState().setValue(HEAT, heat), Block.UPDATE_ALL);
+        blockEntity.notifyUpdate();
     }
 
     public BlockState getBlockState() {

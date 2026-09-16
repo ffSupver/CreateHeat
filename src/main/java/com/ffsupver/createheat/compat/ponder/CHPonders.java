@@ -13,7 +13,7 @@ public class CHPonders {
     public static void register(PonderSceneRegistrationHelper<ResourceLocation> helper){
         PonderSceneRegistrationHelper<ItemProviderEntry<?, ?>> HELPER = helper.withKeyFunction(RegistryEntry::getId);
 
-        HELPER.forComponents(THERMAL_BLOCK,SMART_THERMAL_BLOCK,COPYCAT_THERMAL_BLOCK)
+        HELPER.forComponents(THERMAL_BLOCK,SMART_THERMAL_BLOCK,COPYCAT_THERMAL_BLOCK,THERMAL_PIPE_BLOCK)
                 .addStoryBoard("thermal_block/use",ThermalBlockScene::use)
                 .addStoryBoard("thermal_block/storage",ThermalBlockScene::storage)
                 .addStoryBoard("thermal_block/recipe",ThermalBlockScene::recipe)

@@ -1,6 +1,7 @@
 package com.ffsupver.createheat.block;
 
 import com.ffsupver.createheat.network.DirectionalNetworkConnect;
+import com.ffsupver.createheat.network.HeatService;
 import com.ffsupver.createheat.network.NetworkService;
 import com.ffsupver.createheat.network.TickingBlockNetwork;
 import com.ffsupver.createheat.util.BlockUtil;
@@ -50,6 +51,7 @@ public class NetworkBehaviour extends BlockEntityBehaviour {
         // try to create network or find neighbor network
         if (networkId == null){
             networkId = NetworkService.addBlockToNetwork(getPos(), getWorld(),getNeighborNetworkId(), networkType);
+            blockEntity.sendData();
         }
 
         // try to get network
@@ -73,7 +75,15 @@ public class NetworkBehaviour extends BlockEntityBehaviour {
     public void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         if (tag.contains("network_id")){
-            this.networkId = tag.getUUID("network_id");
+            UUID newNetworkId = tag.getUUID("network_id");
+            if (this.networkId != null && !newNetworkId.equals(this.networkId) && !clientPacket){  // set by structure block
+                HeatService.removeBlockFromNetwork(getWorld(), getPos(), this.networkId);
+                this.network = HeatService.getNetwork(getWorld(), newNetworkId);
+                if (network == null){
+                    newNetworkId = null;  // will try to create new network at next tick
+                }
+            }
+            this.networkId = newNetworkId;
         }
         if (tag.contains("last_pos")){
             this.lastPos = NbtUtil.blockPosFromNbt(tag.getCompound("last_pos"));
@@ -126,6 +136,7 @@ public class NetworkBehaviour extends BlockEntityBehaviour {
     public void setNetworkId(UUID heatNetworkId) {
         this.networkId = heatNetworkId;
         this.network = null;
+        blockEntity.notifyUpdate();
     }
 
     @Override

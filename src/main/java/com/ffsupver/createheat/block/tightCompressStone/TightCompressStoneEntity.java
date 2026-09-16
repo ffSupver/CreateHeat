@@ -19,7 +19,6 @@ public class TightCompressStoneEntity extends SmartBlockEntity{
 
     public Set<UUID> getNeighborNetworkId(){
         return getNetworkBehaviour().getNeighborNetworkId();
-//        return getBehaviour().getNeighborNetworkId();
     }
 
     @Override
@@ -29,7 +28,6 @@ public class TightCompressStoneEntity extends SmartBlockEntity{
     }
 
     public void setNetworkId(UUID id){
-//        getBehaviour().setNetworkId(id);
         getNetworkBehaviour().setNetworkId(id);
     }
 

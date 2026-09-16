@@ -46,7 +46,7 @@
   "createheat.gui.goggles.heat_remain": "剩余热: %s/t",
 
   "createheat.ponder.thermal_block.use.header": "使用导热块",
-  "createheat.ponder.thermal_block.use.text_1": "热量通过导热块传播",
+  "createheat.ponder.thermal_block.use.text_1": "热量通过导热块或导热管传播",
   "createheat.ponder.thermal_block.use.text_2": "导热块为上面的机器供热",
   "createheat.ponder.thermal_block.use.text_3": "超级加热",
   "createheat.ponder.thermal_block.storage.header": "用导热块储存热量",

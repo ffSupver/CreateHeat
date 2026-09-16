@@ -30,6 +30,8 @@ public class ThermalBlockScene {
     public static void use(SceneBuilder builder, SceneBuildingUtil util) {
         CreateSceneBuilder scene = new CreateSceneBuilder(builder);
         scene.title("thermal_block.use", "Using Thermal Block");
+        scene.scaleSceneView(0.8f);
+
 
         scene.configureBasePlate(0, 0, 7);
         scene.world().showSection(util.select().layer(0), Direction.UP);
@@ -37,12 +39,20 @@ public class ThermalBlockScene {
         BlockPos blazePos = util.grid().at(4,1,2);
         scene.world().modifyBlock(blazePos, setHeatLevel(KINDLED),false);
 
+        scene.idle(5);
+
+        int degrees = 20;
+        for (int i = 0;i < 360 / degrees; i++){
+            scene.rotateCameraY(degrees);
+            scene.idle(3);
+        }
 
         scene.idle(10);
 
         scene.overlay().showText(30).placeNearTarget()
-                        .text("Heat goes through Thermal Block")
-                .pointAt(util.grid().at(4,3,2).getBottomCenter());
+                        .text("Heat goes through Thermal Block or Thermal Pipe")
+                .pointAt(util.grid().at(4,3,2).getBottomCenter())
+                .attachKeyFrame();
 
         List<Vec3i> pathList = List.of(
                 new Vec3i(4,2,2),
@@ -104,7 +114,15 @@ public class ThermalBlockScene {
                 .text("Super heat")
                 .pointAt(basinPos.getBottomCenter());
 
-        scene.idle(30);
+        scene.idle(10);
+
+        scene.world().createItemEntity(util.vector().centerOf(basinPos.above(1)), util.vector().of(0, 0, 0), new ItemStack(Blocks.COBBLESTONE));
+
+        scene.idle(5);
+
+        scene.world().modifyBlockEntity(util.grid().at(2,7,2), MechanicalMixerBlockEntity.class, MechanicalMixerBlockEntity::startProcessingBasin);
+
+        scene.idle(10);
 
         scene.markAsFinished();
     }
@@ -146,15 +164,20 @@ public class ThermalBlockScene {
 
         scene.overlay().showText(15).placeNearTarget()
                 .text("When the provided heat exceed the consumed heat")
-                .pointAt(blazePos2.getBottomCenter());
+                .pointAt(blazePos2.getBottomCenter())
+                .attachKeyFrame();
 
         scene.idle(30);
 
         BlockPos lavaPos = util.grid().at(2,1,4);
         for (int i = 0;i < 3;i++){
             scene.world().setBlock(lavaPos.above(i), CHBlocks.TIGHT_COMPRESSED_STONE.getDefaultState().setValue(TightCompressStone.HEAT, TightCompressStone.Heat.REGULAR_HEAT), false);
-            scene.idle(3);
+            scene.idle(5);
         }
+
+        scene.idle(20);
+
+        scene.world().setBlock(lavaPos, CHBlocks.TIGHT_COMPRESSED_STONE.getDefaultState().setValue(TightCompressStone.HEAT, TightCompressStone.Heat.SUPER_HEAT), false);
 
         scene.overlay().showText(15).placeNearTarget()
                 .text("The excess heat will be stored")
