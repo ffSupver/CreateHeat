@@ -19,7 +19,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.*;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.Collection;
 import java.util.Set;
@@ -102,6 +105,19 @@ public class ThermalPipeBlock extends Block implements IBE<ThermalPipeBlockEntit
             });
         }
         super.onRemove(oldState, level, pos, newState, movedByPiston);
+    }
+
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
+        Direction direction = Direction.fromDelta(neighborPos.getX() - pos.getX(), neighborPos.getY() - pos.getY(), neighborPos.getZ() - pos.getZ());
+        if (direction != null && state.getBlock() instanceof ThermalPipeBlock thermalPipeBlock && thermalPipeBlock.canDirectionConnect(state, direction)){
+            BlockState neighborState = level.getBlockState(neighborPos);
+            if (!neighborState.is(CHTags.BlockTag.THERMAL_PIPE_CONNECT) && !(neighborState.getBlock() instanceof ThermalPipeBlock)){
+                BlockState newState = setDirectionConnect(state, direction, false);
+                level.setBlock(pos, newState, Block.UPDATE_ALL);
+            }
+        }
     }
 
     @Override
