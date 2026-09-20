@@ -75,6 +75,11 @@
   "createheat.ponder.thermal_block.smart_thermal_block.text_5": "it will provide heat not higher than \"Regular Heat\" level",
   "createheat.ponder.thermal_block.smart_thermal_block.text_6": "When max heat level is \"Super Heat\", ...",
   "createheat.ponder.thermal_block.smart_thermal_block.text_7": "it will provide heat not higher than \"Super Heat\" level",
+  "createheat.ponder.aeronautics.use.header": "Heating Portable Engine with Thermal Block",
+  "createheat.ponder.aeronautics.use.text_1": "Thermal Block will provide heat with Portable Engine, instead of adding fuel into Portable Engine",
+  "createheat.ponder.aeronautics.use.text_2": "Super heat also work on Portable Engine",
+
+
 
   "createheat.recipe.heat":"Heat",
   "createheat.recipe.heat.amount": "Min: %s Total: %s",

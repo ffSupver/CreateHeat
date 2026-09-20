@@ -75,6 +75,9 @@
   "createheat.ponder.thermal_block.smart_thermal_block.text_5": "提供不高于\"普通加热\"的热量",
   "createheat.ponder.thermal_block.smart_thermal_block.text_6": "当最大热量是\"超级加热\", ...",
   "createheat.ponder.thermal_block.smart_thermal_block.text_7": "提供不高于\"超级加热\"的热量",
+  "createheat.ponder.aeronautics.use.header": "使用导热块加热便携式引擎",
+  "createheat.ponder.aeronautics.use.text_1": "导热块将为便携式引擎提供热量, 无需给便携式引擎添加燃料",
+  "createheat.ponder.aeronautics.use.text_2": "超级加热状态下便携式引擎也会工作",
 
   "createheat.recipe.heat":"加热",
   "createheat.recipe.heat.amount": "至少: %s 总共: %s",

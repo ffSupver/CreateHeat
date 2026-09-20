@@ -2,8 +2,11 @@ package com.ffsupver.createheat.compat.aeronautics;
 
 import com.ffsupver.createheat.compat.CHModCompat;
 import com.ffsupver.createheat.compat.Mods;
+import com.ffsupver.createheat.compat.ponder.scenes.aeronautics.AeronauticsSimulateScene;
+import com.ffsupver.createheat.registries.CHBlocks;
 import com.ffsupver.createheat.registries.CHHeatTransferProcessers;
 import com.tterrag.registrate.util.entry.ItemProviderEntry;
+import dev.simulated_team.simulated.index.SimBlocks;
 import net.createmod.ponder.api.registration.PonderSceneRegistrationHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -24,7 +27,10 @@ public class AeronauticsSimulateCompat implements CHModCompat {
 
     @Override
     public void registerPonder(PonderSceneRegistrationHelper<ItemProviderEntry<?, ?>> HELPER) {
-        CHModCompat.super.registerPonder(HELPER);
+        HELPER.forComponents(CHBlocks.THERMAL_BLOCK)
+                .addStoryBoard("aeronautics/use", AeronauticsSimulateScene::use);
+        HELPER.forComponents(SimBlocks.PORTABLE_ENGINES)
+                .addStoryBoard("aeronautics/use", AeronauticsSimulateScene::use);
     }
 
     @Override
